@@ -1,11 +1,10 @@
 # ExamForge
-ExamForge is a exam practice platform built with .NET, PostgreSQL, and Next.js.
+**ExamForge** is a fullstack exam preparation platform with:
 
-## Goals
-
-- Build a realistic fullstack exam platform.
-- Support separate Study and Admin portals.
-- Practice production-oriented backend, database, authentication, and deployment workflows.
+- A **Study Portal** for learners to practice exams across multiple subjects.
+- An **Admin Portal** for managing subjects, exams, questions, explanations, and content quality.
+- A **.NET backend API** using PostgreSQL as the primary database.
+- A **monorepo structure** so frontend, backend, documentation, and deployment configuration stay in one repository.
 
 ## Tech Stack
 
@@ -27,3 +26,4 @@ apps/
 docs/
 README.md
 LICENSE
+```
