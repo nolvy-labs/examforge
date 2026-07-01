@@ -41,16 +41,25 @@ This checklist defines the minimum feature set required for the first usable ver
 
 ### Authentication and Authorization
 
-- [ ] Implement user registration.
-- [ ] Implement user login.
-- [ ] Implement JWT access token generation.
-- [ ] Implement refresh token flow.
-- [ ] Implement logout or refresh token revocation.
-- [ ] Add `Student` role.
-- [ ] Add `Admin` role.
-- [ ] Protect student-only routes.
-- [ ] Protect admin-only routes.
-- [ ] Add `/auth/me` endpoint.
+- [ ] Add JWT config to appsettings/user-secrets
+- [ ] Install Microsoft.AspNetCore.Authentication.JwtBearer
+- [ ] Add UserRole, User, RefreshToken entities
+- [ ] Add DbSet<User> and DbSet<RefreshToken>
+- [ ] Add EF configurations
+- [ ] Add Application DTOs and interfaces
+- [ ] Add Infrastructure repository
+- [ ] Add password hasher
+- [ ] Add JWT token service
+- [ ] Add refresh token service
+- [ ] Add auth service
+- [ ] Register services in Infrastructure/DependencyInjection.cs
+- [ ] Add API authentication extension
+- [ ] Update Program.cs middleware order
+- [ ] Add AuthController
+- [ ] Add migration AddAuthTables
+- [ ] Apply database update
+- [ ] Test register/login/me/refresh/logout
+- [ ] Add [Authorize] to protected endpoints
 
 #### Exam Tags
 - [ ] Create tag entity.
