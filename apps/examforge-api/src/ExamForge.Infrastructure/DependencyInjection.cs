@@ -1,4 +1,8 @@
-﻿using ExamForge.Infrastructure.Persistence;
+﻿using ExamForge.Application.Auth;
+using ExamForge.Application.Users;
+using ExamForge.Infrastructure.Auth;
+using ExamForge.Infrastructure.Persistence;
+using ExamForge.Infrastructure.Users;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +21,15 @@ public static class DependencyInjection
         {
             options.UseNpgsql(connectionString);
         });
+
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IAuthService, AuthService>();
+
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
 
         return services;
     }

@@ -41,25 +41,24 @@ This checklist defines the minimum feature set required for the first usable ver
 
 ### Authentication and Authorization
 
-- [ ] Add JWT config to appsettings/user-secrets
-- [ ] Install Microsoft.AspNetCore.Authentication.JwtBearer
-- [ ] Add UserRole, User, RefreshToken entities
-- [ ] Add DbSet<User> and DbSet<RefreshToken>
-- [ ] Add EF configurations
-- [ ] Add Application DTOs and interfaces
-- [ ] Add Infrastructure repository
-- [ ] Add password hasher
-- [ ] Add JWT token service
-- [ ] Add refresh token service
-- [ ] Add auth service
-- [ ] Register services in Infrastructure/DependencyInjection.cs
-- [ ] Add API authentication extension
-- [ ] Update Program.cs middleware order
-- [ ] Add AuthController
-- [ ] Add migration AddAuthTables
-- [ ] Apply database update
-- [ ] Test register/login/me/refresh/logout
-- [ ] Add [Authorize] to protected endpoints
+- [x] Add JWT config to appsettings/user-secrets
+- [x] Install Microsoft.AspNetCore.Authentication.JwtBearer
+- [x] Add UserRole, User, RefreshToken entities
+- [x] Add DbSet<User> and DbSet<RefreshToken>
+- [x] Add EF configurations
+- [x] Add Application DTOs and interfaces
+- [x] Add Infrastructure repository
+- [x] Add password hasher
+- [x] Add JWT token service
+- [x] Add refresh token service
+- [x] Add auth service
+- [x] Register services in Infrastructure/DependencyInjection.cs
+- [x] Add API authentication extension
+- [x] Update Program.cs middleware order
+- [x] Add AuthController
+- [x] Add migration AddAuthTables
+- [x] Apply database update
+- [x] Add [Authorize] to protected endpoints
 
 #### Exam Tags
 - [ ] Create tag entity.

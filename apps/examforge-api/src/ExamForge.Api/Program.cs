@@ -1,11 +1,15 @@
+using ExamForge.Api.Extensions;
 using ExamForge.Infrastructure;
+using ExamForge.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApiAuthentication(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
@@ -18,13 +22,16 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -36,9 +43,14 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseMiddleware<ApiExceptionHandlingMiddleware>();
+
 app.UseHttpsRedirection();
 
 app.UseCors("Frontend");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 
