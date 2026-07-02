@@ -1,0 +1,84 @@
+enum UserRole {
+    Student
+    Admin
+}
+
+Table user {
+    Id Guid [pk]
+    Email String [unique, not null]
+    NormalizedEmail String [unique, not null]
+    PasswordHash String [not null]
+    DisplayName String
+    Role UserRole [not null]
+    IsActive Boolean [not null, default: true]
+    CreatedAtUtc DateTime [not null, default: `now()`]
+    UpdatedAtUtc DateTime
+}
+
+Table refresh_tokens {
+    Id Guid [pk]
+    UserId Guid [not null, ref: > user.Id]
+    TokenHash String [not null]
+    ExpiresAtUtc DateTime [not null]
+    CreatedAtUtc DateTime [not null, default: `now()`]
+    RevokedAtUtc DateTime
+    ReplaceByTokenHash String
+}
+
+enum ExamTagType {
+    Subject
+    ExamType
+    Year
+    Grade
+    Skill
+    Level
+    Topic
+    Language
+}
+
+Table exam_tag {
+    Id Guid [pk]
+    Name String [not null]
+    Slug String [not null, unique]
+    Type ExamTagType [not null]
+    Description String
+    IsArchived Boolean [not null, default: false]
+    CreatedAtUtc DateTime [not null, default: `now()`]
+    UpdatedAtUtc DateTime
+}
+
+enum CategoryMatchMode {
+    All
+    Any
+}
+
+Table exam_category {
+    Id Guid [pk]
+    Name String [not null]
+    Slug String [not null, unique]
+    Description String
+
+    MatchMode CategoryMatchMode [not null, default: 'All']
+
+    IsFeatured Boolean [not null, default: false]
+    IsArchived Boolean [not null, default: false]
+    DisplayOrder Int [not null, default: 0]
+
+    CreatedAtUtc DateTime [not null, default: `now()`]
+    UpdatedAtUtc DateTime
+    
+    // ParentCategoryId Guid [ref: > exam_category.Id] Future feature: support for nested categories
+    // SeoTitle String Furure feature: support for SEO title
+    // SeoDescription String Future feature: support for SEO description
+}
+
+Table exam_category_tag {
+    ExamCategoryId Guid [not null, ref: > exam_category.Id]
+    ExamTagId Guid [not null, ref: > exam_tag.Id]
+    CreatedAtUtc DateTime [not null, default: `now()`]
+    Indexes {
+        (ExamCategoryId, ExamTagId) [pk]
+        // ExamTagId Future feature: support for query categories by tag
+    }
+}
+
