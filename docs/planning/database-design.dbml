@@ -9,8 +9,11 @@ Table user {
     NormalizedEmail String [unique, not null]
     PasswordHash String [not null]
     DisplayName String
+    
     Role UserRole [not null]
+    
     IsActive Boolean [not null, default: true]
+
     CreatedAtUtc DateTime [not null, default: `now()`]
     UpdatedAtUtc DateTime
 }
@@ -18,11 +21,13 @@ Table user {
 Table refresh_tokens {
     Id Guid [pk]
     UserId Guid [not null, ref: > user.Id]
+    
     TokenHash String [not null]
+    ReplaceByTokenHash String
+
     ExpiresAtUtc DateTime [not null]
     CreatedAtUtc DateTime [not null, default: `now()`]
     RevokedAtUtc DateTime
-    ReplaceByTokenHash String
 }
 
 enum ExamTagType {
@@ -40,9 +45,12 @@ Table exam_tag {
     Id Guid [pk]
     Name String [not null]
     Slug String [not null, unique]
-    Type ExamTagType [not null]
     Description String
+
+    Type ExamTagType [not null]
+    
     IsArchived Boolean [not null, default: false]
+    
     CreatedAtUtc DateTime [not null, default: `now()`]
     UpdatedAtUtc DateTime
 }
@@ -66,7 +74,7 @@ Table exam_category {
 
     CreatedAtUtc DateTime [not null, default: `now()`]
     UpdatedAtUtc DateTime
-    
+
     // ParentCategoryId Guid [ref: > exam_category.Id] Future feature: support for nested categories
     // SeoTitle String Furure feature: support for SEO title
     // SeoDescription String Future feature: support for SEO description

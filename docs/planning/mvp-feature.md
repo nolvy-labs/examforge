@@ -62,10 +62,10 @@ This checklist defines the minimum feature set required for the first usable ver
 
 #### Exam Tags
 
-* [ ] Add tag type enum: Subject, ExamType, Year, Grade, Skill, Level, Topic.
-* [ ] Create tag domain entity.
-* [ ] Add tag archive/deactivate behavior.
-* [ ] Add tag slug normalization strategy.
+* [x] Add tag type enum: Subject, ExamType, Year, Grade, Skill, Level, Topic.
+* [x] Create tag domain entity.
+* [x] Add tag archive/deactivate behavior.
+* [x] Add tag slug and name normalization strategy.
 * [ ] Add tag EF Core configuration.
 * [ ] Add `DbSet<Tag>` to `ExamForgeDbContext`.
 * [ ] Add tag unique index for slug.

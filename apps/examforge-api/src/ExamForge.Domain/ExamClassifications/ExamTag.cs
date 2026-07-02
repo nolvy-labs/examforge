@@ -1,0 +1,55 @@
+﻿using System.Text;
+using System.Text.RegularExpressions;
+
+using ExamForge.Domain.Common;
+
+namespace ExamForge.Domain.ExamClassifications;
+
+public sealed class ExamTag
+{
+    private ExamTag() { }
+
+    public ExamTag(
+        string name,
+        string? slug,
+        string? description,
+        ExamTagType type
+        )
+    {
+        Id = Guid.NewGuid();
+        Name = TextNormalizer.NormalizeName(name);
+        Slug = TextNormalizer.NormalizeSlug(string.IsNullOrWhiteSpace(slug) ? name : slug);
+        Description = description?.Trim();
+        Type = type;
+        IsArchived = false;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public Guid Id { get; private set; }
+
+    public string Name { get; private set; } = String.Empty;
+
+    public string Slug { get; private set; } = String.Empty;
+
+    public string? Description { get; private set; }
+
+    public ExamTagType Type { get; private set; }
+
+    public bool IsArchived { get; private set; }
+
+    public DateTimeOffset CreatedAtUtc { get; private set; }
+
+    public DateTimeOffset? UpdatedAtUtc { get; private set; }
+
+    public void Archive()
+    {
+        IsArchived = true;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void Restore()
+    {
+        IsArchived = false;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
+}
