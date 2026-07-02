@@ -35,7 +35,7 @@ This checklist defines the minimum feature set required for the first usable ver
 - [x] Create `ExamForge.Tests` project.
 - [ ] Configure project references correctly.
 - [x] Configure dependency injection.
-- [ ] Configure global exception handling.
+- [x] Configure global exception handling.
 - [ ] Configure API response conventions.
 - [x] Configure Swagger/OpenAPI.
 
@@ -61,30 +61,63 @@ This checklist defines the minimum feature set required for the first usable ver
 - [x] Add [Authorize] to protected endpoints
 
 #### Exam Tags
-- [ ] Create tag entity.
-- [ ] Add tag type enum: Subject, ExamType, Year, Grade, Skill, Level, Topic.
-- [ ] Seed sample tags: Toán, Tiếng Anh, THPTQG, 2025, Lớp 12.
-- [ ] Implement public tag list endpoint.
-- [ ] Implement public tag detail endpoint.
-- [ ] Implement admin create tag endpoint.
-- [ ] Implement admin update tag endpoint.
-- [ ] Implement admin archive tag endpoint.
-- [ ] Add tag slug uniqueness validation.
-- [ ] Add tag type validation.
+
+* [ ] Add tag type enum: Subject, ExamType, Year, Grade, Skill, Level, Topic.
+* [ ] Create tag domain entity.
+* [ ] Add tag archive/deactivate behavior.
+* [ ] Add tag slug normalization strategy.
+* [ ] Add tag EF Core configuration.
+* [ ] Add `DbSet<Tag>` to `ExamForgeDbContext`.
+* [ ] Add tag unique index for slug.
+* [ ] Add tag type enum conversion.
+* [ ] Seed sample tags: Toán, Tiếng Anh, THPTQG, 2025, Lớp 12.
+* [ ] Add tag migration.
+* [ ] Apply tag migration locally.
+* [ ] Add tag request/response DTOs.
+* [ ] Add tag repository interface.
+* [ ] Add tag repository implementation.
+* [ ] Add tag service.
+* [ ] Register tag service/repository in dependency injection.
+* [ ] Implement public tag list endpoint.
+* [ ] Implement public tag detail endpoint by slug or id.
+* [ ] Implement admin create tag endpoint.
+* [ ] Implement admin update tag endpoint.
+* [ ] Implement admin archive tag endpoint.
+* [ ] Add tag slug uniqueness validation.
+* [ ] Add tag type validation.
+* [ ] Add basic manual test notes or backend tests.
 
 #### Exam Categories
-- [ ] Create category entity.
-- [ ] Create category-tag many-to-many relationship.
-- [ ] Add category migration.
-- [ ] Seed sample categories.
-- [ ] Implement public category list endpoint.
-- [ ] Implement public category detail endpoint.
-- [ ] Implement public category exams endpoint.
-- [ ] Implement admin create category endpoint.
-- [ ] Implement admin update category endpoint.
-- [ ] Implement admin archive category endpoint.
-- [ ] Add category slug uniqueness validation.
-- [ ] Add validation to prevent duplicate tags in one category.
+
+* [ ] Create category domain entity.
+* [ ] Add category archive/deactivate behavior.
+* [ ] Add category slug normalization strategy.
+* [ ] Create category-tag join entity.
+* [ ] Configure category-tag many-to-many relationship.
+* [ ] Add category EF Core configuration.
+* [ ] Add category-tag EF Core configuration.
+* [ ] Add `DbSet<Category>` and `DbSet<CategoryTag>` to `ExamForgeDbContext`.
+* [ ] Add category unique index for slug.
+* [ ] Add composite unique index for category-tag relationship.
+* [ ] Seed sample categories.
+* [ ] Add category migration.
+* [ ] Apply category migration locally.
+* [ ] Add category request/response DTOs.
+* [ ] Add category repository interface.
+* [ ] Add category repository implementation.
+* [ ] Add category service.
+* [ ] Register category service/repository in dependency injection.
+* [ ] Implement public category list endpoint.
+* [ ] Implement public category detail endpoint by slug or id.
+* [ ] Implement public category exams endpoint.
+* [ ] Implement admin create category endpoint.
+* [ ] Implement admin update category endpoint.
+* [ ] Implement admin archive category endpoint.
+* [ ] Add category slug uniqueness validation.
+* [ ] Add validation to prevent duplicate tags in one category.
+* [ ] Add validation to reject missing/archived tag ids.
+* [ ] Add basic manual test notes or backend tests.
+
 
 ### Question Module
 
