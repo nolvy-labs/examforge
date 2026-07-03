@@ -62,14 +62,14 @@ This checklist defines the minimum feature set required for the first usable ver
 
 #### Exam Tags
 
-* [x] Add tag type enum: Subject, ExamType, Year, Grade, Skill, Level, Topic.
+* [x] Add tag type enum: Unknow, Subject, ExamType, Year, Grade, Skill, Level, Topic.
 * [x] Create tag domain entity.
 * [x] Add tag archive/deactivate behavior.
 * [x] Add tag slug and name normalization strategy.
-* [ ] Add tag EF Core configuration.
+* [x] Add tag EF Core configuration.
 * [ ] Add `DbSet<Tag>` to `ExamForgeDbContext`.
-* [ ] Add tag unique index for slug.
-* [ ] Add tag type enum conversion.
+* [x] Add tag unique index for slug.
+* [x] Add tag type enum conversion.
 * [ ] Seed sample tags: Toán, Tiếng Anh, THPTQG, 2025, Lớp 12.
 * [ ] Add tag migration.
 * [ ] Apply tag migration locally.
@@ -89,16 +89,17 @@ This checklist defines the minimum feature set required for the first usable ver
 
 #### Exam Categories
 
-* [ ] Create category domain entity.
-* [ ] Add category archive/deactivate behavior.
-* [ ] Add category slug normalization strategy.
-* [ ] Create category-tag join entity.
-* [ ] Configure category-tag many-to-many relationship.
-* [ ] Add category EF Core configuration.
-* [ ] Add category-tag EF Core configuration.
-* [ ] Add `DbSet<Category>` and `DbSet<CategoryTag>` to `ExamForgeDbContext`.
-* [ ] Add category unique index for slug.
-* [ ] Add composite unique index for category-tag relationship.
+* [x] Add category match mode enum: Unknow, All, Any.
+* [x] Create category domain entity.
+* [x] Add category archive/deactivate behavior.
+* [x] Add category slug normalization strategy.
+* [x] Add category EF Core configuration.
+* [x] Create category-tag join entity.
+* [x] Configure category-tag many-to-many relationship.
+* [x] Add category-tag EF Core configuration.
+* [x] Add `DbSet<Category>` and `DbSet<CategoryTag>` to `ExamForgeDbContext`.
+* [x] Add category unique index for slug.
+* [x] Add composite unique index for category-tag relationship.
 * [ ] Seed sample categories.
 * [ ] Add category migration.
 * [ ] Apply category migration locally.

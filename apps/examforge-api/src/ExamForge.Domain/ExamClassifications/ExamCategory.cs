@@ -1,7 +1,4 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
-
-using ExamForge.Domain.Common;
+﻿using ExamForge.Domain.Common;
 
 namespace ExamForge.Domain.ExamClassifications;
 
@@ -51,6 +48,7 @@ public sealed class ExamCategory
     public void Archive()
     {
         IsArchived = true;
+        IsFeatured = false;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
     }
 

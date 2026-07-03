@@ -1,7 +1,4 @@
-﻿
-
-
-using ExamForge.Domain.Users;
+﻿using ExamForge.Domain.Users;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
