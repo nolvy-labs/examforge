@@ -23,4 +23,8 @@
     <ProjectReference Include="..\ExamForge.Infrastructure\ExamForge.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
+
 </Project>

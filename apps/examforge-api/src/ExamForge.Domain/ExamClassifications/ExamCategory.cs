@@ -4,6 +4,8 @@ namespace ExamForge.Domain.ExamClassifications;
 
 public sealed class ExamCategory
 {
+    private readonly List<ExamCategoryTag> _examCategoryTags = [];
+
     private ExamCategory() { }
 
     public ExamCategory(
@@ -44,6 +46,8 @@ public sealed class ExamCategory
     public DateTimeOffset CreatedAtUtc { get; private set; }
 
     public DateTimeOffset? UpdatedAtUtc { get; private set; }
+
+    public IReadOnlyCollection<ExamCategoryTag> ExamCategoryTags => _examCategoryTags;
 
     public void Archive()
     {

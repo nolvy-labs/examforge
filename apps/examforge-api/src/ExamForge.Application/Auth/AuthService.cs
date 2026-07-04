@@ -1,36 +1,36 @@
-﻿using ExamForge.Application.Auth;
-using ExamForge.Application.Users;
+﻿using ExamForge.Application.Abstractions.Auth;
+using ExamForge.Application.Abstractions.Persistence;
+using ExamForge.Application.Abstractions.Users;
 using ExamForge.Domain.Users;
-using ExamForge.Infrastructure.Persistence;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+namespace ExamForge.Application.Auth;
 
-namespace ExamForge.Infrastructure.Auth;
-
-public sealed class AuthService : IAuthService
+public sealed class AuthService
 {
     private readonly IUserRepository _users;
-    private readonly ExamForgeDbContext _dbContext;
+    private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IRefreshTokenService _refreshTokenService;
-    private readonly JwtOptions _jwtOptions;
+    private readonly IRefreshTokenLifetimeProvider _refreshTokenLifetimeProvider;
 
     public AuthService(
         IUserRepository users,
-        ExamForgeDbContext dbContext,
+        IRefreshTokenRepository refreshTokens,
+        IUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         IRefreshTokenService refreshTokenService,
-        IOptions<JwtOptions> jwtOptions)
+        IRefreshTokenLifetimeProvider refreshTokenLifetimeProvider)
     {
         _users = users;
-        _dbContext = dbContext;
+        _refreshTokens = refreshTokens;
+        _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _refreshTokenService = refreshTokenService;
-        _jwtOptions = jwtOptions.Value;
+        _refreshTokenLifetimeProvider = refreshTokenLifetimeProvider;
     }
 
     public async Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -55,15 +55,9 @@ public sealed class AuthService : IAuthService
 
         var response = CreateAuthResponse(user);
 
-        var refreshTokenHash = _refreshTokenService.HashRefreshToken(response.RefreshToken);
+        AddRefeshToken(user.Id, response.RefreshToken);
 
-        _dbContext.RefreshTokens.Add(new RefreshToken(
-            user.Id,
-            refreshTokenHash,
-            DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenDays)
-        ));
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return AuthResult.Success(response);
     }
@@ -85,15 +79,9 @@ public sealed class AuthService : IAuthService
 
         var response = CreateAuthResponse(user);
 
-        var refreshTokenHash = _refreshTokenService.HashRefreshToken(response.RefreshToken);
+        AddRefeshToken(user.Id, response.RefreshToken);
 
-        _dbContext.RefreshTokens.Add(new RefreshToken(
-            user.Id,
-            refreshTokenHash,
-            DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenDays)
-        ));
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return AuthResult.Success(response);
     }
@@ -102,9 +90,9 @@ public sealed class AuthService : IAuthService
     {
         var oldTokenHash = _refreshTokenService.HashRefreshToken(request.RefreshToken);
 
-        var storedToken = await _dbContext.RefreshTokens
-            .Include(token => token.User)
-            .FirstOrDefaultAsync(token => token.TokenHash == oldTokenHash, cancellationToken);
+        var storedToken = await _refreshTokens.GetByTokenHashWithUserAsync(
+            oldTokenHash,
+            cancellationToken);
 
         if (storedToken is null || !storedToken.IsActive || !storedToken.User.IsActive)
         {
@@ -117,13 +105,13 @@ public sealed class AuthService : IAuthService
 
         storedToken.Revoke(newTokenHash);
 
-        _dbContext.RefreshTokens.Add(new RefreshToken(
+        _refreshTokens.Add(new RefreshToken(
             storedToken.UserId,
             newTokenHash,
-            DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenDays)
+            _refreshTokenLifetimeProvider.GetExpiresAtUtc()
         ));
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return AuthResult.Success(response);
     }
@@ -132,8 +120,9 @@ public sealed class AuthService : IAuthService
     {
         var tokenHash = _refreshTokenService.HashRefreshToken(refreshToken);
 
-        var storedToken = await _dbContext.RefreshTokens
-            .FirstOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
+        var storedToken = await _refreshTokens.GetByTokenHashAsync(
+            tokenHash,
+            cancellationToken);
 
         if (storedToken is null || !storedToken.IsActive)
         {
@@ -142,7 +131,7 @@ public sealed class AuthService : IAuthService
 
         storedToken.Revoke();
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<UserProfileResponse?> GetMeAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -160,6 +149,17 @@ public sealed class AuthService : IAuthService
             user.DisplayName,
             user.Role
         );
+    }
+
+    private void AddRefeshToken(Guid userId, string refreshToken)
+    {
+        var refreshTokenHash = _refreshTokenService.HashRefreshToken(refreshToken);
+
+        _refreshTokens.Add(new RefreshToken(
+            userId,
+            refreshTokenHash,
+            _refreshTokenLifetimeProvider.GetExpiresAtUtc()
+        ));
     }
 
     private AuthResponse CreateAuthResponse(User user)

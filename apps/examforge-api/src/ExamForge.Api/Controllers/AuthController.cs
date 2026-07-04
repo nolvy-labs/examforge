@@ -1,7 +1,6 @@
 ﻿using System.Security.Claims;
 
-using ExamForge.Api.Auth;
-using ExamForge.Api.Routing;
+using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Auth;
 using ExamForge.Infrastructure.Auth;
 
@@ -15,11 +14,11 @@ namespace ExamForge.Api.Controllers;
 [Route(ApiRoutes.Auth)]
 public sealed class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly AuthService _authService;
     private readonly JwtOptions _jwtOptions;
 
     public AuthController(
-        IAuthService authService,
+        AuthService authService,
         IOptions<JwtOptions> jwtOptions)
     {
         _authService = authService;

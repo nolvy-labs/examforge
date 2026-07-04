@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-using ExamForge.Application.Auth;
+using ExamForge.Application.Abstractions.Auth;
 
 namespace ExamForge.Infrastructure.Auth;
 

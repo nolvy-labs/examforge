@@ -26,13 +26,13 @@ public sealed class ExamCategoryTagConfiguration : IEntityTypeConfiguration<Exam
         builder.Property(category_tag => category_tag.CreatedAtUtc)
             .IsRequired();
 
-        builder.HasOne<ExamCategory>()
-            .WithMany()
+        builder.HasOne(categoryTag => categoryTag.ExamCategory)
+            .WithMany(category => category.ExamCategoryTags)
             .HasForeignKey(categoryTag => categoryTag.ExamCategoryId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<ExamTag>()
-            .WithMany()
+        builder.HasOne(categoryTag => categoryTag.ExamTag)
+            .WithMany(tag => tag.ExamCategoryTags)
             .HasForeignKey(categoryTag => categoryTag.ExamTagId)
             .OnDelete(DeleteBehavior.Cascade);
 

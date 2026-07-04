@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Api.Auth;
+﻿namespace ExamForge.Api.Common.Constants;
 
 public static class AuthCookieNames
 {

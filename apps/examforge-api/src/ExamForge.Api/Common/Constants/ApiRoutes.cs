@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Api.Routing;
+﻿namespace ExamForge.Api.Common.Constants;
 
 public static class ApiRoutes
 {

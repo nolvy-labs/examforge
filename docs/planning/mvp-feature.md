@@ -66,11 +66,10 @@ This checklist defines the minimum feature set required for the first usable ver
 * [x] Create tag domain entity.
 * [x] Add tag archive/deactivate behavior.
 * [x] Add tag slug and name normalization strategy.
-* [x] Add tag EF Core configuration.
-* [ ] Add `DbSet<Tag>` to `ExamForgeDbContext`.
+* [x] Add tag EF Core configuratio Add `DbSet<Tag>` to `ExamForgeDbContext`.
 * [x] Add tag unique index for slug.
 * [x] Add tag type enum conversion.
-* [ ] Seed sample tags: Toán, Tiếng Anh, THPTQG, 2025, Lớp 12.
+* [x] Seed sample tags: Toán, Tiếng Anh, THPTQG, 2025, Lớp 12.
 * [ ] Add tag migration.
 * [ ] Apply tag migration locally.
 * [ ] Add tag request/response DTOs.

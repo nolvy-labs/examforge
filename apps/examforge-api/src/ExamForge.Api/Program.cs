@@ -1,6 +1,7 @@
 using ExamForge.Api.Extensions;
 using ExamForge.Infrastructure;
 using ExamForge.Api.Middleware;
+using ExamForge.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration);
 

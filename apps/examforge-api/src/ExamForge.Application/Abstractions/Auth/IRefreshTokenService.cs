@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Application.Auth;
+﻿namespace ExamForge.Application.Abstractions.Auth;
 
 public interface IRefreshTokenService
 {

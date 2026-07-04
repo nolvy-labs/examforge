@@ -1,5 +1,6 @@
-﻿using ExamForge.Application.Auth;
-using ExamForge.Application.Users;
+﻿using ExamForge.Application.Abstractions.Auth;
+using ExamForge.Application.Abstractions.Persistence;
+using ExamForge.Application.Abstractions.Users;
 using ExamForge.Infrastructure.Auth;
 using ExamForge.Infrastructure.Persistence;
 using ExamForge.Infrastructure.Users;
@@ -25,11 +26,13 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
+        services.AddSingleton<IRefreshTokenLifetimeProvider, RefreshTokenLifetimeProvider>();
 
         return services;
     }

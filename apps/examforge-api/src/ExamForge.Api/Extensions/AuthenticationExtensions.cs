@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-using ExamForge.Api.Auth;
+using ExamForge.Api.Common.Constants;
 using ExamForge.Infrastructure.Auth;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;

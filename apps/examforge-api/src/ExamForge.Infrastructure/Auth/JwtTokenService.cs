@@ -2,7 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 
-using ExamForge.Application.Auth;
+using ExamForge.Application.Abstractions.Auth;
 using ExamForge.Domain.Users;
 
 using Microsoft.Extensions.Options;
