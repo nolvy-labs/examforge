@@ -2,7 +2,7 @@
 
 public enum ExamTagType
 {
-    Unknow = 0,
+    Unknown = 0,
     Subject = 1,
     ExamType = 2,
     Year = 3,

@@ -22,7 +22,8 @@ public sealed class ExamTagConfiguration : IEntityTypeConfiguration<ExamTag>
             .IsRequired();
 
         builder.Property(tag => tag.Description)
-            .HasMaxLength(ExamClassificationConstraints.DescriptionMaxLength);
+            .HasMaxLength(ExamClassificationConstraints.DescriptionMaxLength)
+            .IsRequired();
 
         builder.Property(tag => tag.Type)
             .HasConversion<string>()

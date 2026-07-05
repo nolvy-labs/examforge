@@ -22,7 +22,8 @@ public sealed class ExamCategoryConfiguration : IEntityTypeConfiguration<ExamCat
             .IsRequired();
 
         builder.Property(category => category.Description)
-            .HasMaxLength(ExamClassificationConstraints.DescriptionMaxLength);
+            .HasMaxLength(ExamClassificationConstraints.DescriptionMaxLength)
+            .IsRequired();
 
         builder.Property(category => category.MatchMode)
             .HasConversion<string>()

@@ -1,6 +1,7 @@
 ﻿using ExamForge.Application.Abstractions.Auth;
 using ExamForge.Application.Abstractions.Persistence;
 using ExamForge.Application.Abstractions.Users;
+using ExamForge.Application.Common;
 using ExamForge.Domain.Users;
 
 namespace ExamForge.Application.Auth;
@@ -33,13 +34,15 @@ public sealed class AuthService
         _refreshTokenLifetimeProvider = refreshTokenLifetimeProvider;
     }
 
-    public async Task<AuthResult> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponse, AuthError>> RegisterAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default)
     {
         var normalizedEmail = User.NormalizeEmail(request.Email);
 
         if (await _users.ExistsByNormalizedEmailAsync(normalizedEmail, cancellationToken))
         {
-            return AuthResult.Failure(AuthError.EmailAlreadyExists);
+            return Result<AuthResponse, AuthError>.Failure(AuthError.EmailAlreadyExists);
         }
 
         var passwordHash = _passwordHasher.Hash(request.Password);
@@ -59,22 +62,24 @@ public sealed class AuthService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return AuthResult.Success(response);
+        return Result<AuthResponse, AuthError>.Success(response);
     }
 
-    public async Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponse, AuthError>> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default)
     {
         var normalizedEmail = User.NormalizeEmail(request.Email);
         var user = await _users.GetByNormalizedEmailAsync(normalizedEmail, cancellationToken);
 
         if (user is null || !user.IsActive)
         {
-            return AuthResult.Failure(AuthError.InvalidCredentials);
+            return Result<AuthResponse, AuthError>.Failure(AuthError.InvalidCredentials);
         }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            return AuthResult.Failure(AuthError.InvalidCredentials);
+            return Result<AuthResponse, AuthError>.Failure(AuthError.InvalidCredentials);
         }
 
         var response = CreateAuthResponse(user);
@@ -83,10 +88,12 @@ public sealed class AuthService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return AuthResult.Success(response);
+        return Result<AuthResponse, AuthError>.Success(response);
     }
 
-    public async Task<AuthResult> RefreshAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponse, AuthError>> RefreshAsync(
+        RefreshTokenRequest request,
+        CancellationToken cancellationToken = default)
     {
         var oldTokenHash = _refreshTokenService.HashRefreshToken(request.RefreshToken);
 
@@ -96,7 +103,7 @@ public sealed class AuthService
 
         if (storedToken is null || !storedToken.IsActive || !storedToken.User.IsActive)
         {
-            return AuthResult.Failure(AuthError.InvalidRefreshToken);
+            return Result<AuthResponse, AuthError>.Failure(AuthError.InvalidRefreshToken);
         }
 
         var response = CreateAuthResponse(storedToken.User);
@@ -113,7 +120,7 @@ public sealed class AuthService
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return AuthResult.Success(response);
+        return Result<AuthResponse, AuthError>.Success(response);
     }
 
     public async Task RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)

@@ -70,20 +70,19 @@ This checklist defines the minimum feature set required for the first usable ver
 * [x] Add tag unique index for slug.
 * [x] Add tag type enum conversion.
 * [x] Seed sample tags: Toán, Tiếng Anh, THPTQG, 2025, Lớp 12.
-* [ ] Add tag migration.
-* [ ] Apply tag migration locally.
-* [ ] Add tag request/response DTOs.
-* [ ] Add tag repository interface.
-* [ ] Add tag repository implementation.
-* [ ] Add tag service.
-* [ ] Register tag service/repository in dependency injection.
-* [ ] Implement public tag list endpoint.
-* [ ] Implement public tag detail endpoint by slug or id.
-* [ ] Implement admin create tag endpoint.
-* [ ] Implement admin update tag endpoint.
-* [ ] Implement admin archive tag endpoint.
-* [ ] Add tag slug uniqueness validation.
-* [ ] Add tag type validation.
+* [x] Add tag migration.
+* [x] Add tag request/response DTOs.
+* [x] Add tag repository interface.
+* [x] Add tag repository implementation.
+* [x] Add tag service.
+* [x] Register tag service/repository in dependency injection.
+* [x] Implement public tag list endpoint.
+* [x] Implement public tag detail endpoint by slug or id.
+* [x] Implement admin create tag endpoint.
+* [x] Implement admin update tag endpoint.
+* [x] Implement admin archive tag endpoint.
+* [x] Add tag slug uniqueness validation.
+* [x] Add tag type validation.
 * [ ] Add basic manual test notes or backend tests.
 
 #### Exam Categories
@@ -99,23 +98,21 @@ This checklist defines the minimum feature set required for the first usable ver
 * [x] Add `DbSet<Category>` and `DbSet<CategoryTag>` to `ExamForgeDbContext`.
 * [x] Add category unique index for slug.
 * [x] Add composite unique index for category-tag relationship.
-* [ ] Seed sample categories.
-* [ ] Add category migration.
-* [ ] Apply category migration locally.
-* [ ] Add category request/response DTOs.
-* [ ] Add category repository interface.
-* [ ] Add category repository implementation.
-* [ ] Add category service.
-* [ ] Register category service/repository in dependency injection.
-* [ ] Implement public category list endpoint.
-* [ ] Implement public category detail endpoint by slug or id.
-* [ ] Implement public category exams endpoint.
-* [ ] Implement admin create category endpoint.
-* [ ] Implement admin update category endpoint.
-* [ ] Implement admin archive category endpoint.
-* [ ] Add category slug uniqueness validation.
-* [ ] Add validation to prevent duplicate tags in one category.
-* [ ] Add validation to reject missing/archived tag ids.
+* [x] Add category migration.
+* [x] Add category request/response DTOs.
+* [x] Add category repository interface.
+* [x] Add category repository implementation.
+* [x] Add category service.
+* [x] Register category service/repository in dependency injection.
+* [x] Implement public category list endpoint.
+* [x] Implement public category detail endpoint by slug or id.
+* [x] Implement public category exams endpoint.
+* [x] Implement admin create category endpoint.
+* [x] Implement admin update category endpoint.
+* [x] Implement admin archive category endpoint.
+* [x] Add category slug uniqueness validation.
+* [x] Add validation to prevent duplicate tags in one category.
+* [x] Add validation to reject missing/archived tag ids.
 * [ ] Add basic manual test notes or backend tests.
 
 

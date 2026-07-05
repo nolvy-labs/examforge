@@ -11,14 +11,14 @@ public sealed class ExamTag
     public ExamTag(
         string name,
         string? slug,
-        string? description,
+        string description,
         ExamTagType type
         )
     {
         Id = Guid.NewGuid();
         Name = TextNormalizer.NormalizeName(name);
         Slug = TextNormalizer.NormalizeSlug(string.IsNullOrWhiteSpace(slug) ? name : slug);
-        Description = description?.Trim();
+        Description = description.Trim();
         Type = type;
         IsArchived = false;
         CreatedAtUtc = DateTimeOffset.UtcNow;
@@ -30,7 +30,7 @@ public sealed class ExamTag
 
     public string Slug { get; private set; } = String.Empty;
 
-    public string? Description { get; private set; }
+    public string Description { get; private set; } = String.Empty;
 
     public ExamTagType Type { get; private set; }
 
@@ -41,6 +41,19 @@ public sealed class ExamTag
     public DateTimeOffset? UpdatedAtUtc { get; private set; }
 
     public IReadOnlyCollection<ExamCategoryTag> ExamCategoryTags => _examCategoryTags;
+
+    public void UpdateDetails(
+        string name,
+        string slug,
+        string description,
+        ExamTagType type)
+    {
+        Name = TextNormalizer.NormalizeName(name);
+        Slug = TextNormalizer.NormalizeSlug(slug);
+        Description = description.Trim();
+        Type = type;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
 
     public void Archive()
     {

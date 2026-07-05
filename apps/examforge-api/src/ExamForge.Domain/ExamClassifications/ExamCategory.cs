@@ -19,7 +19,7 @@ public sealed class ExamCategory
         Id = Guid.NewGuid();
         Name = TextNormalizer.NormalizeName(name);
         Slug = TextNormalizer.NormalizeSlug(string.IsNullOrWhiteSpace(slug) ? name : slug);
-        Description = description?.Trim();
+        Description = description?.Trim() ?? string.Empty;
         MatchMode = matchMode;
         IsFeatured = false;
         IsArchived = false;
@@ -33,7 +33,7 @@ public sealed class ExamCategory
 
     public string Slug { get; private set; } = String.Empty;
 
-    public string? Description { get; private set; }
+    public string Description { get; private set; } = String.Empty;
 
     public ExamCategoryMatchMode MatchMode { get; private set; }
 
@@ -48,6 +48,44 @@ public sealed class ExamCategory
     public DateTimeOffset? UpdatedAtUtc { get; private set; }
 
     public IReadOnlyCollection<ExamCategoryTag> ExamCategoryTags => _examCategoryTags;
+
+    public void UpdateDetails(
+        string name,
+        string? slug,
+        string description,
+        ExamCategoryMatchMode matchMode,
+        int displayOrder)
+    {
+        Name = TextNormalizer.NormalizeName(name);
+        Slug = TextNormalizer.NormalizeSlug(string.IsNullOrWhiteSpace(slug) ? name : slug);
+        Description = description.Trim();
+        MatchMode = matchMode;
+        DisplayOrder = displayOrder;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public void ReplaceTags(IEnumerable<Guid> examTagIds)
+    {
+        var newTagIds = examTagIds
+            .Distinct()
+            .ToHashSet();
+
+        _examCategoryTags.RemoveAll(categoryTag => !newTagIds.Contains(categoryTag.ExamTagId));
+
+        var existingTagIds = _examCategoryTags
+            .Select(categoryTag => categoryTag.ExamTagId)
+            .ToHashSet();
+
+        foreach (var examTagId in newTagIds)
+        {
+            if (!existingTagIds.Contains(examTagId))
+            {
+                _examCategoryTags.Add(new ExamCategoryTag(Id, examTagId));
+            }
+        }
+
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
 
     public void Archive()
     {
