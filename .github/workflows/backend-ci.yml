@@ -6,14 +6,14 @@ on:
       - main
     paths:
       - "apps/examforge-api/**"
-      - ".github/workflows/dotnet-backend-ci.yml"
+      - ".github/workflows/backend-ci.yml"
 
   pull_request:
     branches:
       - main
     paths:
       - "apps/examforge-api/**"
-      - ".github/workflows/dotnet-backend-ci.yml"
+      - ".github/workflows/backend-ci.yml"
 
   workflow_dispatch:
 
