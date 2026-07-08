@@ -1,3 +1,4 @@
+/* ================= User and AuthToken =================  */
 enum UserRole {
     Student
     Admin
@@ -30,6 +31,10 @@ Table refresh_tokens {
     RevokedAtUtc DateTime
 }
 
+
+
+
+/* ================= Tag and Category =================  */
 enum ExamTagType {
     Subject
     ExamType
@@ -90,3 +95,311 @@ Table exam_category_tag {
     }
 }
 
+
+
+
+/* ================= Exam and Quesion =================  */
+Enum exam_type {
+  Simple
+  Ielts
+}
+
+Enum exam_version_status {
+  Draft
+  Published
+  Retired
+}
+
+Enum exam_section_kind {
+  Default
+  Reading
+  Listening
+  Writing
+  Speaking
+  Custom
+}
+
+Enum question_type {
+  FillBlank
+  MultipleChoiceSingle
+  MultipleChoiceMultiple
+  Group
+}
+
+Table exams {
+  Id Guid [pk]
+
+  Title String [not null]
+  Slug String [not null, unique]
+  Description String [not null, default: '']
+
+  Type exam_type [not null]
+
+  IsArchived Boolean [not null, default: false]
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    Slug [unique]
+    (IsArchived, Type)
+    ExamCategoryId
+  }
+}
+
+Table exam_versions {
+  Id Guid [pk]
+
+  ExamId Guid [not null, ref: > exams.Id]
+
+  VersionNumber Int [not null]
+  Status exam_version_status [not null]
+
+  Title String [not null]
+  Description String [not null, default: '']
+  Instructions String [not null, default: '']
+
+  DurationMinutes Int
+  TotalScore Decimal(8,2) [not null, default: 0]
+
+  PublishedAtUtc DateTime
+  RetiredAtUtc DateTime
+
+  CreatedByUserId Guid
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    (ExamId, VersionNumber) [unique]
+    (ExamId, Status)
+    (Status, PublishedAtUtc)
+  }
+
+  Note: '''
+  Important PostgreSQL constraint not expressible directly in DBML:
+
+  CREATE UNIQUE INDEX ux_exam_versions_one_published_per_exam
+  ON examforge.exam_versions ("ExamId")
+  WHERE "Status" = 'Published';
+
+  This allows:
+  - multiple Draft versions
+  - multiple Retired versions
+  - zero Published versions
+  - only one Published version per Exam
+  '''
+}
+
+Table exam_sections {
+  Id Guid [pk]
+
+  ExamVersionId Guid [not null, ref: > exam_versions.Id]
+
+  Kind exam_section_kind [not null]
+  Title String [not null, default: '']
+  Instructions String [not null, default: '']
+
+  // For IELTS Reading passage, shared paragraph, case study, etc.
+  StimulusText Text
+
+  // For IELTS Listening audio, future video/image, etc.
+  MediaUrl String
+
+  DisplayOrder Int [not null]
+
+  MetadataJson Json
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    (ExamVersionId, DisplayOrder) [unique]
+    (ExamVersionId, Kind, DisplayOrder)
+  }
+
+  Note: '''
+  Simple exam:
+  - one section with Kind = Default
+  - questions are ordered directly inside that section
+
+  IELTS exam:
+  - multiple sections, for example Reading, Listening, Writing
+  - Reading passage goes into StimulusText
+  - Listening audio goes into MediaUrl
+  '''
+}
+
+Table questions {
+  Id Guid [pk]
+
+  ExamSectionId Guid [not null, ref: > exam_sections.Id]
+
+  // Null = root question in a section.
+  // Non-null = child question inside a Group question.
+  ParentQuestionId Guid [ref: > questions.Id]
+
+  Type question_type [not null]
+
+  Prompt Text [not null]
+  Explanation Text
+
+  Points Decimal(8,2) [not null, default: 1]
+
+  DisplayOrder Int [not null]
+
+  MetadataJson Json
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    (ExamSectionId, ParentQuestionId, DisplayOrder)
+    ParentQuestionId
+    (ExamSectionId, Type)
+  }
+
+  Note: '''
+  Group question rule:
+  - Parent question has Type = Group
+  - Child questions point to ParentQuestionId
+  - Child question Type must not be Group
+  - Nested groups are not allowed
+
+  These rules should be enforced in Domain logic.
+  For stronger DB-level enforcement, use PostgreSQL triggers.
+  '''
+}
+
+Table question_options {
+  Id Guid [pk]
+
+  QuestionId Guid [not null, ref: > questions.Id]
+
+  Label String
+  Text Text [not null]
+
+  IsCorrect Boolean [not null, default: false]
+
+  DisplayOrder Int [not null]
+
+  Explanation Text
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    (QuestionId, DisplayOrder) [unique]
+    (QuestionId, IsCorrect)
+  }
+
+  Note: '''
+  Used only for:
+  - MultipleChoiceSingle
+  - MultipleChoiceMultiple
+
+  Domain rules:
+  - MultipleChoiceSingle must have exactly one correct option
+  - MultipleChoiceMultiple must have one or more correct options
+  - FillBlank and Group must not have options
+  '''
+}
+
+Table fill_answer_keys {
+  Id Guid [pk]
+
+  QuestionId Guid [not null, ref: > questions.Id]
+
+  // For simple fill question, use "answer".
+  // For future multi-blank question, use "blank_1", "blank_2", etc.
+  BlankKey String [not null, default: 'answer']
+
+  AcceptedAnswer String [not null]
+  NormalizedAnswer String [not null]
+
+  IsCaseSensitive Boolean [not null, default: false]
+
+  DisplayOrder Int [not null]
+
+  CreatedAtUtc DateTime [not null]
+
+  Indexes {
+    (QuestionId, BlankKey, NormalizedAnswer) [unique]
+    (QuestionId, BlankKey, DisplayOrder)
+  }
+
+  Note: '''
+  Used only for FillBlank questions.
+  Multiple rows allow multiple accepted answers for the same blank.
+  '''
+}
+
+
+
+/* ================= Attempt and Answer =================  */
+Enum exam_attempt_status {
+  InProgress
+  Submitted
+  Abandoned
+}
+
+Table exam_attempts {
+  Id Guid [pk]
+
+  UserId Guid [not null, ref: > user.Id]
+
+  // Denormalized for easier query.
+  ExamId Guid [not null, ref: > exams.Id]
+
+  // This is the important reference.
+  // The attempt always points to the exact version the user took.
+  ExamVersionId Guid [not null, ref: > exam_versions.Id]
+
+  Status exam_attempt_status [not null]
+
+  StartedAtUtc DateTime [not null]
+  SubmittedAtUtc DateTime
+
+  TotalScore Decimal(8,2)
+  MaxScore Decimal(8,2)
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    (UserId, StartedAtUtc)
+    (ExamId, UserId)
+    ExamVersionId
+  }
+}
+
+Table exam_attempt_answers {
+  Id Guid [pk]
+
+  ExamAttemptId Guid [not null, ref: > exam_attempts.Id]
+  QuestionId Guid [not null, ref: > questions.Id]
+
+  // For FillBlank.
+  TextAnswer String
+
+  IsCorrect Boolean
+  Score Decimal(8,2)
+
+  CreatedAtUtc DateTime [not null]
+  UpdatedAtUtc DateTime
+
+  Indexes {
+    (ExamAttemptId, QuestionId) [unique]
+    QuestionId
+  }
+}
+
+Table exam_attempt_selected_options {
+  ExamAttemptAnswerId Guid [not null, ref: > exam_attempt_answers.Id]
+  QuestionOptionId Guid [not null, ref: > question_options.Id]
+
+  Indexes {
+    (ExamAttemptAnswerId, QuestionOptionId) [pk]
+    QuestionOptionId
+  }
+}
