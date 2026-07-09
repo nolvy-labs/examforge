@@ -143,8 +143,19 @@ Table exams {
   Indexes {
     Slug [unique]
     (IsArchived, Type)
-    ExamCategoryId
   }
+}
+
+Table exam_tag_mapping {
+    ExamId Guid [not null, ref: > exams.Id]
+    ExamTagId Guid [not null, ref: > exam_tag.Id]
+    
+    CreatedAtUtc DateTime [not null, default: `now()`]
+    
+    Indexes {
+        (ExamId, ExamTagId) [pk]
+        ExamTagId 
+    }
 }
 
 Table exam_versions {
