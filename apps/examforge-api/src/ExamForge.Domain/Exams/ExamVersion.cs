@@ -1,4 +1,6 @@
-﻿namespace ExamForge.Domain.Exams;
+﻿using ExamForge.Domain.ExamAttempts;
+
+namespace ExamForge.Domain.Exams;
 
 public class ExamVersion
 {
