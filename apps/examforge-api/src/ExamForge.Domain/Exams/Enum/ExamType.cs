@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Domain.Exam;
+﻿namespace ExamForge.Domain.Exams;
 
 public enum ExamType
 {

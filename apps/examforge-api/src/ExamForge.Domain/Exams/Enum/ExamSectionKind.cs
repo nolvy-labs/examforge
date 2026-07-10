@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Domain;
+﻿namespace ExamForge.Domain.Exams;
 
 public enum ExamSectionKind
 {
