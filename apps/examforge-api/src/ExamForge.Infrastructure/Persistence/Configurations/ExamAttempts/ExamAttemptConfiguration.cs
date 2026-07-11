@@ -32,10 +32,12 @@ public class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
         builder.Property(e => e.SubmittedAtUtc);
 
         builder.Property(e => e.TotalScore)
-            .HasColumnType("decimal(8,2)");
+            .HasColumnType("decimal(8,2)")
+            .HasDefaultValue(0);
 
         builder.Property(e => e.MaxScore)
-            .HasColumnType("decimal(8,2)");
+            .HasColumnType("decimal(8,2)")
+            .HasDefaultValue(0);
 
         builder.Property(e => e.CreatedAtUtc)
             .IsRequired();
@@ -47,6 +49,11 @@ public class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
         builder.HasIndex(e => new { e.ExamId, e.UserId });
 
         builder.HasIndex(e => e.ExamVersionId);
+
+        builder.HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Exam)
             .WithMany(e => e.Attempts)

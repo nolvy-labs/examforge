@@ -1,9 +1,11 @@
 ﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Users;
 
 namespace ExamForge.Domain.ExamAttempts;
 
 public class ExamAttempt
 {
+    public User User { get; set; } = null!;
     public Exam Exam { get; set; } = null!;
     public ExamVersion ExamVersion { get; set; } = null!;
     public ICollection<ExamAttemptAnswer> Answers { get; set; } = new List<ExamAttemptAnswer>();
