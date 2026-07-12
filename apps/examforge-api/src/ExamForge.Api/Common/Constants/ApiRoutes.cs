@@ -4,6 +4,9 @@ public static class ApiRoutes
 {
     public const string V1 = "api/v1";
     public const string Auth = V1 + "/auth";
+    public const string User = V1 + "/[constroller]";
+    public const string Admin = V1 + "/admin/[controller]";
+
     public const string ExamTags = V1 + "/exam-tags";
     public const string AdminExamTags = V1 + "/admin/exam-tags";
     public const string ExamCategories = V1 + "/exam-categories";

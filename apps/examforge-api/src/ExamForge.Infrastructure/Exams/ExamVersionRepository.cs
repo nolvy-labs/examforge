@@ -11,5 +11,4 @@ public sealed class ExamVersionRepository : IExamVersionRepository
     {
         _dbContext = dbContext;
     }
-}{
 }

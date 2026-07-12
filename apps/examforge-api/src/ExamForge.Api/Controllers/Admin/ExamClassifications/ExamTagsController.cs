@@ -1,21 +1,19 @@
-﻿using ExamForge.Api.Common.Constants;
-using ExamForge.Application.ExamTags;
+﻿using ExamForge.Application.ExamTags;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ExamForge.Api.Controllers;
+namespace ExamForge.Api.Controllers.Admin.ExamClassifications;
 
 [ApiController]
 [Authorize(Roles = nameof(UserRole.Admin))]
-[Route(ApiRoutes.AdminExamTags)]
-public sealed class AdminExamTagsController : ControllerBase
+public sealed class ExamTagsController : AdminBaseController
 {
     private readonly ExamTagService _examTagService;
 
-    public AdminExamTagsController(ExamTagService examTagService)
+    public ExamTagsController(ExamTagService examTagService)
     {
         _examTagService = examTagService;
     }
@@ -67,7 +65,7 @@ public sealed class AdminExamTagsController : ControllerBase
         var response = result.Value!;
 
         return CreatedAtAction(
-            nameof(ExamTagsController.GetById),
+            nameof(Controllers.User.ExamTagsController.GetById),
             "ExamTags",
             new { id = response.Id },
             response);
