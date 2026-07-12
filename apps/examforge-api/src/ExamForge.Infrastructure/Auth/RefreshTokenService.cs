@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-using ExamForge.Application.Abstractions.Auth;
+using ExamForge.Application.Abstractions;
 
 namespace ExamForge.Infrastructure.Auth;
 

@@ -1,6 +1,6 @@
 ﻿using ExamForge.Domain.Users;
 
-namespace ExamForge.Application.Abstractions.Auth;
+namespace ExamForge.Application.Abstractions;
 
 public interface IJwtTokenService
 {

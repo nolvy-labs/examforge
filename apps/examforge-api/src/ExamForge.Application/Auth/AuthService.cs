@@ -1,6 +1,4 @@
-﻿using ExamForge.Application.Abstractions.Auth;
-using ExamForge.Application.Abstractions.Persistence;
-using ExamForge.Application.Abstractions.Users;
+﻿using ExamForge.Application.Abstractions;
 using ExamForge.Application.Common;
 using ExamForge.Domain.Users;
 

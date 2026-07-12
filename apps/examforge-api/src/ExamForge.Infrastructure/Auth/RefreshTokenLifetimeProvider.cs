@@ -1,4 +1,4 @@
-﻿using ExamForge.Application.Abstractions.Auth;
+﻿using ExamForge.Application.Abstractions;
 
 using Microsoft.Extensions.Options;
 

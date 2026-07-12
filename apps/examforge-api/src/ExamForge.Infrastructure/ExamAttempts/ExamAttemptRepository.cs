@@ -1,13 +1,13 @@
 ﻿using ExamForge.Application.Abstractions;
 using ExamForge.Infrastructure.Persistence;
 
-namespace ExamForge.Infrastructure.Exams;
+namespace ExamForge.Infrastructure.ExamAttempts;
 
-public sealed class ExamVersionRepository : IExamVersionRepository
+public sealed class ExamAttemptRepository : IExamAttemptRepository
 {
     private readonly ExamForgeDbContext _dbContext;
 
-    public ExamVersionRepository(ExamForgeDbContext dbContext)
+    public ExamAttemptRepository(ExamForgeDbContext dbContext)
     {
         _dbContext = dbContext;
     }

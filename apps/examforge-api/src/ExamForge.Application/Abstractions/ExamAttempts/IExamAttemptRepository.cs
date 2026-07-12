@@ -1,5 +1,5 @@
 ﻿namespace ExamForge.Application.Abstractions;
 
-public interface IFillAnswerKeyRepository
+public interface IExamAttemptRepository
 {
 }

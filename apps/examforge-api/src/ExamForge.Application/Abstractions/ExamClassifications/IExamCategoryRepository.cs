@@ -1,6 +1,6 @@
 ﻿using ExamForge.Domain.ExamClassifications;
 
-namespace ExamForge.Application.Abstractions.ExamClassifications;
+namespace ExamForge.Application.Abstractions;
 
 public interface IExamCategoryRepository
 {

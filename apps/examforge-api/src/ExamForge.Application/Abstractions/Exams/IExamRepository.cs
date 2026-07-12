@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Application.Abstractions.Exams;
+﻿namespace ExamForge.Application.Abstractions;
 
 public interface IExamRepository
 {

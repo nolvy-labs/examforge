@@ -1,4 +1,4 @@
-﻿using ExamForge.Application.Abstractions.Exams;
+﻿using ExamForge.Application.Abstractions;
 using ExamForge.Infrastructure.Persistence;
 
 namespace ExamForge.Infrastructure.Exams;

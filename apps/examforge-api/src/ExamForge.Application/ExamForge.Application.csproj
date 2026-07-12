@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Abstractions\ExamAttempts\" />
+    <Folder Include="Exams\Dtos\" />
   </ItemGroup>
 
   <PropertyGroup>

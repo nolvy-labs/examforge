@@ -1,10 +1,8 @@
-﻿using ExamForge.Application.Abstractions.Auth;
-using ExamForge.Application.Abstractions.ExamClassification;
-using ExamForge.Application.Abstractions.ExamClassifications;
-using ExamForge.Application.Abstractions.Persistence;
-using ExamForge.Application.Abstractions.Users;
+﻿using ExamForge.Application.Abstractions;
 using ExamForge.Infrastructure.Auth;
+using ExamForge.Infrastructure.ExamAttempts;
 using ExamForge.Infrastructure.ExamClassifications;
+using ExamForge.Infrastructure.Exams;
 using ExamForge.Infrastructure.Persistence;
 using ExamForge.Infrastructure.Users;
 
@@ -39,6 +37,17 @@ public static class DependencyInjection
 
         services.AddScoped<IExamTagRepository, ExamTagRepository>();
         services.AddScoped<IExamCategoryRepository, ExamCategoryRepository>();
+
+        services.AddScoped<IExamRepository, ExamRepository>();
+        services.AddScoped<IExamVersionRepository, ExamVersionRepository>();
+        services.AddScoped<IExamSectionRepository, ExamSectionRepository>();
+        services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<IQuestionOptionRepository, QuestionOptionRepository>();
+        services.AddScoped<IFillAnswerKeyRepository, FillAnswerKeyRepository>();
+
+        services.AddScoped<IExamAttemptRepository, ExamAttemptRepository>();
+        services.AddScoped<IExamAttemptAnswerRepository, ExamAttemptAnswerRepository>();
+        services.AddScoped<IExamAttemptSelectedOptionRepository, ExamAttemptSelectedOptionRepository>();
 
         return services;
     }

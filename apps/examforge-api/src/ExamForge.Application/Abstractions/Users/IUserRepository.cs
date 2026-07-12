@@ -1,6 +1,6 @@
 ﻿using ExamForge.Domain.Users;
 
-namespace ExamForge.Application.Abstractions.Users;
+namespace ExamForge.Application.Abstractions;
 
 public interface IUserRepository
 {

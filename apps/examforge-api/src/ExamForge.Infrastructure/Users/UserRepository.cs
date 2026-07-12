@@ -1,4 +1,4 @@
-﻿using ExamForge.Application.Abstractions.Users;
+﻿using ExamForge.Application.Abstractions;
 using ExamForge.Domain.Users;
 using ExamForge.Infrastructure.Persistence;
 

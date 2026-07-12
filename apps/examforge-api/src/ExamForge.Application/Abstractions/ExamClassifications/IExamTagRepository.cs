@@ -1,6 +1,6 @@
 ﻿using ExamForge.Domain.ExamClassifications;
 
-namespace ExamForge.Application.Abstractions.ExamClassification;
+namespace ExamForge.Application.Abstractions;
 
 public interface IExamTagRepository
 {

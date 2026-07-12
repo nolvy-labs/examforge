@@ -1,4 +1,4 @@
-﻿using ExamForge.Application.Abstractions.ExamClassification;
+﻿using ExamForge.Application.Abstractions;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Infrastructure.Persistence;
 

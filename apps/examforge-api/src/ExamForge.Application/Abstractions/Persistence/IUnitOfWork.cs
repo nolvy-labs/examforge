@@ -1,4 +1,4 @@
-﻿namespace ExamForge.Application.Abstractions.Persistence;
+﻿namespace ExamForge.Application.Abstractions;
 
 public interface IUnitOfWork
 {
