@@ -1,5 +1,6 @@
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.ExamClassifications;
+using ExamForge.Domain.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ExamForge.Api.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = nameof(UserRole.Admin))]
 [Route(ApiRoutes.AdminExamCategories)]
 public sealed class AdminExamCategoriesController : ControllerBase
 {

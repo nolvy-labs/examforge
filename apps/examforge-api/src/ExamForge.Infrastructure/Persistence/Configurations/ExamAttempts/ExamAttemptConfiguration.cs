@@ -33,11 +33,11 @@ public class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
 
         builder.Property(e => e.TotalScore)
             .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(0);
+            .HasDefaultValue(0m);
 
         builder.Property(e => e.MaxScore)
             .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(0);
+            .HasDefaultValue(0m);
 
         builder.Property(e => e.CreatedAtUtc)
             .IsRequired();

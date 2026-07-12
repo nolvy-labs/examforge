@@ -40,7 +40,7 @@ public class ExamVersionConfiguration : IEntityTypeConfiguration<ExamVersion>
         builder.Property(e => e.TotalScore)
             .IsRequired()
             .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(0);
+            .HasDefaultValue(0m);
 
         builder.Property(e => e.PublishedAtUtc);
 

@@ -15,6 +15,11 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Exams\" />
+    <Folder Include="ExamAttempts\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
