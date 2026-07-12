@@ -1,14 +1,11 @@
-﻿using ExamForge.Api.Common.Constants;
-using ExamForge.Api.Controllers.Admin;
+﻿using ExamForge.Api.Controllers.Admin;
 using ExamForge.Application.ExamClassifications;
 
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.User;
 
-[ApiController]
-[Route(ApiRoutes.ExamCategories)]
-public sealed class ExamCategoriesController : AdminBaseController
+public sealed class ExamCategoriesController : UserBaseController
 {
     private readonly ExamCategoryService _examCategoryService;
 

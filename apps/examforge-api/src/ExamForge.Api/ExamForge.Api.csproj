@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Controllers\Admin\Exams\" />
     <Folder Include="Extensions\" />
   </ItemGroup>
 

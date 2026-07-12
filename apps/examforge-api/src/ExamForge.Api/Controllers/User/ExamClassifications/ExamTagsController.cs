@@ -1,5 +1,4 @@
-﻿using ExamForge.Api.Common.Constants;
-using ExamForge.Api.Controllers.Admin;
+﻿using ExamForge.Api.Controllers.Admin;
 using ExamForge.Application.ExamTags;
 using ExamForge.Domain.ExamClassifications;
 
@@ -7,9 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.User;
 
-[ApiController]
-[Route(ApiRoutes.ExamTags)]
-public sealed class ExamTagsController : AdminBaseController
+public sealed class ExamTagsController : UserBaseController
 {
     private readonly ExamTagService _examTagService;
 
