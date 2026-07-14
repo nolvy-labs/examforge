@@ -1,47 +1,47 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class ExamConfiguration : IEntityTypeConfiguration<Exam>
+public sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
 {
     public void Configure(EntityTypeBuilder<Exam> builder)
     {
         builder.ToTable("exams");
 
-        builder.HasKey(e => e.Id);
+        builder.HasKey(exam => exam.Id);
 
-        builder.Property(e => e.Title)
-            .IsRequired()
-            .HasMaxLength(255);
-
-        builder.Property(e => e.Slug)
-            .IsRequired()
-            .HasMaxLength(255);
-
-        builder.Property(e => e.Description)
-            .HasDefaultValue(string.Empty)
+        builder.Property(exam => exam.Title)
+            .HasMaxLength(ExamConstraints.TitleMaxLength)
             .IsRequired();
 
-        builder.Property(e => e.Type)
-            .IsRequired()
+        builder.Property(exam => exam.Slug)
+            .HasMaxLength(ExamConstraints.SlugMaxLength)
+            .IsRequired();
+
+        builder.Property(exam => exam.Description)
+            .HasMaxLength(ExamConstraints.DescriptionMaxLength)
+            .IsRequired();
+
+        builder.Property(exam => exam.Type)
             .HasConversion<string>()
-            .HasMaxLength(32);
-
-        builder.Property(e => e.IsArchived)
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(e => e.CreatedAtUtc)
+            .HasMaxLength(32)
             .IsRequired();
 
-        builder.Property(e => e.UpdatedAtUtc);
+        builder.Property(exam => exam.IsArchived)
+            .IsRequired();
 
-        builder.HasIndex(e => e.Slug)
+        builder.Property(exam => exam.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(exam => exam.UpdatedAtUtc);
+
+        builder.HasIndex(exam => exam.Slug)
             .IsUnique();
 
-        builder.HasIndex(e => new { e.IsArchived, e.Type });
+        builder.HasIndex(exam => new { exam.IsArchived, exam.CreatedAtUtc, exam.Id });
+        builder.HasIndex(exam => new { exam.Type, exam.IsArchived });
     }
 }

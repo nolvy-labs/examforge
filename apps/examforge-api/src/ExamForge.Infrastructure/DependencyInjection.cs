@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IExamCategoryRepository, ExamCategoryRepository>();
 
         services.AddScoped<IExamRepository, ExamRepository>();
+        services.AddSingleton<IExamSlugGenerator, ExamSlugGenerator>();
         services.AddScoped<IExamVersionRepository, ExamVersionRepository>();
         services.AddScoped<IExamSectionRepository, ExamSectionRepository>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();

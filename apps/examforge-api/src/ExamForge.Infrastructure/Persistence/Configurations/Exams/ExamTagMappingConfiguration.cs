@@ -1,30 +1,31 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class ExamTagMappingConfiguration : IEntityTypeConfiguration<ExamTagMapping>
+public sealed class ExamTagMappingConfiguration : IEntityTypeConfiguration<ExamTagMapping>
 {
     public void Configure(EntityTypeBuilder<ExamTagMapping> builder)
     {
-        builder.ToTable("exam_tag_mapping");
+        builder.ToTable("exam_tag_mappings");
 
-        builder.HasKey(e => new { e.ExamId, e.ExamTagId });
+        builder.HasKey(mapping => new { mapping.ExamId, mapping.ExamTagId });
 
-        builder.Property(e => e.ExamTagId)
+        builder.Property(mapping => mapping.CreatedAtUtc)
             .IsRequired();
 
-        builder.Property(e => e.CreatedAtUtc)
-            .IsRequired()
-            .HasDefaultValueSql("now()");
-
-        builder.HasIndex(e => e.ExamTagId);
-
-        builder.HasOne(e => e.Exam)
-            .WithMany(e => e.ExamTagMappings)
-            .HasForeignKey(e => e.ExamId)
+        builder.HasOne(mapping => mapping.Exam)
+            .WithMany(exam => exam.ExamTagMappings)
+            .HasForeignKey(mapping => mapping.ExamId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(mapping => mapping.Tag)
+            .WithMany()
+            .HasForeignKey(mapping => mapping.ExamTagId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(mapping => new { mapping.ExamTagId, mapping.ExamId });
     }
 }

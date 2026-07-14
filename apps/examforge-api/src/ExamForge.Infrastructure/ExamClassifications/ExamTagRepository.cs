@@ -89,6 +89,22 @@ public sealed class ExamTagRepository : IExamTagRepository
         return query.AnyAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Guid>> GetExistingActiveTagIdsAsync(
+        IReadOnlyCollection<Guid> tagIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (tagIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await _dbContext.ExamTags
+            .AsNoTracking()
+            .Where(tag => tagIds.Contains(tag.Id) && !tag.IsArchived)
+            .Select(tag => tag.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public void Add(ExamTag tag)
     {
         _dbContext.ExamTags.Add(tag);

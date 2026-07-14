@@ -26,5 +26,9 @@ public interface IExamTagRepository
         Guid? excludeId = null,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<Guid>> GetExistingActiveTagIdsAsync(
+        IReadOnlyCollection<Guid> tagIds,
+        CancellationToken cancellationToken = default);
+
     void Add(ExamTag tag);
 }
