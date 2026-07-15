@@ -18,6 +18,7 @@ public sealed class Exam
         Slug = slug;
         Description = description?.Trim() ?? string.Empty;
         Type = type;
+        NextVersionNumber = 1;
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 
@@ -29,6 +30,7 @@ public sealed class Exam
     public bool IsArchived { get; private set; }
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public DateTimeOffset? UpdatedAtUtc { get; private set; }
+    public int NextVersionNumber { get; private set; }
 
     public IReadOnlyCollection<ExamTagMapping> ExamTagMappings => _examTagMappings;
     public IReadOnlyCollection<ExamVersion> Versions => _versions;
@@ -102,6 +104,18 @@ public sealed class Exam
 
         IsArchived = false;
         UpdatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public int AllocateNextVersionNumber()
+    {
+        if (NextVersionNumber == int.MaxValue)
+        {
+            throw new ExamVersionNumberExhaustedException(Id);
+        }
+
+        var allocated = NextVersionNumber;
+        NextVersionNumber++;
+        return allocated;
     }
 
     private void TouchIf(bool changed)

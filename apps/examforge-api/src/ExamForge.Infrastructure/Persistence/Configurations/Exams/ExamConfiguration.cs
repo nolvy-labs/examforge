@@ -38,6 +38,10 @@ public sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
 
         builder.Property(exam => exam.UpdatedAtUtc);
 
+        builder.Property(exam => exam.NextVersionNumber)
+            .HasDefaultValue(1)
+            .IsRequired();
+
         builder.HasIndex(exam => exam.Slug)
             .IsUnique();
 

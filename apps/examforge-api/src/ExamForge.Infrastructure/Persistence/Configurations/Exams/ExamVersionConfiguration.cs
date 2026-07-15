@@ -1,66 +1,73 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class ExamVersionConfiguration : IEntityTypeConfiguration<ExamVersion>
+public sealed class ExamVersionConfiguration : IEntityTypeConfiguration<ExamVersion>
 {
     public void Configure(EntityTypeBuilder<ExamVersion> builder)
     {
         builder.ToTable("exam_versions");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(version => version.Id);
 
-        builder.Property(e => e.ExamId)
+        builder.Property(version => version.VersionNumber)
             .IsRequired();
 
-        builder.Property(e => e.VersionNumber)
-            .IsRequired();
-
-        builder.Property(e => e.Status)
-            .IsRequired()
+        builder.Property(version => version.Status)
             .HasConversion<string>()
-            .HasMaxLength(32);
-
-        builder.Property(e => e.Title)
-            .IsRequired()
-            .HasMaxLength(255);
-
-        builder.Property(e => e.Description)
-            .IsRequired()
-            .HasDefaultValue(string.Empty);
-
-        builder.Property(e => e.Instructions)
-            .IsRequired()
-            .HasDefaultValue(string.Empty);
-
-        builder.Property(e => e.DurationMinutes);
-
-        builder.Property(e => e.TotalScore)
-            .IsRequired()
-            .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(0m);
-
-        builder.Property(e => e.PublishedAtUtc);
-
-        builder.Property(e => e.RetiredAtUtc);
-
-        builder.Property(e => e.CreatedByUserId);
-
-        builder.Property(e => e.CreatedAtUtc)
+            .HasMaxLength(32)
             .IsRequired();
 
-        builder.Property(e => e.UpdatedAtUtc);
+        builder.Property(version => version.Title)
+            .HasMaxLength(ExamVersionConstraints.TitleMaxLength)
+            .IsRequired();
 
-        builder.HasIndex(e => new { e.ExamId, e.VersionNumber })
+        builder.Property(version => version.Description)
+            .HasMaxLength(ExamVersionConstraints.DescriptionMaxLength)
+            .IsRequired();
+
+        builder.Property(version => version.Instructions)
+            .HasMaxLength(ExamVersionConstraints.InstructionsMaxLength)
+            .IsRequired();
+
+        builder.Property(version => version.DurationMinutes);
+
+        builder.Property(version => version.TotalScore)
+            .HasColumnType("decimal(8,2)")
+            .HasDefaultValue(0m)
+            .IsRequired();
+
+        builder.Property(version => version.PublishedAtUtc);
+        builder.Property(version => version.RetiredAtUtc);
+        builder.Property(version => version.CreatedByUserId);
+
+        builder.Property(version => version.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(version => version.UpdatedAtUtc);
+
+        builder.HasOne(version => version.Exam)
+            .WithMany(exam => exam.Versions)
+            .HasForeignKey(version => version.ExamId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(version => version.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(version => version.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(version => version.CreatedByUserId);
+
+        builder.HasIndex(version => new { version.ExamId, version.VersionNumber })
             .IsUnique();
 
-        builder.HasIndex(e => new { e.ExamId, e.Status });
+        builder.HasIndex(version => new { version.ExamId, version.Status });
+        builder.HasIndex(version => new { version.ExamId, version.CreatedAtUtc, version.Id });
+        builder.HasIndex(version => new { version.Status, version.PublishedAtUtc });
 
-        builder.HasIndex(e => new { e.Status, e.PublishedAtUtc });
-
-        builder.HasIndex(e => e.ExamId)
+        builder.HasIndex(version => version.ExamId)
             .IsUnique()
             .HasDatabaseName("ux_exam_versions_one_published_per_exam")
             .HasFilter("\"Status\" = 'Published'");

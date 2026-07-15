@@ -1,3 +1,4 @@
+using ExamForge.Api.Auth;
 using ExamForge.Api.Common;
 using ExamForge.Api.Extensions;
 using ExamForge.Api.Middleware;
@@ -15,6 +16,8 @@ builder.Services.AddControllers(options =>
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ExamForge.Application.Abstractions.ICurrentUserContext, CurrentUserContext>();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

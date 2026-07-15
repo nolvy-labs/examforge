@@ -434,6 +434,13 @@ public sealed class ExamServiceTests
         {
             return Task.FromResult(1);
         }
+
+        public Task<T> ExecuteInTransactionAsync<T>(
+            Func<CancellationToken, Task<T>> operation,
+            CancellationToken cancellationToken = default)
+        {
+            return operation(cancellationToken);
+        }
     }
 
     private sealed class FakeExamRepository : IExamRepository
