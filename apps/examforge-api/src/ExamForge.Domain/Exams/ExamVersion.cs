@@ -84,6 +84,43 @@ public sealed class ExamVersion
         return true;
     }
 
+    public bool UpdateTotalScore(decimal totalScore)
+    {
+        if (Status != ExamVersionStatus.Draft)
+        {
+            throw new InvalidOperationException("Only Draft exam versions can change total score.");
+        }
+
+        if (totalScore < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalScore));
+        }
+
+        if (TotalScore == totalScore)
+        {
+            return false;
+        }
+
+        TotalScore = totalScore;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        return true;
+    }
+
+    public void InitializeTotalScore(decimal totalScore)
+    {
+        if (Status != ExamVersionStatus.Draft || TotalScore != 0m || UpdatedAtUtc is not null)
+        {
+            throw new InvalidOperationException("Initial total score can only be assigned to a new Draft version.");
+        }
+
+        if (totalScore < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(totalScore));
+        }
+
+        TotalScore = totalScore;
+    }
+
     public bool Publish(DateTimeOffset publishedAtUtc)
     {
         if (Status == ExamVersionStatus.Published)

@@ -1,4 +1,5 @@
 using ExamForge.Application.Abstractions;
+using ExamForge.Application.Exams;
 using ExamForge.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
@@ -14,22 +15,60 @@ public sealed class ExamVersionContentCloner : IExamVersionContentCloner
         _dbContext = dbContext;
     }
 
-    public async Task<ExamVersionContentCloneResult> CloneAsync(
+    public async Task CloneAsync(
         Guid sourceVersionId,
         Guid targetVersionId,
         CancellationToken cancellationToken = default)
     {
-        var sourceHasSections = await _dbContext.ExamSections
-            .AsNoTracking()
-            .AnyAsync(section => section.ExamVersionId == sourceVersionId, cancellationToken);
+        var target = _dbContext.ExamVersions.Local.Single(version => version.Id == targetVersionId);
+        var sourceSections = await _dbContext.ExamSections
+            .AsNoTrackingWithIdentityResolution()
+            .Where(section => section.ExamVersionId == sourceVersionId)
+            .Include(section => section.Questions)
+            .ThenInclude(question => question.Options)
+            .Include(section => section.Questions)
+            .ThenInclude(question => question.FillAnswerKeys)
+            .AsSplitQuery()
+            .OrderBy(section => section.DisplayOrder)
+            .ThenBy(section => section.Id)
+            .ToListAsync(cancellationToken);
+        var source = sourceSections.Select(section => new CloneSectionSource(
+            section.Id,
+            section.Kind,
+            section.Title,
+            section.Instructions,
+            section.StimulusText,
+            section.MediaUrl,
+            section.DisplayOrder,
+            section.MetadataJson,
+            section.Questions.Select(question => new CloneQuestionSource(
+                question.Id,
+                question.ParentQuestionId,
+                question.Type,
+                question.Prompt,
+                question.Explanation,
+                question.Points,
+                question.DisplayOrder,
+                question.MetadataJson,
+                question.Options.Select(option => new CloneOptionSource(
+                    option.Id,
+                    option.Text,
+                    option.Label,
+                    option.IsCorrect,
+                    option.Explanation,
+                    option.DisplayOrder)).ToList(),
+                question.FillAnswerKeys.Select(key => new CloneAnswerKeySource(
+                    key.Id,
+                    key.AcceptedAnswer,
+                    key.NormalizedAnswer,
+                    key.IsCaseSensitive,
+                    key.DisplayOrder)).ToList())).ToList())).ToList();
+        var plan = ExamVersionContentCloneFactory.Create(targetVersionId, source);
 
-        if (!sourceHasSections)
-        {
-            return ExamVersionContentCloneResult.Success;
-        }
-
-        // TODO: Replace this guard with a same-transaction deep clone that creates new IDs,
-        // remaps ParentQuestionId, clones options/answer keys, and recalculates TotalScore.
-        return ExamVersionContentCloneResult.ContentCloneNotAvailable;
+        _dbContext.ExamSections.AddRange(plan.Sections);
+        _dbContext.Questions.AddRange(plan.Questions);
+        _dbContext.QuestionOptions.AddRange(plan.Options);
+        _dbContext.FillAnswerKeys.AddRange(plan.AnswerKeys);
+        target.InitializeTotalScore(plan.TotalScore);
     }
 }

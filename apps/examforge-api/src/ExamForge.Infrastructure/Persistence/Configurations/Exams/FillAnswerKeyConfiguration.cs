@@ -1,49 +1,41 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class FillAnswerKeyConfiguration : IEntityTypeConfiguration<FillAnswerKey>
+public sealed class FillAnswerKeyConfiguration : IEntityTypeConfiguration<FillAnswerKey>
 {
     public void Configure(EntityTypeBuilder<FillAnswerKey> builder)
     {
         builder.ToTable("fill_answer_keys");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(key => key.Id);
 
-        builder.Property(e => e.QuestionId)
+        builder.Property(key => key.BlankKey)
+            .HasMaxLength(FillAnswerKeyConstraints.BlankKeyMaxLength)
             .IsRequired();
 
-        builder.Property(e => e.BlankKey)
-            .IsRequired()
-            .HasMaxLength(255)
-            .HasDefaultValue("answer");
-
-        builder.Property(e => e.AcceptedAnswer)
+        builder.Property(key => key.AcceptedAnswer)
+            .HasMaxLength(FillAnswerKeyConstraints.AcceptedAnswerMaxLength)
             .IsRequired();
 
-        builder.Property(e => e.NormalizedAnswer)
+        builder.Property(key => key.NormalizedAnswer)
+            .HasMaxLength(FillAnswerKeyConstraints.AcceptedAnswerMaxLength)
             .IsRequired();
 
-        builder.Property(e => e.IsCaseSensitive)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(key => key.IsCaseSensitive).IsRequired();
+        builder.Property(key => key.DisplayOrder).IsRequired();
+        builder.Property(key => key.CreatedAtUtc).IsRequired();
+        builder.Property(key => key.UpdatedAtUtc);
 
-        builder.Property(e => e.DisplayOrder)
-            .IsRequired();
-
-        builder.Property(e => e.CreatedAtUtc)
-            .IsRequired();
-
-        builder.HasIndex(e => new { e.QuestionId, e.BlankKey, e.NormalizedAnswer })
-            .IsUnique();
-
-        builder.HasIndex(e => new { e.QuestionId, e.BlankKey, e.DisplayOrder });
-
-        builder.HasOne(e => e.Question)
-            .WithMany(q => q.FillAnswerKeys)
-            .HasForeignKey(e => e.QuestionId)
+        builder.HasOne(key => key.Question)
+            .WithMany(question => question.FillAnswerKeys)
+            .HasForeignKey(key => key.QuestionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(key => new { key.QuestionId, key.BlankKey, key.NormalizedAnswer })
+            .IsUnique();
+        builder.HasIndex(key => new { key.QuestionId, key.DisplayOrder });
     }
 }

@@ -19,7 +19,6 @@ public enum ExamVersionError
     VersionNotReadyForPublication = 14,
     VersionCannotBeDeleted = 15,
     SourceVersionNotFound = 16,
-    ContentCloneNotAvailable = 17,
     VersionNumberExhausted = 18,
     ConcurrencyConflict = 19,
     CurrentUserUnavailable = 20

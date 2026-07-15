@@ -182,20 +182,16 @@ public sealed class ExamVersionService
                 source?.DurationMinutes,
                 _currentUser.UserId.Value);
 
+            _versions.Add(version);
+
             if (source is not null)
             {
-                var cloneResult = await _contentCloner.CloneAsync(
+                await _contentCloner.CloneAsync(
                     source.Id,
                     version.Id,
                     transactionToken);
-
-                if (cloneResult == ExamVersionContentCloneResult.ContentCloneNotAvailable)
-                {
-                    return Failure(ExamVersionError.ContentCloneNotAvailable);
-                }
             }
 
-            _versions.Add(version);
             await _unitOfWork.SaveChangesAsync(transactionToken);
             return Success(ToDetailResponse(version));
         }, cancellationToken);

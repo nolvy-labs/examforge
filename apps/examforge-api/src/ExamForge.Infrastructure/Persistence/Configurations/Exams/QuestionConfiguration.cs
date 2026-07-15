@@ -1,62 +1,58 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class QuestionConfiguration : IEntityTypeConfiguration<Question>
+public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
 {
     public void Configure(EntityTypeBuilder<Question> builder)
     {
         builder.ToTable("questions");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(question => question.Id);
 
-        builder.Property(e => e.ExamSectionId)
-            .IsRequired();
-
-        builder.Property(e => e.ParentQuestionId);
-
-        builder.Property(e => e.Type)
-            .IsRequired()
+        builder.Property(question => question.Type)
             .HasConversion<string>()
-            .HasMaxLength(50);
-
-        builder.Property(e => e.Prompt)
+            .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(e => e.Explanation);
+        builder.Property(question => question.Prompt)
+            .HasMaxLength(QuestionConstraints.PromptMaxLength)
+            .IsRequired();
 
-        builder.Property(e => e.Points)
-            .IsRequired()
+        builder.Property(question => question.Explanation)
+            .HasMaxLength(QuestionConstraints.ExplanationMaxLength);
+
+        builder.Property(question => question.Points)
             .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(1);
-
-        builder.Property(e => e.DisplayOrder)
             .IsRequired();
 
-        builder.Property(e => e.MetadataJson)
-            .HasColumnType("jsonb");
+        builder.Property(question => question.DisplayOrder).IsRequired();
+        builder.Property(question => question.MetadataJson).HasColumnType("jsonb");
+        builder.Property(question => question.CreatedAtUtc).IsRequired();
+        builder.Property(question => question.UpdatedAtUtc);
 
-        builder.Property(e => e.CreatedAtUtc)
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedAtUtc);
-
-        builder.HasIndex(e => new { e.ExamSectionId, e.ParentQuestionId, e.DisplayOrder });
-
-        builder.HasIndex(e => e.ParentQuestionId);
-
-        builder.HasIndex(e => new { e.ExamSectionId, e.Type });
-
-        builder.HasOne(e => e.ExamSection)
-            .WithMany(s => s.Questions)
-            .HasForeignKey(e => e.ExamSectionId)
+        builder.HasOne(question => question.ExamSection)
+            .WithMany(section => section.Questions)
+            .HasForeignKey(question => question.ExamSectionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(e => e.ParentQuestion)
-            .WithMany(p => p.ChildQuestions)
-            .HasForeignKey(e => e.ParentQuestionId)
+        builder.HasOne(question => question.ParentQuestion)
+            .WithMany(parent => parent.ChildQuestions)
+            .HasForeignKey(question => question.ParentQuestionId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasIndex(question => new { question.ExamSectionId, question.DisplayOrder })
+            .IsUnique()
+            .HasDatabaseName("ux_questions_top_level_order")
+            .HasFilter("\"ParentQuestionId\" IS NULL");
+
+        builder.HasIndex(question => new { question.ParentQuestionId, question.DisplayOrder })
+            .IsUnique()
+            .HasDatabaseName("ux_questions_child_order")
+            .HasFilter("\"ParentQuestionId\" IS NOT NULL");
+
+        builder.HasIndex(question => new { question.ExamSectionId, question.Type });
     }
 }

@@ -15,7 +15,8 @@ public sealed class ExamSection
         string? instructions,
         string? stimulusText,
         string? mediaUrl,
-        int displayOrder)
+        int displayOrder,
+        string? metadataJson = null)
     {
         Id = Guid.NewGuid();
         ExamVersionId = examVersionId;
@@ -25,6 +26,7 @@ public sealed class ExamSection
         StimulusText = stimulusText?.Trim();
         MediaUrl = mediaUrl?.Trim();
         DisplayOrder = displayOrder;
+        MetadataJson = metadataJson;
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
 

@@ -126,7 +126,7 @@ public sealed class ExamVersionServiceTests
     }
 
     [Fact]
-    public async Task Clone_placeholder_succeeds_for_empty_source()
+    public async Task Clone_succeeds_for_empty_source()
     {
         var context = new TestContext();
         var exam = context.AddExam();
@@ -141,21 +141,19 @@ public sealed class ExamVersionServiceTests
     }
 
     [Fact]
-    public async Task Clone_placeholder_rejects_content_without_persisting_or_consuming_number()
+    public async Task Clone_succeeds_for_populated_source()
     {
         var context = new TestContext();
         var exam = context.AddExam();
         var source = context.AddVersion(exam);
-        var nextBefore = exam.NextVersionNumber;
-        context.Cloner.UnavailableSourceIds.Add(source.Id);
 
         var result = await context.Service.CreateAsync(
             exam.Id,
             new CreateExamVersionRequest(source.Id));
 
-        Assert.Equal(ExamVersionError.ContentCloneNotAvailable, result.Error);
-        Assert.Single(context.Repository.Versions);
-        Assert.Equal(nextBefore, exam.NextVersionNumber);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(source.Id, context.Cloner.LastSourceVersionId);
+        Assert.Equal(2, context.Repository.Versions.Count);
     }
 
     [Fact]
@@ -541,19 +539,15 @@ public sealed class ExamVersionServiceTests
 
     private sealed class FakeContentCloner : IExamVersionContentCloner
     {
-        public HashSet<Guid> UnavailableSourceIds { get; } = [];
         public Guid? LastSourceVersionId { get; private set; }
 
-        public Task<ExamVersionContentCloneResult> CloneAsync(
+        public Task CloneAsync(
             Guid sourceVersionId,
             Guid targetVersionId,
             CancellationToken cancellationToken = default)
         {
             LastSourceVersionId = sourceVersionId;
-            var result = UnavailableSourceIds.Contains(sourceVersionId)
-                ? ExamVersionContentCloneResult.ContentCloneNotAvailable
-                : ExamVersionContentCloneResult.Success;
-            return Task.FromResult(result);
+            return Task.CompletedTask;
         }
     }
 

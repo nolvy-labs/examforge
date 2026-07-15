@@ -1,48 +1,40 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class QuestionOptionConfiguration : IEntityTypeConfiguration<QuestionOption>
+public sealed class QuestionOptionConfiguration : IEntityTypeConfiguration<QuestionOption>
 {
     public void Configure(EntityTypeBuilder<QuestionOption> builder)
     {
         builder.ToTable("question_options");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(option => option.Id);
 
-        builder.Property(e => e.QuestionId)
+        builder.Property(option => option.Label)
+            .HasMaxLength(QuestionOptionConstraints.LabelMaxLength);
+
+        builder.Property(option => option.Text)
+            .HasMaxLength(QuestionOptionConstraints.TextMaxLength)
             .IsRequired();
 
-        builder.Property(e => e.Label)
-            .HasMaxLength(50);
+        builder.Property(option => option.IsCorrect).IsRequired();
+        builder.Property(option => option.DisplayOrder).IsRequired();
 
-        builder.Property(e => e.Text)
-            .IsRequired();
+        builder.Property(option => option.Explanation)
+            .HasMaxLength(QuestionOptionConstraints.ExplanationMaxLength);
 
-        builder.Property(e => e.IsCorrect)
-            .IsRequired()
-            .HasDefaultValue(false);
+        builder.Property(option => option.CreatedAtUtc).IsRequired();
+        builder.Property(option => option.UpdatedAtUtc);
 
-        builder.Property(e => e.DisplayOrder)
-            .IsRequired();
-
-        builder.Property(e => e.Explanation);
-
-        builder.Property(e => e.CreatedAtUtc)
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedAtUtc);
-
-        builder.HasIndex(e => new { e.QuestionId, e.DisplayOrder })
-            .IsUnique();
-
-        builder.HasIndex(e => new { e.QuestionId, e.IsCorrect });
-
-        builder.HasOne(e => e.Question)
-            .WithMany(q => q.Options)
-            .HasForeignKey(e => e.QuestionId)
+        builder.HasOne(option => option.Question)
+            .WithMany(question => question.Options)
+            .HasForeignKey(option => option.QuestionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(option => new { option.QuestionId, option.DisplayOrder })
+            .IsUnique();
+        builder.HasIndex(option => new { option.QuestionId, option.IsCorrect });
     }
 }

@@ -137,10 +137,8 @@ public sealed class ExamVersionsController : AdminBaseController
             ExamVersionError.VersionNotEditable => CreateConflict("Only Draft versions can be edited."),
             ExamVersionError.InvalidStatusTransition => CreateConflict("The requested status transition is not allowed."),
             ExamVersionError.VersionNotReadyForPublication => CreateConflict(
-                "The version must contain a section with at least one question before publication."),
+                "Every section and question must be complete and TotalScore must match before publication."),
             ExamVersionError.VersionCannotBeDeleted => CreateConflict("Only Draft versions can be deleted."),
-            ExamVersionError.ContentCloneNotAvailable => CreateConflict(
-                "Content cloning is not available yet for versions that contain sections."),
             ExamVersionError.VersionNumberExhausted => CreateConflict("The exam version-number sequence is exhausted."),
             ExamVersionError.ConcurrencyConflict => CreateConflict(
                 "The exam version changed concurrently. Retry the request."),
