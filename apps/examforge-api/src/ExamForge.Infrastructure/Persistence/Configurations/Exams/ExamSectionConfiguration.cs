@@ -1,58 +1,55 @@
-﻿using ExamForge.Domain.Exams;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class ExamSectionConfiguration : IEntityTypeConfiguration<ExamSection>
+public sealed class ExamSectionConfiguration : IEntityTypeConfiguration<ExamSection>
 {
     public void Configure(EntityTypeBuilder<ExamSection> builder)
     {
         builder.ToTable("exam_sections");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(section => section.Id);
 
-        builder.Property(e => e.ExamVersionId)
-            .IsRequired();
-
-        builder.Property(e => e.Kind)
-            .IsRequired()
+        builder.Property(section => section.Kind)
             .HasConversion<string>()
-            .HasMaxLength(50);
-
-        builder.Property(e => e.Title)
-            .IsRequired()
-            .HasDefaultValue(string.Empty)
-            .HasMaxLength(255);
-
-        builder.Property(e => e.Instructions)
-            .IsRequired()
-            .HasDefaultValue(string.Empty);
-
-        builder.Property(e => e.StimulusText);
-
-        builder.Property(e => e.MediaUrl)
-            .HasMaxLength(1024);
-
-        builder.Property(e => e.DisplayOrder)
+            .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(e => e.MetadataJson)
+        builder.Property(section => section.Title)
+            .HasMaxLength(ExamSectionConstraints.TitleMaxLength)
+            .IsRequired();
+
+        builder.Property(section => section.Instructions)
+            .HasMaxLength(ExamSectionConstraints.InstructionsMaxLength)
+            .IsRequired();
+
+        builder.Property(section => section.StimulusText)
+            .HasMaxLength(ExamSectionConstraints.StimulusTextMaxLength);
+
+        builder.Property(section => section.MediaUrl)
+            .HasMaxLength(ExamSectionConstraints.MediaUrlMaxLength);
+
+        builder.Property(section => section.DisplayOrder)
+            .IsRequired();
+
+        builder.Property(section => section.MetadataJson)
             .HasColumnType("jsonb");
 
-        builder.Property(e => e.CreatedAtUtc)
+        builder.Property(section => section.CreatedAtUtc)
             .IsRequired();
 
-        builder.Property(e => e.UpdatedAtUtc);
+        builder.Property(section => section.UpdatedAtUtc);
 
-        builder.HasIndex(e => new { e.ExamVersionId, e.DisplayOrder })
+        builder.HasIndex(section => new { section.ExamVersionId, section.DisplayOrder })
             .IsUnique();
 
-        builder.HasIndex(e => new { e.ExamVersionId, e.Kind, e.DisplayOrder });
+        builder.HasIndex(section => new { section.ExamVersionId, section.Kind, section.DisplayOrder });
 
-        builder.HasOne(e => e.ExamVersion)
-            .WithMany(e => e.Sections)
-            .HasForeignKey(e => e.ExamVersionId)
+        builder.HasOne(section => section.ExamVersion)
+            .WithMany(version => version.Sections)
+            .HasForeignKey(section => section.ExamVersionId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

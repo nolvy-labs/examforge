@@ -57,6 +57,6 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
         builder.HasOne(e => e.ParentQuestion)
             .WithMany(p => p.ChildQuestions)
             .HasForeignKey(e => e.ParentQuestionId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

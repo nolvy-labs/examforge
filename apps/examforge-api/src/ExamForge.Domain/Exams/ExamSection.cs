@@ -1,21 +1,87 @@
-﻿namespace ExamForge.Domain.Exams;
+using ExamForge.Domain.Common;
 
-public class ExamSection
+namespace ExamForge.Domain.Exams;
+
+public sealed class ExamSection
 {
-    public ExamVersion ExamVersion { get; set; } = null!;
-    public ICollection<Question> Questions { get; set; } = new List<Question>();
+    private readonly List<Question> _questions = [];
 
-    private ExamSection () { }
+    private ExamSection() { }
 
-    public Guid Id { get; set; }
-    public Guid ExamVersionId { get; set; }
-    public ExamSectionKind Kind { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Instructions { get; set; } = string.Empty;
-    public string? StimulusText { get; set; }
-    public string? MediaUrl { get; set; }
-    public int DisplayOrder { get; set; }
-    public string? MetadataJson { get; set; }
-    public DateTime CreatedAtUtc { get; set; }
-    public DateTime? UpdatedAtUtc { get; set; }
+    public ExamSection(
+        Guid examVersionId,
+        ExamSectionKind kind,
+        string title,
+        string? instructions,
+        string? stimulusText,
+        string? mediaUrl,
+        int displayOrder)
+    {
+        Id = Guid.NewGuid();
+        ExamVersionId = examVersionId;
+        Kind = kind;
+        Title = TextNormalizer.NormalizeName(title);
+        Instructions = instructions?.Trim() ?? string.Empty;
+        StimulusText = stimulusText?.Trim();
+        MediaUrl = mediaUrl?.Trim();
+        DisplayOrder = displayOrder;
+        CreatedAtUtc = DateTimeOffset.UtcNow;
+    }
+
+    public Guid Id { get; private set; }
+    public Guid ExamVersionId { get; private set; }
+    public ExamSectionKind Kind { get; private set; }
+    public string Title { get; private set; } = string.Empty;
+    public string Instructions { get; private set; } = string.Empty;
+    public string? StimulusText { get; private set; }
+    public string? MediaUrl { get; private set; }
+    public int DisplayOrder { get; private set; }
+    public string? MetadataJson { get; private set; }
+    public DateTimeOffset CreatedAtUtc { get; private set; }
+    public DateTimeOffset? UpdatedAtUtc { get; private set; }
+
+    public ExamVersion ExamVersion { get; private set; } = null!;
+    public IReadOnlyCollection<Question> Questions => _questions;
+
+    public bool UpdateDetails(
+        ExamSectionKind kind,
+        string title,
+        string? instructions,
+        string? stimulusText,
+        string? mediaUrl)
+    {
+        var normalizedTitle = TextNormalizer.NormalizeName(title);
+        var normalizedInstructions = instructions?.Trim() ?? string.Empty;
+        var normalizedStimulusText = stimulusText?.Trim();
+        var normalizedMediaUrl = mediaUrl?.Trim();
+
+        if (Kind == kind &&
+            Title == normalizedTitle &&
+            Instructions == normalizedInstructions &&
+            StimulusText == normalizedStimulusText &&
+            MediaUrl == normalizedMediaUrl)
+        {
+            return false;
+        }
+
+        Kind = kind;
+        Title = normalizedTitle;
+        Instructions = normalizedInstructions;
+        StimulusText = normalizedStimulusText;
+        MediaUrl = normalizedMediaUrl;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        return true;
+    }
+
+    public bool ChangeDisplayOrder(int displayOrder)
+    {
+        if (DisplayOrder == displayOrder)
+        {
+            return false;
+        }
+
+        DisplayOrder = displayOrder;
+        UpdatedAtUtc = DateTimeOffset.UtcNow;
+        return true;
+    }
 }
