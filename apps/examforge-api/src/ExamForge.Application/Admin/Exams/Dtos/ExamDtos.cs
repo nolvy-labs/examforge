@@ -12,8 +12,14 @@ public sealed record CreateExamDetail(
 
 public sealed record CreateExamRequest(
     CreateExamDetail ExamDetail,
-    IReadOnlyCollection<Guid> TagIds
+    IReadOnlyCollection<Guid> TagIds,
+    CreateInitialExamVersionInput? InitialVersion = null
 );
+
+public sealed record CreateInitialExamVersionInput(
+    CreateExamVersionDetail? Detail = null,
+    IReadOnlyList<CreateExamSectionInput>? Sections = null,
+    Guid? SourceVersionId = null);
 
 public sealed record UpdateExamDetail(
     string? Title = null,
@@ -48,7 +54,8 @@ public sealed record ExamResponse(
     IReadOnlyCollection<ExamTagSummaryResponse> Tags,
     bool IsArchived,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc
+    DateTimeOffset? UpdatedAtUtc,
+    ExamVersionDetailResponse? InitialVersion = null
 );
 
 public sealed record GetExamsRequest(

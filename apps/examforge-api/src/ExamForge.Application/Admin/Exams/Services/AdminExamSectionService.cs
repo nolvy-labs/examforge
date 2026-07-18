@@ -16,15 +16,21 @@ public sealed class AdminExamSectionService
     private readonly IAdminExamSectionRepository _sections;
     private readonly IAdminExamVersionRepository _versions;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly NestedExamContentFactory _contentFactory;
+    private readonly NestedExamContentPersistence? _contentPersistence;
 
     public AdminExamSectionService(
         IAdminExamSectionRepository sections,
         IAdminExamVersionRepository versions,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        NestedExamContentFactory? contentFactory = null,
+        NestedExamContentPersistence? contentPersistence = null)
     {
         _sections = sections;
         _versions = versions;
         _unitOfWork = unitOfWork;
+        _contentFactory = contentFactory ?? new NestedExamContentFactory();
+        _contentPersistence = contentPersistence;
     }
 
     public async Task<Result<IReadOnlyList<ExamSectionSummaryResponse>, ExamSectionError>> GetListAsync(
@@ -109,25 +115,39 @@ public sealed class AdminExamSectionService
                 return DetailFailure(ExamSectionError.DisplayOrderExhausted);
             }
 
-            var section = new ExamSection(
+            var graphResult = _contentFactory.Create(
                 versionId,
-                request.Detail.Kind,
-                request.Detail.Title,
-                request.Detail.Instructions,
-                request.Detail.StimulusText,
-                request.Detail.MediaUrl,
-                maximumOrder.HasValue ? maximumOrder.Value + 1 : 0);
-            _sections.Add(section);
-            await _unitOfWork.SaveChangesAsync(transactionToken);
+                [new CreateExamSectionInput(request.Detail, request.Questions)]);
+            if (!graphResult.IsSuccess)
+            {
+                return Result<ExamSectionDetailResponse, ExamSectionError>.Failure(
+                    ExamSectionError.InvalidNestedContent,
+                    graphResult.Error.Select(error => error with
+                    {
+                        Path = error.Path.StartsWith("sections[0].", StringComparison.Ordinal)
+                            ? error.Path[12..]
+                            : error.Path
+                    }).ToList());
+            }
 
-            var saved = await _sections.GetDetailAsync(
-                examId,
-                versionId,
-                section.Id,
-                transactionToken);
-            return DetailSuccess(saved is null
-                ? ToDetailResponse(section, 0, 0m)
-                : ToDetailResponse(saved));
+            var graph = graphResult.Value!;
+            var section = graph.Sections[0];
+            section.ChangeDisplayOrder(maximumOrder.HasValue ? maximumOrder.Value + 1 : 0);
+            if (graph.Questions.Count > 0)
+            {
+                if (_contentPersistence is null)
+                    throw new InvalidOperationException("Nested exam content persistence is unavailable.");
+                _contentPersistence.Add(graph);
+                mutation.Version!.UpdateTotalScore(mutation.Version.TotalScore + graph.TotalScore);
+            }
+            else
+            {
+                _sections.Add(section);
+            }
+            await _unitOfWork.SaveChangesAsync(transactionToken);
+            return DetailSuccess(NestedExamContentFactory.ToResponse(
+                section,
+                graph.SectionResponses[0].Questions ?? []));
         }, DetailFailure(ExamSectionError.ConcurrencyConflict), cancellationToken);
     }
 

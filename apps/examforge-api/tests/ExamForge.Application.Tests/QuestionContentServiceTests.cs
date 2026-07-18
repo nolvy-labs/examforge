@@ -13,6 +13,53 @@ namespace ExamForge.Application.Tests;
 public sealed class QuestionContentServiceTests
 {
     [Fact]
+    public async Task Nested_group_creation_is_ordered_atomic_and_updates_total_once()
+    {
+        var context = new TestContext();
+        var request = new CreateQuestionRequest(
+            new CreateQuestionDetail(QuestionType.Group, "Group"),
+            ChildQuestions:
+            [
+                new(new CreateQuestionDetail(QuestionType.FillBlank, "First", Points: 2m),
+                    AnswerKeys: [new("answer")]),
+                new(new CreateQuestionDetail(QuestionType.MultipleChoiceSingle, "Second", Points: 3m),
+                    Options: [new("A", IsCorrect: true), new("B")])
+            ]);
+
+        var result = await context.Questions.CreateAsync(
+            context.Exam.Id, context.Version.Id, context.Section.Id, request);
+
+        Assert.True(result.IsSuccess);
+        var children = result.Value!.ChildQuestions!;
+        Assert.Equal(new[] { 0, 1 }, children.Select(child => child.DisplayOrder));
+        Assert.All(children, child => Assert.Equal(result.Value.Id, child.ParentQuestionId));
+        Assert.Equal(3, context.AdminQuestionRepository.Questions.Count);
+        Assert.Equal(2, context.OptionRepository.Options.Count);
+        Assert.Single(context.AnswerKeyRepository.Keys);
+        Assert.Equal(5m, context.Version.TotalScore);
+        Assert.Equal(1, context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Invalid_nested_question_creates_nothing_and_returns_path()
+    {
+        var context = new TestContext();
+        var request = new CreateQuestionRequest(
+            new CreateQuestionDetail(QuestionType.MultipleChoiceSingle, "Question"),
+            Options: [new("A", IsCorrect: true), new("B", IsCorrect: true)]);
+
+        var result = await context.Questions.CreateAsync(
+            context.Exam.Id, context.Version.Id, context.Section.Id, request);
+
+        Assert.Equal(QuestionError.InvalidNestedContent, result.Error);
+        var error = Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<NestedContentValidationError>>(result.AdditionalData));
+        Assert.Equal("options", error.Path);
+        Assert.Empty(context.AdminQuestionRepository.Questions);
+        Assert.Empty(context.OptionRepository.Options);
+        Assert.Equal(0, context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
     public async Task Question_create_applies_default_points_and_updates_total()
     {
         var context = new TestContext();
@@ -217,7 +264,13 @@ public sealed class QuestionContentServiceTests
                 AdminQuestionRepository,
                 SectionRepository,
                 VersionRepository,
-                UnitOfWork);
+                UnitOfWork,
+                new NestedExamContentFactory(),
+                new NestedExamContentPersistence(
+                    SectionRepository,
+                    AdminQuestionRepository,
+                    OptionRepository,
+                    AnswerKeyRepository));
             Options = new AdminQuestionOptionService(
                 OptionRepository,
                 AdminQuestionRepository,
@@ -581,7 +634,12 @@ public sealed class QuestionContentServiceTests
     private sealed class FakeUnitOfWork : IUnitOfWork
     {
         public bool ThrowConflict { get; set; }
-        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(1);
+        public int SaveCount { get; private set; }
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            SaveCount++;
+            return Task.FromResult(1);
+        }
 
         public async Task<T> ExecuteInTransactionAsync<T>(
             Func<CancellationToken, Task<T>> operation,

@@ -20,5 +20,6 @@ public enum QuestionError
     IncompatibleQuestionContent = 15,
     InvalidQuestionOrder = 16,
     DisplayOrderExhausted = 17,
-    ConcurrencyConflict = 18
+    ConcurrencyConflict = 18,
+    InvalidNestedContent = 19
 }

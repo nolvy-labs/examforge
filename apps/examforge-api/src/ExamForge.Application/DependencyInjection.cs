@@ -1,5 +1,6 @@
 using ExamForge.Application.Admin.ExamClassifications.Services;
 using ExamForge.Application.Admin.Exams.Services;
+using ExamForge.Application.Admin.Exams.Utils;
 using ExamForge.Application.Auth;
 using ExamForge.Application.ExamAttempts;
 using ExamForge.Application.Student.ExamClassifications.Services;
@@ -24,6 +25,8 @@ public static class DependencyInjection
         services.AddScoped<AdminQuestionService>();
         services.AddScoped<AdminQuestionOptionService>();
         services.AddScoped<AdminFillAnswerKeyService>();
+        services.AddScoped<NestedExamContentFactory>();
+        services.AddScoped<NestedExamContentPersistence>();
 
         services.AddScoped<ExamAttemptService>();
         services.AddScoped<ExamAttemptAnswerService>();

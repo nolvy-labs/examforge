@@ -21,5 +21,6 @@ public enum ExamVersionError
     SourceVersionNotFound = 16,
     VersionNumberExhausted = 18,
     ConcurrencyConflict = 19,
-    CurrentUserUnavailable = 20
+    CurrentUserUnavailable = 20,
+    InvalidNestedContent = 21
 }

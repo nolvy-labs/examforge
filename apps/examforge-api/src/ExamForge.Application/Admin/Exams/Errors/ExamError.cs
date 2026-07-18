@@ -13,5 +13,8 @@ public enum ExamError
     OverlappingTagChanges = 8,
     MissingOrArchivedTagIds = 9,
     TooManyTags = 10,
-    UnableToGenerateUniqueSlug = 11
+    UnableToGenerateUniqueSlug = 11,
+    InvalidNestedContent = 12,
+    CurrentUserUnavailable = 13,
+    ConcurrencyConflict = 14
 }

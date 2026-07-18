@@ -9,7 +9,16 @@ public sealed record GetExamVersionsRequest(
     ExamVersionStatus? Status = null,
     ExamSortOrder Sort = ExamSortOrder.Newest);
 
-public sealed record CreateExamVersionRequest(Guid? SourceVersionId = null);
+public sealed record CreateExamVersionDetail(
+    string? Title = null,
+    string? Description = null,
+    string? Instructions = null,
+    int? DurationMinutes = null);
+
+public sealed record CreateExamVersionRequest(
+    Guid? SourceVersionId = null,
+    CreateExamVersionDetail? Detail = null,
+    IReadOnlyList<CreateExamSectionInput>? Sections = null);
 
 public sealed record UpdateExamVersionRequest(
     string? Title = null,
@@ -46,4 +55,5 @@ public sealed record ExamVersionDetailResponse(
     DateTimeOffset? PublishedAtUtc,
     DateTimeOffset? RetiredAtUtc,
     DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc);
+    DateTimeOffset? UpdatedAtUtc,
+    IReadOnlyList<ExamSectionDetailResponse>? Sections = null);

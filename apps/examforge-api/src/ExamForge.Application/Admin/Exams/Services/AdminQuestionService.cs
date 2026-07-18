@@ -17,17 +17,23 @@ public sealed class AdminQuestionService
     private readonly IAdminExamSectionRepository _sections;
     private readonly IAdminExamVersionRepository _versions;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly NestedExamContentFactory _contentFactory;
+    private readonly NestedExamContentPersistence? _contentPersistence;
 
     public AdminQuestionService(
         IAdminQuestionRepository questions,
         IAdminExamSectionRepository sections,
         IAdminExamVersionRepository versions,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        NestedExamContentFactory? contentFactory = null,
+        NestedExamContentPersistence? contentPersistence = null)
     {
         _questions = questions;
         _sections = sections;
         _versions = versions;
         _unitOfWork = unitOfWork;
+        _contentFactory = contentFactory ?? new NestedExamContentFactory();
+        _contentPersistence = contentPersistence;
     }
 
     public async Task<Result<IReadOnlyList<QuestionSummaryResponse>, QuestionError>> GetListAsync(
@@ -142,27 +148,47 @@ public sealed class AdminQuestionService
                 return DetailFailure(QuestionError.DisplayOrderExhausted);
             }
 
-            var question = new Question(
+            var input = new CreateQuestionInput(
+                request.Detail,
+                request.ChildQuestions,
+                request.Options,
+                request.AnswerKeys);
+            var graphResult = _contentFactory.CreateQuestion(
                 sectionId,
                 request.ParentQuestionId,
-                request.Detail.Type,
-                request.Detail.Prompt,
-                request.Detail.Explanation,
-                points,
+                input,
                 maximumOrder.HasValue ? maximumOrder.Value + 1 : 0);
-            _questions.Add(question);
-            await _unitOfWork.SaveChangesAsync(token);
-            await RecalculateTotalScoreAsync(mutation.Version!, token);
+            if (!graphResult.IsSuccess)
+            {
+                return Result<QuestionDetailResponse, QuestionError>.Failure(
+                    QuestionError.InvalidNestedContent,
+                    graphResult.Error.Select(error => error with
+                    {
+                        Path = error.Path.StartsWith("question.", StringComparison.Ordinal)
+                            ? error.Path[9..]
+                            : error.Path
+                    }).ToList());
+            }
 
-            var saved = await _questions.GetDetailAsync(
-                examId,
-                versionId,
-                sectionId,
-                question.Id,
-                token);
-            return saved is null
-                ? DetailFailure(QuestionError.QuestionNotFound)
-                : DetailSuccess(ToDetailResponse(saved));
+            var graph = graphResult.Value!;
+            var hasNestedContent = graph.Children.Count > 0 || graph.Options.Count > 0 || graph.AnswerKeys.Count > 0;
+            if (hasNestedContent)
+            {
+                if (_contentPersistence is null)
+                    throw new InvalidOperationException("Nested exam content persistence is unavailable.");
+                _contentPersistence.Add(graph);
+            }
+            else
+            {
+                _questions.Add(graph.Question);
+            }
+
+            var addedScore = graph.Question.Type == QuestionType.Group
+                ? graph.Children.Sum(child => child.Question.Points)
+                : graph.Question.Points;
+            mutation.Version!.UpdateTotalScore(mutation.Version.TotalScore + addedScore);
+            await _unitOfWork.SaveChangesAsync(token);
+            return DetailSuccess(NestedExamContentFactory.ToResponse(graph));
         }, DetailFailure(QuestionError.ConcurrencyConflict), cancellationToken);
     }
 

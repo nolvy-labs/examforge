@@ -18,19 +18,25 @@ public sealed class AdminExamVersionService
     private readonly IAdminExamVersionPublishReadinessChecker _readinessChecker;
     private readonly ICurrentUserContext _currentUser;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly NestedExamContentFactory _contentFactory;
+    private readonly NestedExamContentPersistence? _contentPersistence;
 
     public AdminExamVersionService(
         IAdminExamVersionRepository versions,
         IAdminExamVersionContentCloner contentCloner,
         IAdminExamVersionPublishReadinessChecker readinessChecker,
         ICurrentUserContext currentUser,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        NestedExamContentFactory? contentFactory = null,
+        NestedExamContentPersistence? contentPersistence = null)
     {
         _versions = versions;
         _contentCloner = contentCloner;
         _readinessChecker = readinessChecker;
         _currentUser = currentUser;
         _unitOfWork = unitOfWork;
+        _contentFactory = contentFactory ?? new NestedExamContentFactory();
+        _contentPersistence = contentPersistence;
     }
 
     public async Task<Result<CollectionResponse<ExamVersionSummaryResponse>, ExamVersionError>> GetPageAsync(
@@ -138,6 +144,19 @@ public sealed class AdminExamVersionService
             return Failure(ExamVersionError.CurrentUserUnavailable);
         }
 
+        if (request.SourceVersionId.HasValue && (request.Sections?.Count ?? 0) > 0)
+        {
+            return Failure(ExamVersionError.InvalidNestedContent,
+                new[] { new NestedContentValidationError("sections", "source_and_sections_mutually_exclusive", "SourceVersionId and non-empty Sections cannot be supplied together.") });
+        }
+
+        if (!request.SourceVersionId.HasValue)
+        {
+            var validation = _contentFactory.Create(Guid.Empty, request.Sections);
+            if (!validation.IsSuccess)
+                return Failure(ExamVersionError.InvalidNestedContent, validation.Error);
+        }
+
         return await ExecuteDetailTransactionAsync(async transactionToken =>
         {
             var exam = await _versions.GetExamForUpdateAsync(examId, transactionToken);
@@ -167,8 +186,17 @@ public sealed class AdminExamVersionService
                 }
             }
 
-            int versionNumber;
+            var title = request.Detail?.Title ?? source?.Title ?? exam.Title;
+            var description = request.Detail?.Description ?? source?.Description ?? exam.Description;
+            var instructions = request.Detail?.Instructions ?? source?.Instructions ?? string.Empty;
+            var duration = request.Detail?.DurationMinutes ?? source?.DurationMinutes;
+            var detailError = ValidateDetails(title, description, instructions, duration);
+            if (detailError != ExamVersionError.None)
+            {
+                return Failure(detailError);
+            }
 
+            int versionNumber;
             try
             {
                 versionNumber = exam.AllocateNextVersionNumber();
@@ -181,24 +209,46 @@ public sealed class AdminExamVersionService
             var version = new ExamVersion(
                 examId,
                 versionNumber,
-                source?.Title ?? exam.Title,
-                source?.Description ?? exam.Description,
-                source?.Instructions ?? string.Empty,
-                source?.DurationMinutes,
+                title,
+                description,
+                instructions,
+                duration,
                 _currentUser.UserId.Value);
 
-            _versions.Add(version);
-
+            CreatedExamContentGraph? createdGraph = null;
             if (source is not null)
             {
-                await _contentCloner.CloneAsync(
+                _versions.Add(version);
+                var clonePlan = await _contentCloner.CloneAsync(
                     source.Id,
                     version.Id,
                     transactionToken);
+                createdGraph = new CreatedExamContentGraph(
+                    clonePlan.Sections.ToList(), clonePlan.Questions.ToList(), clonePlan.Options.ToList(),
+                    clonePlan.AnswerKeys.ToList(), NestedExamContentFactory.ToResponses(clonePlan), clonePlan.TotalScore);
+            }
+            else
+            {
+                var graphResult = _contentFactory.Create(version.Id, request.Sections);
+                if (!graphResult.IsSuccess)
+                {
+                    return Failure(ExamVersionError.InvalidNestedContent, graphResult.Error);
+                }
+
+                var graph = graphResult.Value!;
+                createdGraph = graph;
+                _versions.Add(version);
+                if (graph.Sections.Count > 0)
+                {
+                    if (_contentPersistence is null)
+                        throw new InvalidOperationException("Nested exam content persistence is unavailable.");
+                    _contentPersistence.Add(graph);
+                    version.InitializeTotalScore(graph.TotalScore);
+                }
             }
 
             await _unitOfWork.SaveChangesAsync(transactionToken);
-            return Success(ToDetailResponse(version));
+            return Success(ToDetailResponse(version) with { Sections = createdGraph?.SectionResponses });
         }, cancellationToken);
     }
 
@@ -514,4 +564,9 @@ public sealed class AdminExamVersionService
     {
         return Result<ExamVersionDetailResponse, ExamVersionError>.Failure(error);
     }
+
+    private static Result<ExamVersionDetailResponse, ExamVersionError> Failure(
+        ExamVersionError error,
+        object? additionalData) =>
+        Result<ExamVersionDetailResponse, ExamVersionError>.Failure(error, additionalData);
 }

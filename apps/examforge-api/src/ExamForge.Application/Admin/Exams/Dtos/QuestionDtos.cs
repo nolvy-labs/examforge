@@ -11,7 +11,21 @@ public sealed record CreateQuestionDetail(
 
 public sealed record CreateQuestionRequest(
     CreateQuestionDetail Detail,
-    Guid? ParentQuestionId = null);
+    Guid? ParentQuestionId = null,
+    IReadOnlyList<CreateChildQuestionInput>? ChildQuestions = null,
+    IReadOnlyList<CreateQuestionOptionDetail>? Options = null,
+    IReadOnlyList<CreateFillAnswerKeyInput>? AnswerKeys = null);
+
+public sealed record CreateQuestionInput(
+    CreateQuestionDetail Detail,
+    IReadOnlyList<CreateChildQuestionInput>? ChildQuestions = null,
+    IReadOnlyList<CreateQuestionOptionDetail>? Options = null,
+    IReadOnlyList<CreateFillAnswerKeyInput>? AnswerKeys = null);
+
+public sealed record CreateChildQuestionInput(
+    CreateQuestionDetail Detail,
+    IReadOnlyList<CreateQuestionOptionDetail>? Options = null,
+    IReadOnlyList<CreateFillAnswerKeyInput>? AnswerKeys = null);
 
 public sealed record UpdateQuestionDetail(
     QuestionType? Type = null,
@@ -58,4 +72,5 @@ public sealed record QuestionDetailResponse(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? UpdatedAtUtc,
     IReadOnlyList<QuestionOptionResponse> Options,
-    IReadOnlyList<FillAnswerKeyResponse> AnswerKeys);
+    IReadOnlyList<FillAnswerKeyResponse> AnswerKeys,
+    IReadOnlyList<QuestionDetailResponse>? ChildQuestions = null);

@@ -17,5 +17,6 @@ public enum ExamSectionError
     ConflictingPatchOperations = 12,
     InvalidSectionOrder = 13,
     DisplayOrderExhausted = 14,
-    ConcurrencyConflict = 15
+    ConcurrencyConflict = 15,
+    InvalidNestedContent = 16
 }

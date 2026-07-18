@@ -18,17 +18,29 @@ public sealed class AdminExamService
     private readonly IAdminExamTagRepository _examTags;
     private readonly IAdminExamSlugGenerator _slugGenerator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserContext? _currentUser;
+    private readonly IAdminExamVersionRepository? _versions;
+    private readonly NestedExamContentFactory _contentFactory;
+    private readonly NestedExamContentPersistence? _contentPersistence;
 
     public AdminExamService(
         IAdminExamRepository exams,
         IAdminExamTagRepository examTags,
         IAdminExamSlugGenerator slugGenerator,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICurrentUserContext? currentUser = null,
+        IAdminExamVersionRepository? versions = null,
+        NestedExamContentFactory? contentFactory = null,
+        NestedExamContentPersistence? contentPersistence = null)
     {
         _exams = exams;
         _examTags = examTags;
         _slugGenerator = slugGenerator;
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
+        _versions = versions;
+        _contentFactory = contentFactory ?? new NestedExamContentFactory();
+        _contentPersistence = contentPersistence;
     }
 
     public async Task<Result<CollectionResponse<ExamResponse>, ExamError>> GetAdminPageAsync(
@@ -124,6 +136,18 @@ public sealed class AdminExamService
             return Result<ExamResponse, ExamError>.Failure(ExamError.InvalidRequest);
         }
 
+        if (request.InitialVersion is not null && _currentUser?.UserId is null)
+        {
+            return Result<ExamResponse, ExamError>.Failure(ExamError.CurrentUserUnavailable);
+        }
+
+        if (request.InitialVersion?.SourceVersionId is not null)
+        {
+            return Result<ExamResponse, ExamError>.Failure(
+                ExamError.InvalidNestedContent,
+                new[] { new NestedContentValidationError("initialVersion.sourceVersionId", "invalid_source_version", "An initial version cannot clone content from another exam.") });
+        }
+
         var detailError = ValidateDetails(request.ExamDetail.Title, request.ExamDetail.Description, request.ExamDetail.Type);
 
         if (detailError != ExamError.None)
@@ -156,17 +180,70 @@ public sealed class AdminExamService
                 ExamError.UnableToGenerateUniqueSlug);
         }
 
-        var exam = new Exam(
-            request.ExamDetail.Title,
-            slug,
-            request.ExamDetail.Description,
-            request.ExamDetail.Type);
-        exam.AddTags(tagValidation.Value);
+        try
+        {
+            var creation = await _unitOfWork.ExecuteInTransactionAsync(async token =>
+            {
+                var exam = new Exam(request.ExamDetail.Title, slug, request.ExamDetail.Description, request.ExamDetail.Type);
+                exam.AddTags(tagValidation.Value);
+                ExamVersionDetailResponse? initialVersionResponse = null;
+                ExamVersion? initialVersion = null;
+                CreatedExamContentGraph? graph = null;
 
-        _exams.Add(exam);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                if (request.InitialVersion is not null)
+                {
+                    var detail = request.InitialVersion.Detail;
+                    var title = detail?.Title ?? exam.Title;
+                    var description = detail?.Description ?? exam.Description;
+                    var instructions = detail?.Instructions ?? string.Empty;
+                    var duration = detail?.DurationMinutes;
+                    var versionError = ValidateVersionDetails(title, description, instructions, duration);
+                    if (versionError is not null)
+                        return Result<(Exam Exam, ExamVersionDetailResponse? Version), ExamError>.Failure(
+                            ExamError.InvalidNestedContent, new[] { versionError });
 
-        return await GetSavedResponseAsync(exam, cancellationToken);
+                    initialVersion = new ExamVersion(exam.Id, exam.AllocateNextVersionNumber(), title,
+                        description, instructions, duration, _currentUser!.UserId!.Value);
+                    var graphResult = _contentFactory.Create(initialVersion.Id,
+                        request.InitialVersion.Sections, "initialVersion.sections");
+                    if (!graphResult.IsSuccess)
+                        return Result<(Exam Exam, ExamVersionDetailResponse? Version), ExamError>.Failure(
+                            ExamError.InvalidNestedContent, graphResult.Error);
+                    graph = graphResult.Value!;
+                    if (graph.Sections.Count > 0)
+                        initialVersion.InitializeTotalScore(graph.TotalScore);
+                    initialVersionResponse = ToVersionResponse(initialVersion, graph.SectionResponses);
+                }
+
+                _exams.Add(exam);
+                if (initialVersion is not null)
+                {
+                    if (_versions is null)
+                        throw new InvalidOperationException("Exam version persistence is unavailable.");
+                    _versions.Add(initialVersion);
+                    if (graph!.Sections.Count > 0)
+                    {
+                        if (_contentPersistence is null)
+                            throw new InvalidOperationException("Nested exam content persistence is unavailable.");
+                        _contentPersistence.Add(graph);
+                    }
+                }
+
+                await _unitOfWork.SaveChangesAsync(token);
+                return Result<(Exam Exam, ExamVersionDetailResponse? Version), ExamError>.Success((exam, initialVersionResponse));
+            }, cancellationToken);
+
+            if (!creation.IsSuccess)
+                return Result<ExamResponse, ExamError>.Failure(creation.Error, creation.AdditionalData);
+            var saved = await GetSavedResponseAsync(creation.Value.Exam, cancellationToken);
+            return saved.IsSuccess
+                ? Result<ExamResponse, ExamError>.Success(saved.Value! with { InitialVersion = creation.Value.Version })
+                : saved;
+        }
+        catch (PersistenceConflictException)
+        {
+            return Result<ExamResponse, ExamError>.Failure(ExamError.ConcurrencyConflict);
+        }
     }
 
     public async Task<Result<ExamResponse, ExamError>> UpdateAsync(
@@ -372,6 +449,27 @@ public sealed class AdminExamService
 
         return Enum.IsDefined(type) ? ExamError.None : ExamError.InvalidType;
     }
+
+    private static NestedContentValidationError? ValidateVersionDetails(
+        string? title, string? description, string? instructions, int? duration)
+    {
+        if (string.IsNullOrWhiteSpace(title) || TextNormalizer.NormalizeName(title).Length > ExamVersionConstraints.TitleMaxLength)
+            return new("initialVersion.detail.title", "invalid_title", "Exam version title is invalid.");
+        if (description?.Trim().Length > ExamVersionConstraints.DescriptionMaxLength)
+            return new("initialVersion.detail.description", "invalid_description", "Exam version description is invalid.");
+        if (instructions?.Trim().Length > ExamVersionConstraints.InstructionsMaxLength)
+            return new("initialVersion.detail.instructions", "invalid_instructions", "Exam version instructions are invalid.");
+        if (duration is <= 0 or > ExamVersionConstraints.MaxDurationMinutes)
+            return new("initialVersion.detail.durationMinutes", "invalid_duration", "Exam version duration is invalid.");
+        return null;
+    }
+
+    private static ExamVersionDetailResponse ToVersionResponse(
+        ExamVersion version, IReadOnlyList<ExamSectionDetailResponse> sections) =>
+        new(version.Id, version.ExamId, version.VersionNumber, version.Status, version.Title,
+            version.Description, version.Instructions, version.DurationMinutes, version.TotalScore,
+            version.CreatedByUserId, version.PublishedAtUtc, version.RetiredAtUtc, version.CreatedAtUtc,
+            version.UpdatedAtUtc, sections);
 
     private static bool HasDuplicates(IReadOnlyCollection<Guid> ids)
     {

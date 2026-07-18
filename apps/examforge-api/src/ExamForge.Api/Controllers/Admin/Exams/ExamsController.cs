@@ -130,6 +130,12 @@ public sealed class ExamsController : AdminBaseController
                 StatusCodes.Status409Conflict,
                 "Conflict",
                 "A unique exam slug could not be generated."),
+            ExamError.CurrentUserUnavailable => CreateProblem(
+                StatusCodes.Status401Unauthorized, "Unauthorized", "The authenticated user identifier is unavailable."),
+            ExamError.ConcurrencyConflict => CreateProblem(
+                StatusCodes.Status409Conflict, "Conflict", "The exam changed concurrently. Retry the request."),
+            ExamError.InvalidNestedContent => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "Nested exam content is invalid."),
             _ => CreateProblem(
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
@@ -142,7 +148,15 @@ public sealed class ExamsController : AdminBaseController
             problem.Extensions["missingOrArchivedTagIds"] = tagIds;
         }
 
+        AddNestedErrors(problem, additionalData);
+
         return StatusCode(problem.Status!.Value, problem);
+    }
+
+    private static void AddNestedErrors(ProblemDetails problem, object? additionalData)
+    {
+        if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
+            problem.Extensions["errors"] = errors;
     }
 
     private ProblemDetails CreateProblem(int status, string title, string detail)

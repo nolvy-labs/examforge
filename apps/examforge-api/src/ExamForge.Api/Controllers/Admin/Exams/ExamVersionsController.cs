@@ -7,6 +7,7 @@ using ExamForge.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Admin.Exams;
+
 [Route($"~/{ApiRoutes.V1}/admin/exams/{{examId:guid}}/versions")]
 public sealed class ExamVersionsController : AdminBaseController
 {
@@ -56,7 +57,7 @@ public sealed class ExamVersionsController : AdminBaseController
 
         if (!result.IsSuccess)
         {
-            return ToActionResult(result.Error);
+            return ToActionResult(result.Error, result.AdditionalData);
         }
 
         return CreatedAtAction(
@@ -110,7 +111,7 @@ public sealed class ExamVersionsController : AdminBaseController
         return error == ExamVersionError.None ? NoContent() : ToActionResult(error);
     }
 
-    private ActionResult ToActionResult(ExamVersionError error)
+    private ActionResult ToActionResult(ExamVersionError error, object? additionalData = null)
     {
         var problem = error switch
         {
@@ -150,9 +151,12 @@ public sealed class ExamVersionsController : AdminBaseController
             ExamVersionError.InvalidDuration => CreateBadRequest(
                 $"Duration must be between 1 and {ExamForge.Domain.Exams.ExamVersionConstraints.MaxDurationMinutes} minutes."),
             ExamVersionError.InvalidStatus => CreateBadRequest("Exam version status is invalid."),
+            ExamVersionError.InvalidNestedContent => CreateBadRequest("Nested exam content is invalid."),
             _ => CreateBadRequest("The exam version request is invalid.")
         };
 
+        if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
+            problem.Extensions["errors"] = errors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

@@ -62,7 +62,7 @@ public sealed class QuestionsController : AdminBaseController
 
         if (!result.IsSuccess)
         {
-            return ToActionResult(result.Error);
+            return ToActionResult(result.Error, result.AdditionalData);
         }
 
         return CreatedAtAction(
@@ -124,7 +124,7 @@ public sealed class QuestionsController : AdminBaseController
         return error == QuestionError.None ? NoContent() : ToActionResult(error);
     }
 
-    private ActionResult ToActionResult(QuestionError error)
+    private ActionResult ToActionResult(QuestionError error, object? additionalData = null)
     {
         var problem = error switch
         {
@@ -151,8 +151,11 @@ public sealed class QuestionsController : AdminBaseController
                 "Explanation and ClearExplanation cannot be supplied together."),
             QuestionError.InvalidQuestionOrder => BadRequestProblem(
                 "OrderedQuestionIds must contain the complete sibling set exactly once."),
+            QuestionError.InvalidNestedContent => BadRequestProblem("Nested question content is invalid."),
             _ => BadRequestProblem("The question request is invalid.")
         };
+        if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
+            problem.Extensions["errors"] = errors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

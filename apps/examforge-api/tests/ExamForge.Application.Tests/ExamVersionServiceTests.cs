@@ -546,13 +546,13 @@ public sealed class ExamVersionServiceTests
     {
         public Guid? LastSourceVersionId { get; private set; }
 
-        public Task CloneAsync(
+        public Task<ExamVersionContentClonePlan> CloneAsync(
             Guid sourceVersionId,
             Guid targetVersionId,
             CancellationToken cancellationToken = default)
         {
             LastSourceVersionId = sourceVersionId;
-            return Task.CompletedTask;
+            return Task.FromResult(new ExamVersionContentClonePlan([], [], [], [], 0m));
         }
     }
 

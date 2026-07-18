@@ -10,7 +10,13 @@ public sealed record CreateExamSectionDetail(
     string? StimulusText = null,
     string? MediaUrl = null);
 
-public sealed record CreateExamSectionRequest(CreateExamSectionDetail Detail);
+public sealed record CreateExamSectionInput(
+    CreateExamSectionDetail Detail,
+    IReadOnlyList<CreateQuestionInput>? Questions = null);
+
+public sealed record CreateExamSectionRequest(
+    CreateExamSectionDetail Detail,
+    IReadOnlyList<CreateQuestionInput>? Questions = null);
 
 public sealed record UpdateExamSectionDetail(
     ExamSectionKind? Kind = null,
@@ -49,4 +55,5 @@ public sealed record ExamSectionDetailResponse(
     DateTimeOffset? UpdatedAtUtc,
     string Instructions,
     string? StimulusText,
-    string? MediaUrl);
+    string? MediaUrl,
+    IReadOnlyList<QuestionDetailResponse>? Questions = null);

@@ -57,7 +57,7 @@ public sealed class ExamSectionsController : AdminBaseController
 
         if (!result.IsSuccess)
         {
-            return ToActionResult(result.Error);
+            return ToActionResult(result.Error, result.AdditionalData);
         }
 
         return CreatedAtAction(
@@ -113,7 +113,7 @@ public sealed class ExamSectionsController : AdminBaseController
         return error == ExamSectionError.None ? NoContent() : ToActionResult(error);
     }
 
-    private ActionResult ToActionResult(ExamSectionError error)
+    private ActionResult ToActionResult(ExamSectionError error, object? additionalData = null)
     {
         var problem = error switch
         {
@@ -138,9 +138,12 @@ public sealed class ExamSectionsController : AdminBaseController
                 "A replacement value and its clear flag cannot be supplied together."),
             ExamSectionError.InvalidSectionOrder => CreateBadRequest(
                 "OrderedSectionIds must contain every section in this version exactly once."),
+            ExamSectionError.InvalidNestedContent => CreateBadRequest("Nested exam content is invalid."),
             _ => CreateBadRequest("The exam section request is invalid.")
         };
 
+        if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
+            problem.Extensions["errors"] = errors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

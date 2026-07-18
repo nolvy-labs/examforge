@@ -20,7 +20,7 @@ public sealed class AdminExamVersionContentCloner : IAdminExamVersionContentClon
         _dbContext = dbContext;
     }
 
-    public async Task CloneAsync(
+    public async Task<ExamVersionContentClonePlan> CloneAsync(
         Guid sourceVersionId,
         Guid targetVersionId,
         CancellationToken cancellationToken = default)
@@ -75,5 +75,6 @@ public sealed class AdminExamVersionContentCloner : IAdminExamVersionContentClon
         _dbContext.QuestionOptions.AddRange(plan.Options);
         _dbContext.FillAnswerKeys.AddRange(plan.AnswerKeys);
         target.InitializeTotalScore(plan.TotalScore);
+        return plan;
     }
 }

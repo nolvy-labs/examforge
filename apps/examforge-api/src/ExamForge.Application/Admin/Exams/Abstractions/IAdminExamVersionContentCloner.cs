@@ -1,9 +1,9 @@
-using ExamForge.Application.Admin.Exams.Models;
+using ExamForge.Application.Admin.Exams.Utils;
 namespace ExamForge.Application.Admin.Exams.Abstractions;
 
 public interface IAdminExamVersionContentCloner
 {
-    Task CloneAsync(
+    Task<ExamVersionContentClonePlan> CloneAsync(
         Guid sourceVersionId,
         Guid targetVersionId,
         CancellationToken cancellationToken = default);
