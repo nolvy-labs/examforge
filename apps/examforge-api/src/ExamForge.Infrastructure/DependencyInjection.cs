@@ -1,8 +1,12 @@
-﻿using ExamForge.Application.Abstractions;
+using ExamForge.Application.Abstractions;
+using ExamForge.Application.Admin.ExamClassifications.Abstractions;
+using ExamForge.Application.Admin.Exams.Abstractions;
+using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Infrastructure.Auth;
 using ExamForge.Infrastructure.ExamAttempts;
-using ExamForge.Infrastructure.ExamClassifications;
-using ExamForge.Infrastructure.Exams;
+using ExamForge.Infrastructure.ExamClassifications.Admin;
+using ExamForge.Infrastructure.ExamClassifications.Student;
+using ExamForge.Infrastructure.Exams.Admin;
 using ExamForge.Infrastructure.Persistence;
 using ExamForge.Infrastructure.Users;
 
@@ -35,18 +39,20 @@ public static class DependencyInjection
         services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
         services.AddSingleton<IRefreshTokenLifetimeProvider, RefreshTokenLifetimeProvider>();
 
-        services.AddScoped<IExamTagRepository, ExamTagRepository>();
-        services.AddScoped<IExamCategoryRepository, ExamCategoryRepository>();
+        services.AddScoped<IAdminExamTagRepository, AdminExamTagRepository>();
+        services.AddScoped<IStudentExamTagQuery, StudentExamTagQuery>();
+        services.AddScoped<IAdminExamCategoryRepository, AdminExamCategoryRepository>();
+        services.AddScoped<IStudentExamCategoryQuery, StudentExamCategoryQuery>();
 
-        services.AddScoped<IExamRepository, ExamRepository>();
-        services.AddSingleton<IExamSlugGenerator, ExamSlugGenerator>();
-        services.AddScoped<IExamVersionRepository, ExamVersionRepository>();
-        services.AddScoped<IExamVersionContentCloner, ExamVersionContentCloner>();
-        services.AddScoped<IExamVersionPublishReadinessChecker, ExamVersionPublishReadinessChecker>();
-        services.AddScoped<IExamSectionRepository, ExamSectionRepository>();
-        services.AddScoped<IQuestionRepository, QuestionRepository>();
-        services.AddScoped<IQuestionOptionRepository, QuestionOptionRepository>();
-        services.AddScoped<IFillAnswerKeyRepository, FillAnswerKeyRepository>();
+        services.AddScoped<IAdminExamRepository, AdminExamRepository>();
+        services.AddSingleton<IAdminExamSlugGenerator, AdminExamSlugGenerator>();
+        services.AddScoped<IAdminExamVersionRepository, AdminExamVersionRepository>();
+        services.AddScoped<IAdminExamVersionContentCloner, AdminExamVersionContentCloner>();
+        services.AddScoped<IAdminExamVersionPublishReadinessChecker, AdminExamVersionPublishReadinessChecker>();
+        services.AddScoped<IAdminExamSectionRepository, AdminExamSectionRepository>();
+        services.AddScoped<IAdminQuestionRepository, AdminQuestionRepository>();
+        services.AddScoped<IAdminQuestionOptionRepository, AdminQuestionOptionRepository>();
+        services.AddScoped<IAdminFillAnswerKeyRepository, AdminFillAnswerKeyRepository>();
 
         services.AddScoped<IExamAttemptRepository, ExamAttemptRepository>();
         services.AddScoped<IExamAttemptAnswerRepository, ExamAttemptAnswerRepository>();

@@ -1,7 +1,8 @@
 using ExamForge.Api.Common.Constants;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Services;
 using ExamForge.Application.Common;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +10,9 @@ namespace ExamForge.Api.Controllers.Admin.Exams;
 [Route($"~/{ApiRoutes.V1}/admin/exams/{{examId:guid}}/versions")]
 public sealed class ExamVersionsController : AdminBaseController
 {
-    private readonly ExamVersionService _examVersionService;
+    private readonly AdminExamVersionService _examVersionService;
 
-    public ExamVersionsController(ExamVersionService examVersionService)
+    public ExamVersionsController(AdminExamVersionService examVersionService)
     {
         _examVersionService = examVersionService;
     }

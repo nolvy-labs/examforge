@@ -1,6 +1,12 @@
 using ExamForge.Application.Abstractions;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
+using ExamForge.Application.Admin.ExamClassifications.Abstractions;
+using ExamForge.Application.Admin.Exams.Abstractions;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Enums;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Models;
+using ExamForge.Application.Admin.Exams.Services;
+using ExamForge.Application.Admin.Exams.Utils;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Exams;
 
@@ -308,7 +314,7 @@ public sealed class ExamServiceTests
     public async Task Offset_metadata_calculates_page_values()
     {
         var context = CreateContext();
-        context.ExamRepository.PageOverride = new ExamRepositoryPage([], 45);
+        context.AdminExamRepository.PageOverride = new ExamRepositoryPage([], 45);
 
         var result = await context.Service.GetAdminPageAsync(
             new GetExamsRequest(Page: 2, PageSize: 20));
@@ -382,17 +388,17 @@ public sealed class ExamServiceTests
         public TestContext(string slug, IReadOnlyCollection<ExamTag> tags)
         {
             TagRepository = new FakeExamTagRepository(tags);
-            ExamRepository = new FakeExamRepository(tags);
+            AdminExamRepository = new FakeExamRepository(tags);
             SlugGenerator = new FakeExamSlugGenerator(slug);
-            Service = new ExamService(
-                ExamRepository,
+            Service = new AdminExamService(
+                AdminExamRepository,
                 TagRepository,
                 SlugGenerator,
                 new FakeUnitOfWork());
         }
 
-        public ExamService Service { get; }
-        public FakeExamRepository ExamRepository { get; }
+        public AdminExamService Service { get; }
+        public FakeExamRepository AdminExamRepository { get; }
         public FakeExamTagRepository TagRepository { get; }
         public FakeExamSlugGenerator SlugGenerator { get; }
 
@@ -405,12 +411,12 @@ public sealed class ExamServiceTests
         {
             var exam = new Exam(title, slug, description, type);
             exam.AddTags(tagIds ?? []);
-            ExamRepository.Add(exam);
+            AdminExamRepository.Add(exam);
             return exam;
         }
     }
 
-    private sealed class FakeExamSlugGenerator : IExamSlugGenerator
+    private sealed class FakeExamSlugGenerator : IAdminExamSlugGenerator
     {
         private readonly string _slug;
 
@@ -443,7 +449,7 @@ public sealed class ExamServiceTests
         }
     }
 
-    private sealed class FakeExamRepository : IExamRepository
+    private sealed class FakeExamRepository : IAdminExamRepository
     {
         private readonly List<Exam> _exams = [];
         private readonly IReadOnlyDictionary<Guid, ExamTagData> _tags;
@@ -519,7 +525,7 @@ public sealed class ExamServiceTests
         }
     }
 
-    private sealed class FakeExamTagRepository : IExamTagRepository
+    private sealed class FakeExamTagRepository : IAdminExamTagRepository
     {
         private readonly List<ExamTag> _tags;
 
@@ -538,7 +544,6 @@ public sealed class ExamServiceTests
 
         public Task<ExamTag?> GetByIdAsync(
             Guid id,
-            bool includeArchived,
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_tags.SingleOrDefault(tag => tag.Id == id));

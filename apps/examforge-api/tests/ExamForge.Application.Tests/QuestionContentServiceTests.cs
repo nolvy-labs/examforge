@@ -1,6 +1,11 @@
 using ExamForge.Application.Abstractions;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Abstractions;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Enums;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Models;
+using ExamForge.Application.Admin.Exams.Services;
+using ExamForge.Application.Admin.Exams.Utils;
 using ExamForge.Domain.Exams;
 
 namespace ExamForge.Application.Tests;
@@ -202,26 +207,26 @@ public sealed class QuestionContentServiceTests
                 null,
                 null,
                 0);
-            QuestionRepository = new FakeQuestionRepository(this);
+            AdminQuestionRepository = new FakeQuestionRepository(this);
             OptionRepository = new FakeQuestionOptionRepository();
             AnswerKeyRepository = new FakeFillAnswerKeyRepository();
             VersionRepository = new FakeExamVersionRepository(this);
             SectionRepository = new FakeExamSectionRepository(this);
             UnitOfWork = new FakeUnitOfWork();
-            Questions = new QuestionService(
-                QuestionRepository,
+            Questions = new AdminQuestionService(
+                AdminQuestionRepository,
                 SectionRepository,
                 VersionRepository,
                 UnitOfWork);
-            Options = new QuestionOptionService(
+            Options = new AdminQuestionOptionService(
                 OptionRepository,
-                QuestionRepository,
+                AdminQuestionRepository,
                 SectionRepository,
                 VersionRepository,
                 UnitOfWork);
-            AnswerKeys = new FillAnswerKeyService(
+            AnswerKeys = new AdminFillAnswerKeyService(
                 AnswerKeyRepository,
-                QuestionRepository,
+                AdminQuestionRepository,
                 SectionRepository,
                 VersionRepository,
                 UnitOfWork);
@@ -230,15 +235,15 @@ public sealed class QuestionContentServiceTests
         public Exam Exam { get; }
         public ExamVersion Version { get; }
         public ExamSection Section { get; }
-        public FakeQuestionRepository QuestionRepository { get; }
+        public FakeQuestionRepository AdminQuestionRepository { get; }
         public FakeQuestionOptionRepository OptionRepository { get; }
         public FakeFillAnswerKeyRepository AnswerKeyRepository { get; }
         public FakeExamVersionRepository VersionRepository { get; }
         public FakeExamSectionRepository SectionRepository { get; }
         public FakeUnitOfWork UnitOfWork { get; }
-        public QuestionService Questions { get; }
-        public QuestionOptionService Options { get; }
-        public FillAnswerKeyService AnswerKeys { get; }
+        public AdminQuestionService Questions { get; }
+        public AdminQuestionOptionService Options { get; }
+        public AdminFillAnswerKeyService AnswerKeys { get; }
 
         public Question AddQuestion(
             QuestionType type,
@@ -252,8 +257,8 @@ public sealed class QuestionContentServiceTests
                 "Question",
                 null,
                 points ?? (type == QuestionType.Group ? 0m : 1m),
-                QuestionRepository.Questions.Count(item => item.ParentQuestionId == parentId));
-            QuestionRepository.Add(question);
+                AdminQuestionRepository.Questions.Count(item => item.ParentQuestionId == parentId));
+            AdminQuestionRepository.Add(question);
             return question;
         }
 
@@ -285,7 +290,7 @@ public sealed class QuestionContentServiceTests
         }
     }
 
-    private sealed class FakeQuestionRepository : IQuestionRepository
+    private sealed class FakeQuestionRepository : IAdminQuestionRepository
     {
         private readonly TestContext _context;
 
@@ -410,7 +415,7 @@ public sealed class QuestionContentServiceTests
             key.IsCaseSensitive, key.DisplayOrder, key.CreatedAtUtc, key.UpdatedAtUtc);
     }
 
-    private sealed class FakeQuestionOptionRepository : IQuestionOptionRepository
+    private sealed class FakeQuestionOptionRepository : IAdminQuestionOptionRepository
     {
         public List<QuestionOption> Options { get; } = [];
 
@@ -449,7 +454,7 @@ public sealed class QuestionContentServiceTests
             option.DisplayOrder, option.Explanation, option.CreatedAtUtc, option.UpdatedAtUtc);
     }
 
-    private sealed class FakeFillAnswerKeyRepository : IFillAnswerKeyRepository
+    private sealed class FakeFillAnswerKeyRepository : IAdminFillAnswerKeyRepository
     {
         public List<FillAnswerKey> Keys { get; } = [];
 
@@ -488,7 +493,7 @@ public sealed class QuestionContentServiceTests
             key.IsCaseSensitive, key.DisplayOrder, key.CreatedAtUtc, key.UpdatedAtUtc);
     }
 
-    private sealed class FakeExamSectionRepository : IExamSectionRepository
+    private sealed class FakeExamSectionRepository : IAdminExamSectionRepository
     {
         private readonly TestContext _context;
         public FakeExamSectionRepository(TestContext context) => _context = context;
@@ -524,12 +529,12 @@ public sealed class QuestionContentServiceTests
             _context.Section.Id, _context.Version.Id, _context.Exam.Id,
             _context.Section.Kind, _context.Section.Title, _context.Section.Instructions,
             _context.Section.StimulusText, _context.Section.MediaUrl, _context.Section.DisplayOrder,
-            _context.QuestionRepository.Questions.Count,
-            _context.QuestionRepository.Questions.Where(q => q.Type != QuestionType.Group).Sum(q => q.Points),
+            _context.AdminQuestionRepository.Questions.Count,
+            _context.AdminQuestionRepository.Questions.Where(q => q.Type != QuestionType.Group).Sum(q => q.Points),
             _context.Section.CreatedAtUtc, _context.Section.UpdatedAtUtc);
     }
 
-    private sealed class FakeExamVersionRepository : IExamVersionRepository
+    private sealed class FakeExamVersionRepository : IAdminExamVersionRepository
     {
         private readonly TestContext _context;
         public FakeExamVersionRepository(TestContext context) => _context = context;

@@ -1,6 +1,11 @@
 using ExamForge.Application.Abstractions;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Abstractions;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Enums;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Models;
+using ExamForge.Application.Admin.Exams.Services;
+using ExamForge.Application.Admin.Exams.Utils;
 using ExamForge.Domain.Exams;
 
 namespace ExamForge.Application.Tests;
@@ -432,10 +437,10 @@ public sealed class ExamSectionServiceTests
             Versions = new FakeExamVersionRepository();
             Sections = new FakeExamSectionRepository();
             UnitOfWork = new FakeUnitOfWork(Sections);
-            Service = new ExamSectionService(Sections, Versions, UnitOfWork);
+            Service = new AdminExamSectionService(Sections, Versions, UnitOfWork);
         }
 
-        public ExamSectionService Service { get; }
+        public AdminExamSectionService Service { get; }
         public FakeExamVersionRepository Versions { get; }
         public FakeExamSectionRepository Sections { get; }
         public FakeUnitOfWork UnitOfWork { get; }
@@ -496,7 +501,7 @@ public sealed class ExamSectionServiceTests
         }
     }
 
-    private sealed class FakeExamSectionRepository : IExamSectionRepository
+    private sealed class FakeExamSectionRepository : IAdminExamSectionRepository
     {
         public List<ExamSection> Sections { get; } = [];
         public Dictionary<Guid, (int Count, decimal Points)> Aggregates { get; } = [];
@@ -578,7 +583,7 @@ public sealed class ExamSectionServiceTests
         }
     }
 
-    private sealed class FakeExamVersionRepository : IExamVersionRepository
+    private sealed class FakeExamVersionRepository : IAdminExamVersionRepository
     {
         public List<Exam> Exams { get; } = [];
         public List<ExamVersion> Versions { get; } = [];

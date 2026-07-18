@@ -1,6 +1,7 @@
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Services;
 using ExamForge.Application.Common;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +9,9 @@ namespace ExamForge.Api.Controllers.Admin.Exams;
 
 public sealed class ExamsController : AdminBaseController
 {
-    private readonly ExamService _examService;
+    private readonly AdminExamService _examService;
 
-    public ExamsController(ExamService examService)
+    public ExamsController(AdminExamService examService)
     {
         _examService = examService;
     }

@@ -1,4 +1,6 @@
-using ExamForge.Application.ExamClassifications;
+using ExamForge.Application.Admin.ExamClassifications.Dtos;
+using ExamForge.Application.Admin.ExamClassifications.Errors;
+using ExamForge.Application.Admin.ExamClassifications.Services;
 using ExamForge.Domain.Users;
 
 using Microsoft.AspNetCore.Authorization;
@@ -10,9 +12,9 @@ namespace ExamForge.Api.Controllers.Admin.ExamClassifications;
 [Authorize(Roles = nameof(UserRole.Admin))]
 public sealed class ExamCategoriesController : AdminBaseController
 {
-    private readonly ExamCategoryService _examCategoryService;
+    private readonly AdminExamCategoryService _examCategoryService;
 
-    public ExamCategoriesController(ExamCategoryService examCategoryService)
+    public ExamCategoriesController(AdminExamCategoryService examCategoryService)
     {
         _examCategoryService = examCategoryService;
     }
@@ -22,7 +24,7 @@ public sealed class ExamCategoriesController : AdminBaseController
         [FromQuery] bool? isArchived,
         CancellationToken cancellationToken)
     {
-        var categories = await _examCategoryService.GetAdminListAsync(
+        var categories = await _examCategoryService.ListAsync(
             isArchived,
             cancellationToken);
 

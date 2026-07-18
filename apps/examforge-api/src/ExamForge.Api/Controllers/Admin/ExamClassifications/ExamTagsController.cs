@@ -1,4 +1,6 @@
-﻿using ExamForge.Application.ExamTags;
+using ExamForge.Application.Admin.ExamClassifications.Dtos;
+using ExamForge.Application.Admin.ExamClassifications.Errors;
+using ExamForge.Application.Admin.ExamClassifications.Services;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Users;
 
@@ -11,9 +13,9 @@ namespace ExamForge.Api.Controllers.Admin.ExamClassifications;
 [Authorize(Roles = nameof(UserRole.Admin))]
 public sealed class ExamTagsController : AdminBaseController
 {
-    private readonly ExamTagService _examTagService;
+    private readonly AdminExamTagService _examTagService;
 
-    public ExamTagsController(ExamTagService examTagService)
+    public ExamTagsController(AdminExamTagService examTagService)
     {
         _examTagService = examTagService;
     }
@@ -39,7 +41,6 @@ public sealed class ExamTagsController : AdminBaseController
     {
         var result = await _examTagService.GetByIdAsync(
             id,
-            includeArchived: true,
             cancellationToken);
 
         if (!result.IsSuccess)
@@ -65,7 +66,7 @@ public sealed class ExamTagsController : AdminBaseController
         var response = result.Value!;
 
         return CreatedAtAction(
-            nameof(Controllers.User.ExamTagsController.GetById),
+            nameof(Controllers.Student.ExamClassifications.ExamTagsController.GetById),
             "ExamTags",
             new { id = response.Id },
             response);

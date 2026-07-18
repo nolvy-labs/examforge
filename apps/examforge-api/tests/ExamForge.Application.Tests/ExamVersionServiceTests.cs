@@ -1,8 +1,13 @@
 using System.Reflection;
 
 using ExamForge.Application.Abstractions;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Abstractions;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Enums;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Models;
+using ExamForge.Application.Admin.Exams.Services;
+using ExamForge.Application.Admin.Exams.Utils;
 using ExamForge.Domain.Exams;
 
 namespace ExamForge.Application.Tests;
@@ -473,7 +478,7 @@ public sealed class ExamVersionServiceTests
             CurrentUser = new FakeCurrentUserContext(
                 useDefaultUser && userId is null ? Guid.NewGuid() : userId);
             UnitOfWork = new FakeUnitOfWork(Repository);
-            Service = new ExamVersionService(
+            Service = new AdminExamVersionService(
                 Repository,
                 Cloner,
                 Readiness,
@@ -481,7 +486,7 @@ public sealed class ExamVersionServiceTests
                 UnitOfWork);
         }
 
-        public ExamVersionService Service { get; }
+        public AdminExamVersionService Service { get; }
         public FakeExamVersionRepository Repository { get; }
         public FakeContentCloner Cloner { get; }
         public FakeReadinessChecker Readiness { get; }
@@ -537,7 +542,7 @@ public sealed class ExamVersionServiceTests
         public Guid? UserId { get; }
     }
 
-    private sealed class FakeContentCloner : IExamVersionContentCloner
+    private sealed class FakeContentCloner : IAdminExamVersionContentCloner
     {
         public Guid? LastSourceVersionId { get; private set; }
 
@@ -551,7 +556,7 @@ public sealed class ExamVersionServiceTests
         }
     }
 
-    private sealed class FakeReadinessChecker : IExamVersionPublishReadinessChecker
+    private sealed class FakeReadinessChecker : IAdminExamVersionPublishReadinessChecker
     {
         public HashSet<Guid> ReadyVersionIds { get; } = [];
 
@@ -600,7 +605,7 @@ public sealed class ExamVersionServiceTests
         }
     }
 
-    private sealed class FakeExamVersionRepository : IExamVersionRepository
+    private sealed class FakeExamVersionRepository : IAdminExamVersionRepository
     {
         public List<Exam> Exams { get; } = [];
         public List<ExamVersion> Versions { get; } = [];

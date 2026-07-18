@@ -1,6 +1,7 @@
 using ExamForge.Api.Common.Constants;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +10,9 @@ namespace ExamForge.Api.Controllers.Admin.Exams;
 [Route($"~/{ApiRoutes.V1}/admin/exams/{{examId:guid}}/versions/{{versionId:guid}}/sections/{{sectionId:guid}}/questions/{{questionId:guid}}/answer-keys")]
 public sealed class FillAnswerKeysController : AdminBaseController
 {
-    private readonly FillAnswerKeyService _answerKeys;
+    private readonly AdminFillAnswerKeyService _answerKeys;
 
-    public FillAnswerKeysController(FillAnswerKeyService answerKeys)
+    public FillAnswerKeysController(AdminFillAnswerKeyService answerKeys)
     {
         _answerKeys = answerKeys;
     }

@@ -1,6 +1,7 @@
 using ExamForge.Api.Common.Constants;
-using ExamForge.Application.Exams;
-using ExamForge.Application.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Admin.Exams.Errors;
+using ExamForge.Application.Admin.Exams.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +10,9 @@ namespace ExamForge.Api.Controllers.Admin.Exams;
 [Route($"~/{ApiRoutes.V1}/admin/exams/{{examId:guid}}/versions/{{versionId:guid}}/sections/{{sectionId:guid}}/questions/{{questionId:guid}}/options")]
 public sealed class QuestionOptionsController : AdminBaseController
 {
-    private readonly QuestionOptionService _options;
+    private readonly AdminQuestionOptionService _options;
 
-    public QuestionOptionsController(QuestionOptionService options)
+    public QuestionOptionsController(AdminQuestionOptionService options)
     {
         _options = options;
     }

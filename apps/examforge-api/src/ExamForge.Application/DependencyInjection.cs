@@ -1,8 +1,8 @@
-﻿using ExamForge.Application.Auth;
+using ExamForge.Application.Admin.ExamClassifications.Services;
+using ExamForge.Application.Admin.Exams.Services;
+using ExamForge.Application.Auth;
 using ExamForge.Application.ExamAttempts;
-using ExamForge.Application.ExamClassifications;
-using ExamForge.Application.Exams;
-using ExamForge.Application.ExamTags;
+using ExamForge.Application.Student.ExamClassifications.Services;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,15 +13,17 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<AuthService>();
-        services.AddScoped<ExamTagService>();
-        services.AddScoped<ExamCategoryService>();
+        services.AddScoped<AdminExamTagService>();
+        services.AddScoped<StudentExamTagService>();
+        services.AddScoped<AdminExamCategoryService>();
+        services.AddScoped<StudentExamCategoryService>();
 
-        services.AddScoped<ExamService>();
-        services.AddScoped<ExamVersionService>();
-        services.AddScoped<ExamSectionService>();
-        services.AddScoped<QuestionService>();
-        services.AddScoped<QuestionOptionService>();
-        services.AddScoped<FillAnswerKeyService>();
+        services.AddScoped<AdminExamService>();
+        services.AddScoped<AdminExamVersionService>();
+        services.AddScoped<AdminExamSectionService>();
+        services.AddScoped<AdminQuestionService>();
+        services.AddScoped<AdminQuestionOptionService>();
+        services.AddScoped<AdminFillAnswerKeyService>();
 
         services.AddScoped<ExamAttemptService>();
         services.AddScoped<ExamAttemptAnswerService>();
