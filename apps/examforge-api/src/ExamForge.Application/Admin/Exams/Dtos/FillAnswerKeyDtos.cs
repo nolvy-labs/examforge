@@ -9,10 +9,6 @@ public sealed record CreateFillAnswerKeyInput(
     string AcceptedAnswer,
     bool IsCaseSensitive = false);
 
-public sealed record UpdateFillAnswerKeyRequest(
-    string? AcceptedAnswer = null,
-    bool? IsCaseSensitive = null);
-
 public sealed record FillAnswerKeyResponse(
     Guid Id,
     Guid QuestionId,

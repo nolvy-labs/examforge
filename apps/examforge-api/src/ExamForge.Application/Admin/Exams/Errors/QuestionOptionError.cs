@@ -15,8 +15,8 @@ public enum QuestionOptionError
     InvalidText = 10,
     InvalidLabel = 11,
     InvalidExplanation = 12,
-    ConflictingPatchOperations = 13,
     InvalidOptionOrder = 14,
     DisplayOrderExhausted = 15,
-    ConcurrencyConflict = 16
+    ConcurrencyConflict = 16,
+    InvalidPatch = 17
 }

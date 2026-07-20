@@ -1,8 +1,10 @@
+using ExamForge.Api.Common;
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Admin.Exams.Errors;
 using ExamForge.Application.Admin.Exams.Services;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Admin.Exams;
@@ -58,14 +60,16 @@ public sealed class FillAnswerKeysController : AdminBaseController
     }
 
     [HttpPatch("{answerKeyId:guid}")]
+    [Consumes("application/json-patch+json")]
     public async Task<ActionResult<FillAnswerKeyResponse>> Update(
         Guid examId, Guid versionId, Guid sectionId, Guid questionId, Guid answerKeyId,
-        [FromBody] UpdateFillAnswerKeyRequest request,
+        [FromBody] JsonPatchDocument<FillAnswerKeyPatchModel>? patchDocument,
         CancellationToken cancellationToken)
     {
         var result = await _answerKeys.UpdateAsync(
-            examId, versionId, sectionId, questionId, answerKeyId, request, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
+            examId, versionId, sectionId, questionId, answerKeyId,
+            JsonPatchOperationMapper.Map(patchDocument), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error, result.AdditionalData);
     }
 
     [HttpDelete("{answerKeyId:guid}")]
@@ -78,7 +82,7 @@ public sealed class FillAnswerKeysController : AdminBaseController
         return error == FillAnswerKeyError.None ? NoContent() : ToActionResult(error);
     }
 
-    private ActionResult ToActionResult(FillAnswerKeyError error)
+    private ActionResult ToActionResult(FillAnswerKeyError error, object? additionalData = null)
     {
         var problem = error switch
         {
@@ -96,8 +100,11 @@ public sealed class FillAnswerKeysController : AdminBaseController
             FillAnswerKeyError.ConcurrencyConflict => ConflictProblem(
                 "The answer keys changed concurrently. Retry the request."),
             FillAnswerKeyError.InvalidAcceptedAnswer => BadRequestProblem("AcceptedAnswer is invalid."),
+            FillAnswerKeyError.InvalidPatch => BadRequestProblem("The JSON Patch document is invalid."),
             _ => BadRequestProblem("The fill answer key request is invalid.")
         };
+        if (additionalData is IReadOnlyList<PatchValidationError> errors)
+            problem.Extensions["errors"] = errors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

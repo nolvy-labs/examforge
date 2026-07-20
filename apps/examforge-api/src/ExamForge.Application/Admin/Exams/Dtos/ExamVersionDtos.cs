@@ -20,13 +20,6 @@ public sealed record CreateExamVersionRequest(
     CreateExamVersionDetail? Detail = null,
     IReadOnlyList<CreateExamSectionInput>? Sections = null);
 
-public sealed record UpdateExamVersionRequest(
-    string? Title = null,
-    string? Description = null,
-    string? Instructions = null,
-    // Null means unchanged, so this API version cannot clear an existing duration.
-    int? DurationMinutes = null);
-
 public sealed record ExamVersionSummaryResponse(
     Guid Id,
     Guid ExamId,

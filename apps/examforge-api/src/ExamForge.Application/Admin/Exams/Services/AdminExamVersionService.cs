@@ -255,13 +255,12 @@ public sealed class AdminExamVersionService
     public async Task<Result<ExamVersionDetailResponse, ExamVersionError>> UpdateAsync(
         Guid examId,
         Guid versionId,
-        UpdateExamVersionRequest? request,
+        IReadOnlyList<PatchOperation>? operations,
         CancellationToken cancellationToken = default)
     {
-        if (request is null)
-        {
-            return Failure(ExamVersionError.InvalidRequest);
-        }
+        var limitErrors = RestrictedPatchApplier.ValidateDocumentLimits(operations);
+        if (limitErrors is not null)
+            return Failure(ExamVersionError.InvalidPatch, limitErrors);
 
         return await ExecuteDetailTransactionAsync(async transactionToken =>
         {
@@ -289,18 +288,25 @@ public sealed class AdminExamVersionService
                 return Failure(ExamVersionError.VersionNotEditable);
             }
 
-            var title = request.Title ?? version.Title;
-            var description = request.Description ?? version.Description;
-            var instructions = request.Instructions ?? version.Instructions;
-            var durationMinutes = request.DurationMinutes ?? version.DurationMinutes;
-            var validationError = ValidateDetails(title, description, instructions, durationMinutes);
+            var patch = RestrictedPatchApplier.Apply(operations, new ExamVersionPatchModel
+            {
+                Title = version.Title,
+                Description = version.Description,
+                Instructions = version.Instructions,
+                DurationMinutes = version.DurationMinutes
+            });
+            if (!patch.IsSuccess)
+                return Failure(ExamVersionError.InvalidPatch, patch.Error);
+
+            var model = patch.Value!;
+            var validationError = ValidateDetails(
+                model.Title, model.Description, model.Instructions, model.DurationMinutes);
 
             if (validationError != ExamVersionError.None)
-            {
-                return Failure(validationError);
-            }
+                return Failure(ExamVersionError.InvalidPatch, new[] {
+                    new PatchValidationError(operations!.Count, null, "invalid_final_state", "The patched exam version details are invalid.") });
 
-            if (version.UpdateDetails(title, description, instructions, durationMinutes))
+            if (version.UpdateDetails(model.Title, model.Description, model.Instructions, model.DurationMinutes))
             {
                 await _unitOfWork.SaveChangesAsync(transactionToken);
             }

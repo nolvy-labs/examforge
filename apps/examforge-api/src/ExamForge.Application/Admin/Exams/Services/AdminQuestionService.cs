@@ -197,18 +197,12 @@ public sealed class AdminQuestionService
         Guid versionId,
         Guid sectionId,
         Guid questionId,
-        UpdateQuestionRequest? request,
+        IReadOnlyList<PatchOperation>? operations,
         CancellationToken cancellationToken = default)
     {
-        if (request is null)
-        {
-            return DetailFailure(QuestionError.InvalidRequest);
-        }
-
-        if (request.ClearExplanation && request.Detail?.Explanation is not null)
-        {
-            return DetailFailure(QuestionError.ConflictingPatchOperations);
-        }
+        var limitErrors = RestrictedPatchApplier.ValidateDocumentLimits(operations);
+        if (limitErrors is not null)
+            return DetailFailure(QuestionError.InvalidPatch, limitErrors);
 
         return await ExecuteAsync(async token =>
         {
@@ -226,34 +220,37 @@ public sealed class AdminQuestionService
                 return DetailFailure(QuestionError.QuestionNotFound);
             }
 
-            var type = request.Detail?.Type ?? question.Type;
-            var prompt = request.Detail?.Prompt ?? question.Prompt;
-            var explanation = request.ClearExplanation
-                ? null
-                : request.Detail?.Explanation ?? question.Explanation;
-            var points = ResolvePoints(question, type, request.Detail?.Points);
-            var validationError = ValidateDetails(type, prompt, explanation, points);
+            var patch = RestrictedPatchApplier.Apply(operations, new QuestionPatchModel
+            {
+                Type = question.Type,
+                Prompt = question.Prompt,
+                Explanation = question.Explanation,
+                Points = question.Points
+            });
+            if (!patch.IsSuccess)
+                return DetailFailure(QuestionError.InvalidPatch, patch.Error);
+
+            var model = patch.Value!;
+            var validationError = ValidateDetails(model.Type, model.Prompt, model.Explanation, model.Points);
 
             if (validationError != QuestionError.None)
-            {
-                return DetailFailure(validationError);
-            }
+                return DetailFailure(QuestionError.InvalidPatch, new[] {
+                    new PatchValidationError(operations!.Count, null, "invalid_final_state", "The patched question details are invalid.") });
 
-            if (!CanChangeType(question, type))
+            if (!CanChangeType(question, model.Type))
             {
                 return DetailFailure(QuestionError.IncompatibleQuestionContent);
             }
 
-            var affectsScore = question.Type != type || question.Points != points;
+            var oldScore = question.Type == QuestionType.Group ? 0m : question.Points;
+            var newScore = model.Type == QuestionType.Group ? 0m : model.Points;
+            var affectsScore = oldScore != newScore;
 
-            if (question.UpdateDetails(type, prompt, explanation, points))
+            if (question.UpdateDetails(model.Type, model.Prompt, model.Explanation, model.Points))
             {
-                await _unitOfWork.SaveChangesAsync(token);
-
                 if (affectsScore)
-                {
-                    await RecalculateTotalScoreAsync(mutation.Version!, token);
-                }
+                    mutation.Version!.UpdateTotalScore(mutation.Version.TotalScore - oldScore + newScore);
+                await _unitOfWork.SaveChangesAsync(token);
             }
 
             var saved = await _questions.GetDetailAsync(
@@ -559,29 +556,6 @@ public sealed class AdminQuestionService
             question.Options.Count(option => option.IsCorrect) <= 1;
     }
 
-    private static decimal ResolvePoints(
-        Question question,
-        QuestionType type,
-        decimal? requestedPoints)
-    {
-        if (requestedPoints.HasValue)
-        {
-            return requestedPoints.Value;
-        }
-
-        if (type == QuestionType.Group && question.Type != QuestionType.Group)
-        {
-            return 0m;
-        }
-
-        if (question.Type == QuestionType.Group && type != QuestionType.Group)
-        {
-            return 1m;
-        }
-
-        return question.Points;
-    }
-
     private static decimal DefaultPoints(QuestionType type) =>
         type == QuestionType.Group ? 0m : 1m;
 
@@ -633,6 +607,11 @@ public sealed class AdminQuestionService
 
     private static Result<QuestionDetailResponse, QuestionError> DetailFailure(QuestionError error) =>
         Result<QuestionDetailResponse, QuestionError>.Failure(error);
+
+    private static Result<QuestionDetailResponse, QuestionError> DetailFailure(
+        QuestionError error,
+        object? additionalData) =>
+        Result<QuestionDetailResponse, QuestionError>.Failure(error, additionalData);
 
     private static Result<IReadOnlyList<QuestionSummaryResponse>, QuestionError> SummarySuccess(
         IReadOnlyList<QuestionSummaryResponse> value) =>

@@ -1,8 +1,10 @@
+using ExamForge.Api.Common;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Admin.Exams.Errors;
 using ExamForge.Application.Admin.Exams.Services;
 using ExamForge.Application.Common;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Admin.Exams;
@@ -56,13 +58,29 @@ public sealed class ExamsController : AdminBaseController
     }
 
     [HttpPatch("{id:guid}")]
+    [Consumes("application/json-patch+json")]
     public async Task<ActionResult<ExamResponse>> Update(
         Guid id,
-        [FromBody] UpdateExamRequest request,
+        [FromBody] JsonPatchDocument<ExamPatchModel>? patchDocument,
         CancellationToken cancellationToken)
     {
-        var result = await _examService.UpdateAsync(id, request, cancellationToken);
+        var result = await _examService.UpdateAsync(
+            id,
+            JsonPatchOperationMapper.Map(patchDocument),
+            cancellationToken);
 
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : ToActionResult(result.Error, result.AdditionalData);
+    }
+
+    [HttpPut("{id:guid}/tags")]
+    public async Task<ActionResult<ExamResponse>> ReplaceTags(
+        Guid id,
+        [FromBody] ReplaceExamTagsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _examService.ReplaceTagsAsync(id, request, cancellationToken);
         return result.IsSuccess
             ? Ok(result.Value)
             : ToActionResult(result.Error, result.AdditionalData);
@@ -136,6 +154,8 @@ public sealed class ExamsController : AdminBaseController
                 StatusCodes.Status409Conflict, "Conflict", "The exam changed concurrently. Retry the request."),
             ExamError.InvalidNestedContent => CreateProblem(
                 StatusCodes.Status400BadRequest, "Bad Request", "Nested exam content is invalid."),
+            ExamError.InvalidPatch => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "The JSON Patch document is invalid."),
             _ => CreateProblem(
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
@@ -149,6 +169,7 @@ public sealed class ExamsController : AdminBaseController
         }
 
         AddNestedErrors(problem, additionalData);
+        AddPatchErrors(problem, additionalData);
 
         return StatusCode(problem.Status!.Value, problem);
     }
@@ -156,6 +177,12 @@ public sealed class ExamsController : AdminBaseController
     private static void AddNestedErrors(ProblemDetails problem, object? additionalData)
     {
         if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
+            problem.Extensions["errors"] = errors;
+    }
+
+    private static void AddPatchErrors(ProblemDetails problem, object? additionalData)
+    {
+        if (additionalData is IReadOnlyList<PatchValidationError> errors)
             problem.Extensions["errors"] = errors;
     }
 

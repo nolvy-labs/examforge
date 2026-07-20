@@ -248,21 +248,12 @@ public sealed class AdminExamService
 
     public async Task<Result<ExamResponse, ExamError>> UpdateAsync(
         Guid id,
-        UpdateExamRequest request,
+        IReadOnlyList<PatchOperation>? operations,
         CancellationToken cancellationToken = default)
     {
-        if (HasDuplicates(request.AddedTagIds) || HasDuplicates(request.RemovedTagIds))
-        {
-            return Result<ExamResponse, ExamError>.Failure(ExamError.DuplicateTagIds);
-        }
-
-        var addedTagIds = request.AddedTagIds.ToHashSet();
-        var removedTagIds = request.RemovedTagIds.ToHashSet();
-
-        if (addedTagIds.Overlaps(removedTagIds))
-        {
-            return Result<ExamResponse, ExamError>.Failure(ExamError.OverlappingTagChanges);
-        }
+        var limitErrors = RestrictedPatchApplier.ValidateDocumentLimits(operations);
+        if (limitErrors is not null)
+            return Result<ExamResponse, ExamError>.Failure(ExamError.InvalidPatch, limitErrors);
 
         var exam = await _exams.GetTrackedWithTagMappingsAsync(id, cancellationToken);
 
@@ -271,37 +262,22 @@ public sealed class AdminExamService
             return Result<ExamResponse, ExamError>.Failure(ExamError.NotFound);
         }
 
-        var title = request.ExamDetail?.Title ?? exam.Title;
-        var description = request.ExamDetail?.Description ?? exam.Description;
-        var type = request.ExamDetail?.Type ?? exam.Type;
-        var detailError = ValidateDetails(title, description, type);
+        var patch = RestrictedPatchApplier.Apply(operations, new ExamPatchModel
+        {
+            Title = exam.Title,
+            Description = exam.Description,
+            Type = exam.Type
+        });
+        if (!patch.IsSuccess)
+            return Result<ExamResponse, ExamError>.Failure(ExamError.InvalidPatch, patch.Error);
+
+        var model = patch.Value!;
+        var detailError = ValidateDetails(model.Title, model.Description, model.Type);
 
         if (detailError != ExamError.None)
-        {
-            return Result<ExamResponse, ExamError>.Failure(detailError);
-        }
+            return InvalidPatch(operations!.Count, "invalid_final_state", "The patched exam details are invalid.");
 
-        var addedTagValidation = await ValidateActiveTagIdsAsync(addedTagIds, cancellationToken);
-
-        if (!addedTagValidation.IsSuccess)
-        {
-            return Result<ExamResponse, ExamError>.Failure(
-                addedTagValidation.Error,
-                addedTagValidation.AdditionalData);
-        }
-
-        var finalTagIds = exam.ExamTagMappings
-            .Select(mapping => mapping.ExamTagId)
-            .ToHashSet();
-        finalTagIds.UnionWith(addedTagIds);
-        finalTagIds.ExceptWith(removedTagIds);
-
-        if (finalTagIds.Count > ExamConstraints.MaxTags)
-        {
-            return Result<ExamResponse, ExamError>.Failure(ExamError.TooManyTags);
-        }
-
-        var normalizedTitle = TextNormalizer.NormalizeName(title);
+        var normalizedTitle = TextNormalizer.NormalizeName(model.Title);
         var slug = exam.Slug;
 
         if (!string.Equals(normalizedTitle, exam.Title, StringComparison.Ordinal))
@@ -317,15 +293,43 @@ public sealed class AdminExamService
             // Published public exams may need slug history or redirects in a later feature.
         }
 
-        exam.UpdateDetails(
-            normalizedTitle,
-            slug,
-            description,
-            type);
-        exam.AddTags(addedTagIds);
-        exam.RemoveTags(removedTagIds);
+        var changed = exam.Title != normalizedTitle || exam.Slug != slug ||
+            exam.Description != (model.Description?.Trim() ?? string.Empty) || exam.Type != model.Type;
+        exam.UpdateDetails(normalizedTitle, slug, model.Description, model.Type);
+        if (changed)
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return await GetSavedResponseAsync(exam, cancellationToken);
+    }
+
+    public async Task<Result<ExamResponse, ExamError>> ReplaceTagsAsync(
+        Guid id,
+        ReplaceExamTagsRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request?.TagIds is null)
+            return Result<ExamResponse, ExamError>.Failure(ExamError.InvalidRequest);
+        if (HasDuplicates(request.TagIds))
+            return Result<ExamResponse, ExamError>.Failure(ExamError.DuplicateTagIds);
+        if (request.TagIds.Count > ExamConstraints.MaxTags)
+            return Result<ExamResponse, ExamError>.Failure(ExamError.TooManyTags);
+
+        var exam = await _exams.GetTrackedWithTagMappingsAsync(id, cancellationToken);
+        if (exam is null)
+            return Result<ExamResponse, ExamError>.Failure(ExamError.NotFound);
+
+        var validation = await ValidateActiveTagIdsAsync(request.TagIds, cancellationToken);
+        if (!validation.IsSuccess)
+            return Result<ExamResponse, ExamError>.Failure(validation.Error, validation.AdditionalData);
+
+        var requested = validation.Value!.ToHashSet();
+        var current = exam.ExamTagMappings.Select(mapping => mapping.ExamTagId).ToHashSet();
+        if (!current.SetEquals(requested))
+        {
+            exam.RemoveTags(current.Except(requested));
+            exam.AddTags(requested.Except(current));
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
         return await GetSavedResponseAsync(exam, cancellationToken);
     }
@@ -470,6 +474,11 @@ public sealed class AdminExamService
             version.Description, version.Instructions, version.DurationMinutes, version.TotalScore,
             version.CreatedByUserId, version.PublishedAtUtc, version.RetiredAtUtc, version.CreatedAtUtc,
             version.UpdatedAtUtc, sections);
+
+    private static Result<ExamResponse, ExamError> InvalidPatch(int operationIndex, string code, string message) =>
+        Result<ExamResponse, ExamError>.Failure(
+            ExamError.InvalidPatch,
+            new[] { new PatchValidationError(operationIndex, null, code, message) });
 
     private static bool HasDuplicates(IReadOnlyCollection<Guid> ids)
     {

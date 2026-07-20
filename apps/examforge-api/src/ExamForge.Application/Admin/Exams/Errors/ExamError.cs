@@ -16,5 +16,6 @@ public enum ExamError
     UnableToGenerateUniqueSlug = 11,
     InvalidNestedContent = 12,
     CurrentUserUnavailable = 13,
-    ConcurrencyConflict = 14
+    ConcurrencyConflict = 14,
+    InvalidPatch = 15
 }

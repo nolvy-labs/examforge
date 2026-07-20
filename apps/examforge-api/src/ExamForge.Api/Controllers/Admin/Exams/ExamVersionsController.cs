@@ -1,9 +1,11 @@
+using ExamForge.Api.Common;
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Admin.Exams.Errors;
 using ExamForge.Application.Admin.Exams.Services;
 using ExamForge.Application.Common;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Admin.Exams;
@@ -67,18 +69,19 @@ public sealed class ExamVersionsController : AdminBaseController
     }
 
     [HttpPatch("{versionId:guid}")]
+    [Consumes("application/json-patch+json")]
     public async Task<ActionResult<ExamVersionDetailResponse>> Update(
         Guid examId,
         Guid versionId,
-        [FromBody] UpdateExamVersionRequest request,
+        [FromBody] JsonPatchDocument<ExamVersionPatchModel>? patchDocument,
         CancellationToken cancellationToken)
     {
         var result = await _examVersionService.UpdateAsync(
             examId,
             versionId,
-            request,
+            JsonPatchOperationMapper.Map(patchDocument),
             cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error, result.AdditionalData);
     }
 
     [HttpPost("{versionId:guid}/publish")]
@@ -152,11 +155,14 @@ public sealed class ExamVersionsController : AdminBaseController
                 $"Duration must be between 1 and {ExamForge.Domain.Exams.ExamVersionConstraints.MaxDurationMinutes} minutes."),
             ExamVersionError.InvalidStatus => CreateBadRequest("Exam version status is invalid."),
             ExamVersionError.InvalidNestedContent => CreateBadRequest("Nested exam content is invalid."),
+            ExamVersionError.InvalidPatch => CreateBadRequest("The JSON Patch document is invalid."),
             _ => CreateBadRequest("The exam version request is invalid.")
         };
 
         if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
             problem.Extensions["errors"] = errors;
+        if (additionalData is IReadOnlyList<PatchValidationError> patchErrors)
+            problem.Extensions["errors"] = patchErrors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

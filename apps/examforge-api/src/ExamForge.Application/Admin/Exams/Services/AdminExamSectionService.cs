@@ -155,19 +155,12 @@ public sealed class AdminExamSectionService
         Guid examId,
         Guid versionId,
         Guid sectionId,
-        UpdateExamSectionRequest? request,
+        IReadOnlyList<PatchOperation>? operations,
         CancellationToken cancellationToken = default)
     {
-        if (request is null)
-        {
-            return DetailFailure(ExamSectionError.InvalidRequest);
-        }
-
-        if ((request.ClearStimulusText && request.Detail?.StimulusText is not null) ||
-            (request.ClearMediaUrl && request.Detail?.MediaUrl is not null))
-        {
-            return DetailFailure(ExamSectionError.ConflictingPatchOperations);
-        }
+        var limitErrors = RestrictedPatchApplier.ValidateDocumentLimits(operations);
+        if (limitErrors is not null)
+            return DetailFailure(ExamSectionError.InvalidPatch, limitErrors);
 
         return await ExecuteMutationAsync(async transactionToken =>
         {
@@ -188,28 +181,30 @@ public sealed class AdminExamSectionService
                 return DetailFailure(ExamSectionError.SectionNotFound);
             }
 
-            var kind = request.Detail?.Kind ?? section.Kind;
-            var title = request.Detail?.Title ?? section.Title;
-            var instructions = request.Detail?.Instructions ?? section.Instructions;
-            var stimulusText = request.ClearStimulusText
-                ? null
-                : request.Detail?.StimulusText ?? section.StimulusText;
-            var mediaUrl = request.ClearMediaUrl
-                ? null
-                : request.Detail?.MediaUrl ?? section.MediaUrl;
+            var patch = RestrictedPatchApplier.Apply(operations, new ExamSectionPatchModel
+            {
+                Kind = section.Kind,
+                Title = section.Title,
+                Instructions = section.Instructions,
+                StimulusText = section.StimulusText,
+                MediaUrl = section.MediaUrl
+            });
+            if (!patch.IsSuccess)
+                return DetailFailure(ExamSectionError.InvalidPatch, patch.Error);
+
+            var model = patch.Value!;
             var validationError = ValidateDetails(
-                kind,
-                title,
-                instructions,
-                stimulusText,
-                mediaUrl);
+                model.Kind,
+                model.Title,
+                model.Instructions,
+                model.StimulusText,
+                model.MediaUrl);
 
             if (validationError != ExamSectionError.None)
-            {
-                return DetailFailure(validationError);
-            }
+                return DetailFailure(ExamSectionError.InvalidPatch, new[] {
+                    new PatchValidationError(operations!.Count, null, "invalid_final_state", "The patched exam section details are invalid.") });
 
-            if (section.UpdateDetails(kind, title, instructions, stimulusText, mediaUrl))
+            if (section.UpdateDetails(model.Kind, model.Title, model.Instructions, model.StimulusText, model.MediaUrl))
             {
                 await _unitOfWork.SaveChangesAsync(transactionToken);
             }
@@ -502,6 +497,11 @@ public sealed class AdminExamSectionService
     private static Result<ExamSectionDetailResponse, ExamSectionError> DetailFailure(
         ExamSectionError error) =>
         Result<ExamSectionDetailResponse, ExamSectionError>.Failure(error);
+
+    private static Result<ExamSectionDetailResponse, ExamSectionError> DetailFailure(
+        ExamSectionError error,
+        object? additionalData) =>
+        Result<ExamSectionDetailResponse, ExamSectionError>.Failure(error, additionalData);
 
     private static Result<IReadOnlyList<ExamSectionSummaryResponse>, ExamSectionError> SummarySuccess(
         IReadOnlyList<ExamSectionSummaryResponse> response) =>

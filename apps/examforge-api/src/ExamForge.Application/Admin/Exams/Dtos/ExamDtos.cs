@@ -21,22 +21,6 @@ public sealed record CreateInitialExamVersionInput(
     IReadOnlyList<CreateExamSectionInput>? Sections = null,
     Guid? SourceVersionId = null);
 
-public sealed record UpdateExamDetail(
-    string? Title = null,
-    string? Description = null,
-    ExamType? Type = null
-);
-
-public sealed record UpdateExamRequest(
-    UpdateExamDetail? ExamDetail = null,
-    IReadOnlyCollection<Guid>? AddedTagIds = null,
-    IReadOnlyCollection<Guid>? RemovedTagIds = null
-)
-{
-    public IReadOnlyCollection<Guid> AddedTagIds { get; init; } = AddedTagIds ?? [];
-    public IReadOnlyCollection<Guid> RemovedTagIds { get; init; } = RemovedTagIds ?? [];
-}
-
 public sealed record ExamTagSummaryResponse(
     Guid Id,
     string Name,

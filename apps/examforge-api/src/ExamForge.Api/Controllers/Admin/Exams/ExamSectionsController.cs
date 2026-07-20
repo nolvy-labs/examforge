@@ -1,8 +1,10 @@
+using ExamForge.Api.Common;
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Admin.Exams.Errors;
 using ExamForge.Application.Admin.Exams.Services;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Admin.Exams;
@@ -67,20 +69,21 @@ public sealed class ExamSectionsController : AdminBaseController
     }
 
     [HttpPatch("{sectionId:guid}")]
+    [Consumes("application/json-patch+json")]
     public async Task<ActionResult<ExamSectionDetailResponse>> Update(
         Guid examId,
         Guid versionId,
         Guid sectionId,
-        [FromBody] UpdateExamSectionRequest request,
+        [FromBody] JsonPatchDocument<ExamSectionPatchModel>? patchDocument,
         CancellationToken cancellationToken)
     {
         var result = await _examSectionService.UpdateAsync(
             examId,
             versionId,
             sectionId,
-            request,
+            JsonPatchOperationMapper.Map(patchDocument),
             cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
+        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error, result.AdditionalData);
     }
 
     [HttpPut("order")]
@@ -134,16 +137,17 @@ public sealed class ExamSectionsController : AdminBaseController
             ExamSectionError.InvalidInstructions => CreateBadRequest("Exam section instructions are invalid."),
             ExamSectionError.InvalidStimulusText => CreateBadRequest("Exam section stimulus text is invalid."),
             ExamSectionError.InvalidMediaUrl => CreateBadRequest("Exam section media URL is invalid."),
-            ExamSectionError.ConflictingPatchOperations => CreateBadRequest(
-                "A replacement value and its clear flag cannot be supplied together."),
             ExamSectionError.InvalidSectionOrder => CreateBadRequest(
                 "OrderedSectionIds must contain every section in this version exactly once."),
             ExamSectionError.InvalidNestedContent => CreateBadRequest("Nested exam content is invalid."),
+            ExamSectionError.InvalidPatch => CreateBadRequest("The JSON Patch document is invalid."),
             _ => CreateBadRequest("The exam section request is invalid.")
         };
 
         if (additionalData is IReadOnlyList<ExamForge.Application.Admin.Exams.Models.NestedContentValidationError> errors)
             problem.Extensions["errors"] = errors;
+        if (additionalData is IReadOnlyList<PatchValidationError> patchErrors)
+            problem.Extensions["errors"] = patchErrors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

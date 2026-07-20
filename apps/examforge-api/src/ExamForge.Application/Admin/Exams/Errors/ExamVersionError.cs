@@ -22,5 +22,6 @@ public enum ExamVersionError
     VersionNumberExhausted = 18,
     ConcurrencyConflict = 19,
     CurrentUserUnavailable = 20,
-    InvalidNestedContent = 21
+    InvalidNestedContent = 21,
+    InvalidPatch = 22
 }

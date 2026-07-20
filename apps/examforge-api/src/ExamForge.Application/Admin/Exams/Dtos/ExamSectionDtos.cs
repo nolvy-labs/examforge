@@ -18,18 +18,6 @@ public sealed record CreateExamSectionRequest(
     CreateExamSectionDetail Detail,
     IReadOnlyList<CreateQuestionInput>? Questions = null);
 
-public sealed record UpdateExamSectionDetail(
-    ExamSectionKind? Kind = null,
-    string? Title = null,
-    string? Instructions = null,
-    string? StimulusText = null,
-    string? MediaUrl = null);
-
-public sealed record UpdateExamSectionRequest(
-    UpdateExamSectionDetail? Detail = null,
-    bool ClearStimulusText = false,
-    bool ClearMediaUrl = false);
-
 public sealed record ReorderExamSectionsRequest(IReadOnlyList<Guid> OrderedSectionIds);
 
 public sealed record ExamSectionSummaryResponse(

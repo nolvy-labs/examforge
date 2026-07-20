@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
 using ExamForge.Application.Admin.Exams.Dtos;
@@ -12,6 +14,79 @@ namespace ExamForge.Application.Tests;
 
 public sealed class QuestionContentServiceTests
 {
+    [Fact]
+    public async Task Question_patch_clears_explanation_and_updates_score_with_one_save()
+    {
+        var context = new TestContext();
+        var question = context.AddQuestion(QuestionType.FillBlank, points: 1m);
+        question.UpdateDetails(question.Type, question.Prompt, "Explanation", question.Points);
+        context.Version.UpdateTotalScore(1m);
+
+        var result = await context.Questions.UpdateAsync(
+            context.Exam.Id, context.Version.Id, context.Section.Id, question.Id,
+            [new PatchOperation("remove", "/explanation"), Replace("/points", 2m)]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value!.Explanation);
+        Assert.Equal(2m, result.Value.Points);
+        Assert.Equal(2m, context.Version.TotalScore);
+        Assert.Equal(1, context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Question_type_patch_preserves_content_compatibility()
+    {
+        var context = new TestContext();
+        var question = context.AddQuestion(QuestionType.FillBlank);
+        context.AddAnswerKey(question, "Answer", false);
+
+        var result = await context.Questions.UpdateAsync(
+            context.Exam.Id, context.Version.Id, context.Section.Id, question.Id,
+            [Replace("/type", (int)QuestionType.MultipleChoiceSingle)]);
+
+        Assert.Equal(QuestionError.IncompatibleQuestionContent, result.Error);
+        Assert.Equal(QuestionType.FillBlank, question.Type);
+        Assert.Equal(0, context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Option_patch_preserves_single_choice_correctness_behavior()
+    {
+        var context = new TestContext();
+        var question = context.AddQuestion(QuestionType.MultipleChoiceSingle);
+        var first = context.AddOption(question, true);
+        var second = context.AddOption(question, false);
+
+        var result = await context.Options.UpdateAsync(
+            context.Exam.Id, context.Version.Id, context.Section.Id, question.Id, second.Id,
+            [Replace("/isCorrect", true)]);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(first.IsCorrect);
+        Assert.True(second.IsCorrect);
+        Assert.Equal(1, context.UnitOfWork.SaveCount);
+    }
+
+    [Fact]
+    public async Task Fill_answer_patch_rejects_normalized_duplicate()
+    {
+        var context = new TestContext();
+        var question = context.AddQuestion(QuestionType.FillBlank);
+        context.AddAnswerKey(question, "Hello World", false);
+        var second = context.AddAnswerKey(question, "Other", true);
+
+        var result = await context.AnswerKeys.UpdateAsync(
+            context.Exam.Id, context.Version.Id, context.Section.Id, question.Id, second.Id,
+            [Replace("/acceptedAnswer", "  hello   world ")]);
+
+        Assert.Equal(FillAnswerKeyError.DuplicateAcceptedAnswer, result.Error);
+        Assert.Equal("Other", second.AcceptedAnswer);
+        Assert.Equal(0, context.UnitOfWork.SaveCount);
+    }
+
+    private static PatchOperation Replace(string path, object? value) =>
+        new("replace", path, JsonSerializer.SerializeToElement(value));
+
     [Fact]
     public async Task Nested_group_creation_is_ordered_atomic_and_updates_total_once()
     {
@@ -216,7 +291,10 @@ public sealed class QuestionContentServiceTests
             context.Section.Id,
             question.Id,
             key.Id,
-            new UpdateFillAnswerKeyRequest(" Second  Value ", IsCaseSensitive: true));
+            [
+                new PatchOperation("replace", "/acceptedAnswer", JsonSerializer.SerializeToElement(" Second  Value ")),
+                new PatchOperation("replace", "/isCaseSensitive", JsonSerializer.SerializeToElement(true))
+            ]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Second Value", result.Value!.AcceptedAnswer);
@@ -325,6 +403,7 @@ public sealed class QuestionContentServiceTests
                 null,
                 OptionRepository.Options.Count(item => item.QuestionId == question.Id));
             OptionRepository.Add(option);
+            ((List<QuestionOption>)question.Options).Add(option);
             return option;
         }
 
@@ -339,6 +418,7 @@ public sealed class QuestionContentServiceTests
                 isCaseSensitive,
                 AnswerKeyRepository.Keys.Count(item => item.QuestionId == question.Id));
             AnswerKeyRepository.Add(key);
+            ((List<FillAnswerKey>)question.FillAnswerKeys).Add(key);
             return key;
         }
     }

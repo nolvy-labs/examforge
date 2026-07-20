@@ -170,13 +170,12 @@ public sealed class AdminFillAnswerKeyService
         Guid sectionId,
         Guid questionId,
         Guid answerKeyId,
-        UpdateFillAnswerKeyRequest? request,
+        IReadOnlyList<PatchOperation>? operations,
         CancellationToken cancellationToken = default)
     {
-        if (request is null)
-        {
-            return Failure(FillAnswerKeyError.InvalidRequest);
-        }
+        var limitErrors = RestrictedPatchApplier.ValidateDocumentLimits(operations);
+        if (limitErrors is not null)
+            return Failure(FillAnswerKeyError.InvalidPatch, limitErrors);
 
         return await ExecuteAsync(async token =>
         {
@@ -205,20 +204,28 @@ public sealed class AdminFillAnswerKeyService
                 return Failure(FillAnswerKeyError.AnswerKeyNotFound);
             }
 
-            var acceptedAnswer = request.AcceptedAnswer ?? key.AcceptedAnswer;
-            var isCaseSensitive = request.IsCaseSensitive ?? key.IsCaseSensitive;
-
-            if (!IsValidAnswer(acceptedAnswer))
+            var patch = RestrictedPatchApplier.Apply(operations, new FillAnswerKeyPatchModel
             {
-                return Failure(FillAnswerKeyError.InvalidAcceptedAnswer);
+                AcceptedAnswer = key.AcceptedAnswer,
+                IsCaseSensitive = key.IsCaseSensitive
+            });
+            if (!patch.IsSuccess)
+                return Failure(FillAnswerKeyError.InvalidPatch, patch.Error);
+
+            var model = patch.Value!;
+
+            if (!IsValidAnswer(model.AcceptedAnswer))
+            {
+                return Failure(FillAnswerKeyError.InvalidPatch, new[] {
+                    new PatchValidationError(operations!.Count, null, "invalid_final_state", "The patched fill answer key is invalid.") });
             }
 
-            if (HasDuplicate(current, acceptedAnswer, isCaseSensitive, key.Id))
+            if (HasDuplicate(current, model.AcceptedAnswer, model.IsCaseSensitive, key.Id))
             {
                 return Failure(FillAnswerKeyError.DuplicateAcceptedAnswer);
             }
 
-            if (key.Update(acceptedAnswer, isCaseSensitive))
+            if (key.Update(model.AcceptedAnswer, model.IsCaseSensitive))
             {
                 await _unitOfWork.SaveChangesAsync(token);
             }
@@ -406,6 +413,11 @@ public sealed class AdminFillAnswerKeyService
 
     private static Result<FillAnswerKeyResponse, FillAnswerKeyError> Failure(FillAnswerKeyError error) =>
         Result<FillAnswerKeyResponse, FillAnswerKeyError>.Failure(error);
+
+    private static Result<FillAnswerKeyResponse, FillAnswerKeyError> Failure(
+        FillAnswerKeyError error,
+        object? additionalData) =>
+        Result<FillAnswerKeyResponse, FillAnswerKeyError>.Failure(error, additionalData);
 
     private static Result<IReadOnlyList<FillAnswerKeyResponse>, FillAnswerKeyError> ListSuccess(
         IReadOnlyList<FillAnswerKeyResponse> value) =>

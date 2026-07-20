@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.ExamClassifications.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
@@ -111,8 +113,7 @@ public sealed class ExamServiceTests
             UpdateRequest(
                 "  Exam   title ",
                 description: "Changed",
-                type: ExamType.Ielts,
-                addedTagIds: [tag.Id]));
+                type: ExamType.Ielts));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("original-slug-12345678", result.Value!.Slug);
@@ -131,7 +132,7 @@ public sealed class ExamServiceTests
 
         var result = await context.Service.UpdateAsync(
             exam.Id,
-            new UpdateExamRequest(new UpdateExamDetail(Title: "New title")));
+            UpdateRequest(title: "New title"));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("New title", result.Value!.Title);
@@ -150,7 +151,7 @@ public sealed class ExamServiceTests
 
         var result = await context.Service.UpdateAsync(
             exam.Id,
-            new UpdateExamRequest(new UpdateExamDetail(Description: "Changed description")));
+            UpdateRequest(description: "Changed description"));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Exam title", result.Value!.Title);
@@ -168,7 +169,7 @@ public sealed class ExamServiceTests
 
         var result = await context.Service.UpdateAsync(
             exam.Id,
-            new UpdateExamRequest(new UpdateExamDetail(Type: ExamType.Ielts)));
+            UpdateRequest(type: ExamType.Ielts));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Exam title", result.Value!.Title);
@@ -185,9 +186,9 @@ public sealed class ExamServiceTests
         var context = CreateContext(tags: [tag]);
         var exam = context.AddExam(description: "Original description");
 
-        var result = await context.Service.UpdateAsync(
+        var result = await context.Service.ReplaceTagsAsync(
             exam.Id,
-            new UpdateExamRequest(AddedTagIds: [tag.Id]));
+            new ReplaceExamTagsRequest([tag.Id]));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Exam title", result.Value!.Title);
@@ -198,17 +199,17 @@ public sealed class ExamServiceTests
     }
 
     [Fact]
-    public async Task Update_rejects_overlapping_tag_changes()
+    public async Task Replace_tags_rejects_duplicates()
     {
         var tagId = Guid.NewGuid();
         var context = CreateContext();
         var exam = context.AddExam();
 
-        var result = await context.Service.UpdateAsync(
+        var result = await context.Service.ReplaceTagsAsync(
             exam.Id,
-            UpdateRequest(addedTagIds: [tagId], removedTagIds: [tagId]));
+            new ReplaceExamTagsRequest([tagId, tagId]));
 
-        Assert.Equal(ExamError.OverlappingTagChanges, result.Error);
+        Assert.Equal(ExamError.DuplicateTagIds, result.Error);
     }
 
     [Fact]
@@ -219,9 +220,9 @@ public sealed class ExamServiceTests
         var exam = context.AddExam(tagIds: [tag.Id]);
         var updatedAt = exam.UpdatedAtUtc;
 
-        var result = await context.Service.UpdateAsync(
+        var result = await context.Service.ReplaceTagsAsync(
             exam.Id,
-            UpdateRequest(addedTagIds: [tag.Id]));
+            new ReplaceExamTagsRequest([tag.Id]));
 
         Assert.True(result.IsSuccess);
         Assert.Single(exam.ExamTagMappings);
@@ -235,9 +236,9 @@ public sealed class ExamServiceTests
         var exam = context.AddExam();
         var updatedAt = exam.UpdatedAtUtc;
 
-        var result = await context.Service.UpdateAsync(
+        var result = await context.Service.ReplaceTagsAsync(
             exam.Id,
-            UpdateRequest(removedTagIds: [Guid.NewGuid()]));
+            new ReplaceExamTagsRequest([]));
 
         Assert.True(result.IsSuccess);
         Assert.Empty(exam.ExamTagMappings);
@@ -250,11 +251,11 @@ public sealed class ExamServiceTests
         var tag = CreateTag();
         var context = CreateContext(tags: [tag]);
         var exam = context.AddExam();
-        var request = UpdateRequest(description: "Changed", addedTagIds: [tag.Id]);
+        var request = new ReplaceExamTagsRequest([tag.Id]);
 
-        var first = await context.Service.UpdateAsync(exam.Id, request);
+        var first = await context.Service.ReplaceTagsAsync(exam.Id, request);
         var updatedAt = exam.UpdatedAtUtc;
-        var second = await context.Service.UpdateAsync(exam.Id, request);
+        var second = await context.Service.ReplaceTagsAsync(exam.Id, request);
 
         Assert.True(first.IsSuccess);
         Assert.True(second.IsSuccess);
@@ -269,9 +270,9 @@ public sealed class ExamServiceTests
         var context = CreateContext(tags: [archivedTag]);
         var exam = context.AddExam();
 
-        var result = await context.Service.UpdateAsync(
+        var result = await context.Service.ReplaceTagsAsync(
             exam.Id,
-            UpdateRequest(addedTagIds: [archivedTag.Id, Guid.NewGuid()]));
+            new ReplaceExamTagsRequest([archivedTag.Id, Guid.NewGuid()]));
 
         Assert.Equal(ExamError.MissingOrArchivedTagIds, result.Error);
     }
@@ -283,9 +284,9 @@ public sealed class ExamServiceTests
         var context = CreateContext(tags: [archivedTag]);
         var exam = context.AddExam(tagIds: [archivedTag.Id]);
 
-        var result = await context.Service.UpdateAsync(
+        var result = await context.Service.ReplaceTagsAsync(
             exam.Id,
-            UpdateRequest(removedTagIds: [archivedTag.Id]));
+            new ReplaceExamTagsRequest([]));
 
         Assert.True(result.IsSuccess);
         Assert.Empty(exam.ExamTagMappings);
@@ -347,18 +348,20 @@ public sealed class ExamServiceTests
             tagIds);
     }
 
-    private static UpdateExamRequest UpdateRequest(
+    private static IReadOnlyList<PatchOperation> UpdateRequest(
         string? title = null,
         string? description = null,
-        ExamType? type = null,
-        IReadOnlyCollection<Guid>? addedTagIds = null,
-        IReadOnlyCollection<Guid>? removedTagIds = null)
+        ExamType? type = null)
     {
-        return new UpdateExamRequest(
-            new UpdateExamDetail(title, description, type),
-            addedTagIds ?? [],
-            removedTagIds ?? []);
+        var operations = new List<PatchOperation>();
+        if (title is not null) operations.Add(Replace("/title", title));
+        if (description is not null) operations.Add(Replace("/description", description));
+        if (type.HasValue) operations.Add(Replace("/type", (int)type.Value));
+        return operations;
     }
+
+    private static PatchOperation Replace(string path, object? value) =>
+        new("replace", path, JsonSerializer.SerializeToElement(value));
 
     private static ExamTag CreateTag(bool archived = false)
     {

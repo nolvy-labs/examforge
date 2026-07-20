@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
 using ExamForge.Application.Admin.Exams.Dtos;
@@ -12,6 +14,11 @@ namespace ExamForge.Application.Tests;
 
 public sealed class ExamSectionServiceTests
 {
+    private static PatchOperation Replace(string path, object? value) =>
+        new("replace", path, JsonSerializer.SerializeToElement(value));
+
+    private static PatchOperation Remove(string path) => new("remove", path);
+
     [Fact]
     public async Task Empty_list_succeeds_and_order_is_deterministic()
     {
@@ -154,7 +161,7 @@ public sealed class ExamSectionServiceTests
         Assert.Equal(ExamSectionError.ExamArchived,
             (await context.Service.CreateAsync(exam.Id, version.Id, Create("New"))).Error);
         Assert.Equal(ExamSectionError.ExamArchived,
-            (await context.Service.UpdateAsync(exam.Id, version.Id, section.Id, new())).Error);
+            (await context.Service.UpdateAsync(exam.Id, version.Id, section.Id, [])).Error);
         Assert.Equal(ExamSectionError.ExamArchived,
             (await context.Service.ReorderAsync(exam.Id, version.Id, new([section.Id]))).Error);
         Assert.Equal(ExamSectionError.ExamArchived,
@@ -173,7 +180,7 @@ public sealed class ExamSectionServiceTests
         Assert.Equal(ExamSectionError.VersionNotEditable,
             (await context.Service.CreateAsync(exam.Id, version.Id, Create("New"))).Error);
         Assert.Equal(ExamSectionError.VersionNotEditable,
-            (await context.Service.UpdateAsync(exam.Id, version.Id, section.Id, new())).Error);
+            (await context.Service.UpdateAsync(exam.Id, version.Id, section.Id, [])).Error);
         Assert.Equal(ExamSectionError.VersionNotEditable,
             (await context.Service.ReorderAsync(exam.Id, version.Id, new([section.Id]))).Error);
         Assert.Equal(ExamSectionError.VersionNotEditable,
@@ -209,15 +216,15 @@ public sealed class ExamSectionServiceTests
             mediaUrl: "https://example.com/old");
 
         var title = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(new(Title: " New title ")));
+            exam.Id, version.Id, section.Id, [Replace("/title", " New title ")]);
         var kind = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(new(Kind: ExamSectionKind.Listening)));
+            exam.Id, version.Id, section.Id, [Replace("/kind", (int)ExamSectionKind.Listening)]);
         var instructions = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(new(Instructions: "")));
+            exam.Id, version.Id, section.Id, [Replace("/instructions", "")]);
         var stimulus = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(new(StimulusText: " New stimulus ")));
+            exam.Id, version.Id, section.Id, [Replace("/stimulusText", " New stimulus ")]);
         var media = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(new(MediaUrl: " https://example.com/new ")));
+            exam.Id, version.Id, section.Id, [Replace("/mediaUrl", " https://example.com/new ")]);
 
         Assert.Equal("New title", title.Value!.Title);
         Assert.Equal("Old instructions", title.Value.Instructions);
@@ -238,34 +245,27 @@ public sealed class ExamSectionServiceTests
             mediaUrl: "https://example.com/media");
 
         var stimulus = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(ClearStimulusText: true));
+            exam.Id, version.Id, section.Id, [Remove("/stimulusText")]);
         var media = await context.Service.UpdateAsync(
-            exam.Id, version.Id, section.Id, new(ClearMediaUrl: true));
+            exam.Id, version.Id, section.Id, [Remove("/mediaUrl")]);
 
         Assert.Null(stimulus.Value!.StimulusText);
         Assert.Null(media.Value!.MediaUrl);
     }
 
     [Fact]
-    public async Task Patch_rejects_conflicting_clear_and_replacement_operations()
+    public async Task Patch_rejects_unsupported_operation_without_changes()
     {
         var context = new TestContext();
         var (exam, version) = context.AddExamAndVersion();
         var section = context.AddSection(version);
 
-        var stimulus = await context.Service.UpdateAsync(
-            exam.Id,
-            version.Id,
-            section.Id,
-            new(new(StimulusText: "Replacement"), ClearStimulusText: true));
-        var media = await context.Service.UpdateAsync(
-            exam.Id,
-            version.Id,
-            section.Id,
-            new(new(MediaUrl: "https://example.com/new"), ClearMediaUrl: true));
+        var result = await context.Service.UpdateAsync(
+            exam.Id, version.Id, section.Id,
+            [Replace("/title", "Changed"), new PatchOperation("add", "/mediaUrl", JsonSerializer.SerializeToElement("https://example.com"))]);
 
-        Assert.Equal(ExamSectionError.ConflictingPatchOperations, stimulus.Error);
-        Assert.Equal(ExamSectionError.ConflictingPatchOperations, media.Error);
+        Assert.Equal(ExamSectionError.InvalidPatch, result.Error);
+        Assert.Equal("Section", section.Title);
     }
 
     [Fact]
@@ -275,12 +275,12 @@ public sealed class ExamSectionServiceTests
         var (exam, version) = context.AddExamAndVersion();
         var section = context.AddSection(version);
 
-        Assert.Equal(ExamSectionError.InvalidStimulusText,
+        Assert.Equal(ExamSectionError.InvalidPatch,
             (await context.Service.UpdateAsync(
-                exam.Id, version.Id, section.Id, new(new(StimulusText: " ")))).Error);
-        Assert.Equal(ExamSectionError.InvalidMediaUrl,
+                exam.Id, version.Id, section.Id, [Replace("/stimulusText", " ")])).Error);
+        Assert.Equal(ExamSectionError.InvalidPatch,
             (await context.Service.UpdateAsync(
-                exam.Id, version.Id, section.Id, new(new(MediaUrl: " ")))).Error);
+                exam.Id, version.Id, section.Id, [Replace("/mediaUrl", " ")])).Error);
     }
 
     [Fact]
@@ -293,10 +293,10 @@ public sealed class ExamSectionServiceTests
         var saves = context.UnitOfWork.SaveCount;
 
         Assert.Equal(ExamSectionError.SectionNotFound,
-            (await context.Service.UpdateAsync(exam.Id, version.Id, section.Id, new())).Error);
+            (await context.Service.UpdateAsync(exam.Id, version.Id, section.Id, [])).Error);
         var own = context.AddSection(version);
         var updatedAt = own.UpdatedAtUtc;
-        var result = await context.Service.UpdateAsync(exam.Id, version.Id, own.Id, new());
+        var result = await context.Service.UpdateAsync(exam.Id, version.Id, own.Id, []);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(saves, context.UnitOfWork.SaveCount);

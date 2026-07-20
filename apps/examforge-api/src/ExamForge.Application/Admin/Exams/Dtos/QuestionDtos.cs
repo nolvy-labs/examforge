@@ -27,16 +27,6 @@ public sealed record CreateChildQuestionInput(
     IReadOnlyList<CreateQuestionOptionDetail>? Options = null,
     IReadOnlyList<CreateFillAnswerKeyInput>? AnswerKeys = null);
 
-public sealed record UpdateQuestionDetail(
-    QuestionType? Type = null,
-    string? Prompt = null,
-    string? Explanation = null,
-    decimal? Points = null);
-
-public sealed record UpdateQuestionRequest(
-    UpdateQuestionDetail? Detail = null,
-    bool ClearExplanation = false);
-
 public sealed record ReorderQuestionsRequest(
     Guid? ParentQuestionId,
     IReadOnlyList<Guid> OrderedQuestionIds);

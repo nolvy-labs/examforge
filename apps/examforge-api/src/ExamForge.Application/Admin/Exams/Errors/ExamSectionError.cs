@@ -14,9 +14,9 @@ public enum ExamSectionError
     InvalidInstructions = 9,
     InvalidStimulusText = 10,
     InvalidMediaUrl = 11,
-    ConflictingPatchOperations = 12,
     InvalidSectionOrder = 13,
     DisplayOrderExhausted = 14,
     ConcurrencyConflict = 15,
-    InvalidNestedContent = 16
+    InvalidNestedContent = 16,
+    InvalidPatch = 17
 }

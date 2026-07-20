@@ -14,5 +14,6 @@ public enum FillAnswerKeyError
     QuestionDoesNotSupportAnswerKeys = 9,
     InvalidAcceptedAnswer = 10,
     DuplicateAcceptedAnswer = 11,
-    ConcurrencyConflict = 12
+    ConcurrencyConflict = 12,
+    InvalidPatch = 13
 }

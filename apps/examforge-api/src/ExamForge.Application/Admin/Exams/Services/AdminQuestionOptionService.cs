@@ -178,19 +178,12 @@ public sealed class AdminQuestionOptionService
         Guid sectionId,
         Guid questionId,
         Guid optionId,
-        UpdateQuestionOptionRequest? request,
+        IReadOnlyList<PatchOperation>? operations,
         CancellationToken cancellationToken = default)
     {
-        if (request is null)
-        {
-            return Failure(QuestionOptionError.InvalidRequest);
-        }
-
-        if ((request.ClearLabel && request.Detail?.Label is not null) ||
-            (request.ClearExplanation && request.Detail?.Explanation is not null))
-        {
-            return Failure(QuestionOptionError.ConflictingPatchOperations);
-        }
+        var limitErrors = RestrictedPatchApplier.ValidateDocumentLimits(operations);
+        if (limitErrors is not null)
+            return Failure(QuestionOptionError.InvalidPatch, limitErrors);
 
         return await ExecuteAsync(async token =>
         {
@@ -219,23 +212,27 @@ public sealed class AdminQuestionOptionService
                 return Failure(QuestionOptionError.OptionNotFound);
             }
 
-            var text = request.Detail?.Text ?? option.Text;
-            var label = request.ClearLabel ? null : request.Detail?.Label ?? option.Label;
-            var isCorrect = request.Detail?.IsCorrect ?? option.IsCorrect;
-            var explanation = request.ClearExplanation
-                ? null
-                : request.Detail?.Explanation ?? option.Explanation;
-            var validationError = ValidateDetails(text, label, explanation);
+            var patch = RestrictedPatchApplier.Apply(operations, new QuestionOptionPatchModel
+            {
+                Text = option.Text,
+                Label = option.Label,
+                IsCorrect = option.IsCorrect,
+                Explanation = option.Explanation
+            });
+            if (!patch.IsSuccess)
+                return Failure(QuestionOptionError.InvalidPatch, patch.Error);
+
+            var model = patch.Value!;
+            var validationError = ValidateDetails(model.Text, model.Label, model.Explanation);
 
             if (validationError != QuestionOptionError.None)
-            {
-                return Failure(validationError);
-            }
+                return Failure(QuestionOptionError.InvalidPatch, new[] {
+                    new PatchValidationError(operations!.Count, null, "invalid_final_state", "The patched question option details are invalid.") });
 
             var changedOtherOptions = context.Question.Type == QuestionType.MultipleChoiceSingle &&
-                isCorrect &&
+                model.IsCorrect &&
                 UnsetOtherCorrectOptions(current, option.Id);
-            var changed = option.UpdateDetails(text, label, isCorrect, explanation);
+            var changed = option.UpdateDetails(model.Text, model.Label, model.IsCorrect, model.Explanation);
 
             if (changed || changedOtherOptions)
             {
@@ -550,6 +547,11 @@ public sealed class AdminQuestionOptionService
 
     private static Result<QuestionOptionResponse, QuestionOptionError> Failure(QuestionOptionError error) =>
         Result<QuestionOptionResponse, QuestionOptionError>.Failure(error);
+
+    private static Result<QuestionOptionResponse, QuestionOptionError> Failure(
+        QuestionOptionError error,
+        object? additionalData) =>
+        Result<QuestionOptionResponse, QuestionOptionError>.Failure(error, additionalData);
 
     private static Result<IReadOnlyList<QuestionOptionResponse>, QuestionOptionError> ListSuccess(
         IReadOnlyList<QuestionOptionResponse> value) =>

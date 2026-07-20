@@ -1,8 +1,10 @@
+using ExamForge.Api.Common;
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Admin.Exams.Errors;
 using ExamForge.Application.Admin.Exams.Services;
 
+using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Admin.Exams;
@@ -58,14 +60,16 @@ public sealed class QuestionOptionsController : AdminBaseController
     }
 
     [HttpPatch("{optionId:guid}")]
+    [Consumes("application/json-patch+json")]
     public async Task<ActionResult<QuestionOptionResponse>> Update(
         Guid examId, Guid versionId, Guid sectionId, Guid questionId, Guid optionId,
-        [FromBody] UpdateQuestionOptionRequest request,
+        [FromBody] JsonPatchDocument<QuestionOptionPatchModel>? patchDocument,
         CancellationToken cancellationToken)
     {
         var result = await _options.UpdateAsync(
-            examId, versionId, sectionId, questionId, optionId, request, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
+            examId, versionId, sectionId, questionId, optionId,
+            JsonPatchOperationMapper.Map(patchDocument), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error, result.AdditionalData);
     }
 
     [HttpPut("order")]
@@ -89,7 +93,7 @@ public sealed class QuestionOptionsController : AdminBaseController
         return error == QuestionOptionError.None ? NoContent() : ToActionResult(error);
     }
 
-    private ActionResult ToActionResult(QuestionOptionError error)
+    private ActionResult ToActionResult(QuestionOptionError error, object? additionalData = null)
     {
         var problem = error switch
         {
@@ -109,12 +113,13 @@ public sealed class QuestionOptionsController : AdminBaseController
             QuestionOptionError.InvalidText => BadRequestProblem("Question option text is invalid."),
             QuestionOptionError.InvalidLabel => BadRequestProblem("Question option label is invalid."),
             QuestionOptionError.InvalidExplanation => BadRequestProblem("Question option explanation is invalid."),
-            QuestionOptionError.ConflictingPatchOperations => BadRequestProblem(
-                "A replacement value and its clear flag cannot be supplied together."),
             QuestionOptionError.InvalidOptionOrder => BadRequestProblem(
                 "OrderedOptionIds must contain every option exactly once."),
+            QuestionOptionError.InvalidPatch => BadRequestProblem("The JSON Patch document is invalid."),
             _ => BadRequestProblem("The question option request is invalid.")
         };
+        if (additionalData is IReadOnlyList<PatchValidationError> errors)
+            problem.Extensions["errors"] = errors;
         return StatusCode(problem.Status!.Value, problem);
     }
 

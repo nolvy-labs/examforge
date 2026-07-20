@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
@@ -14,6 +15,9 @@ namespace ExamForge.Application.Tests;
 
 public sealed class ExamVersionServiceTests
 {
+    private static PatchOperation Replace(string path, object? value) =>
+        new("replace", path, JsonSerializer.SerializeToElement(value));
+
     [Fact]
     public async Task Empty_creation_uses_exam_metadata_starts_at_one_and_records_current_user()
     {
@@ -252,11 +256,11 @@ public sealed class ExamVersionServiceTests
         var partial = await context.Service.UpdateAsync(
             exam.Id,
             version.Id,
-            new UpdateExamVersionRequest(Title: "Changed"));
+            [Replace("/title", "Changed")]);
         var cleared = await context.Service.UpdateAsync(
             exam.Id,
             version.Id,
-            new UpdateExamVersionRequest(Description: "", Instructions: ""));
+            [Replace("/description", ""), Replace("/instructions", "")]);
 
         Assert.Equal("Changed", partial.Value!.Title);
         Assert.Equal("Description", partial.Value.Description);
@@ -277,7 +281,7 @@ public sealed class ExamVersionServiceTests
         var result = await context.Service.UpdateAsync(
             exam.Id,
             version.Id,
-            new UpdateExamVersionRequest());
+            []);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(updatedAt, version.UpdatedAtUtc);
@@ -296,7 +300,7 @@ public sealed class ExamVersionServiceTests
         var result = await context.Service.UpdateAsync(
             exam.Id,
             version.Id,
-            new UpdateExamVersionRequest(Title: "Changed"));
+            [Replace("/title", "Changed")]);
 
         Assert.Equal(ExamVersionError.VersionNotEditable, result.Error);
     }
@@ -314,9 +318,9 @@ public sealed class ExamVersionServiceTests
         var result = await context.Service.UpdateAsync(
             exam.Id,
             version.Id,
-            new UpdateExamVersionRequest(DurationMinutes: duration));
+            [Replace("/durationMinutes", duration)]);
 
-        Assert.Equal(ExamVersionError.InvalidDuration, result.Error);
+        Assert.Equal(ExamVersionError.InvalidPatch, result.Error);
     }
 
     [Fact]
@@ -437,7 +441,7 @@ public sealed class ExamVersionServiceTests
         Assert.Equal(ExamVersionError.ExamArchived,
             (await context.Service.CreateAsync(exam.Id, new CreateExamVersionRequest())).Error);
         Assert.Equal(ExamVersionError.ExamArchived,
-            (await context.Service.UpdateAsync(exam.Id, draft.Id, new UpdateExamVersionRequest(Title: "X"))).Error);
+            (await context.Service.UpdateAsync(exam.Id, draft.Id, [Replace("/title", "X")])).Error);
         Assert.Equal(ExamVersionError.ExamArchived,
             (await context.Service.PublishAsync(exam.Id, draft.Id)).Error);
         Assert.Equal(ExamVersionError.ExamArchived,

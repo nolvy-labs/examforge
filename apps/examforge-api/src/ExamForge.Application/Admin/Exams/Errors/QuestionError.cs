@@ -16,10 +16,10 @@ public enum QuestionError
     InvalidPrompt = 11,
     InvalidExplanation = 12,
     InvalidPoints = 13,
-    ConflictingPatchOperations = 14,
     IncompatibleQuestionContent = 15,
     InvalidQuestionOrder = 16,
     DisplayOrderExhausted = 17,
     ConcurrencyConflict = 18,
-    InvalidNestedContent = 19
+    InvalidNestedContent = 19,
+    InvalidPatch = 20
 }
