@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 
+using ExamForge.Api.Common;
 using ExamForge.Api.Controllers.Admin.Exams;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Domain.Users;
@@ -95,6 +96,63 @@ public sealed class AdminExamJsonPatchApiContractTests
         response.EnsureSuccessStatusCode();
         var document = await response.Content.ReadAsStringAsync();
         Assert.Contains("application/json-patch+json", document, StringComparison.Ordinal);
+        Assert.Contains("content/batch", document, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Batch_route_uses_post_and_application_json()
+    {
+        var method = typeof(ExamVersionsController).GetMethod(nameof(ExamVersionsController.BatchUpdateContent))!;
+        var route = Assert.Single(method.GetCustomAttributes<HttpPostAttribute>());
+        var consumes = Assert.Single(method.GetCustomAttributes<ConsumesAttribute>());
+
+        Assert.Equal("{versionId:guid}/content/batch", route.Template);
+        Assert.Equal("application/json", Assert.Single(consumes.ContentTypes));
+        Assert.Contains(method.GetParameters(), parameter =>
+            parameter.ParameterType == typeof(BulkUpdateExamVersionContentRequest));
+    }
+
+    [Fact]
+    public async Task Batch_requires_if_match()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        using var content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync(
+            $"/api/v1/admin/exams/{Guid.NewGuid()}/versions/{Guid.NewGuid()}/content/batch",
+            content);
+
+        Assert.Equal((HttpStatusCode)428, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Batch_rejects_malformed_if_match()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/v1/admin/exams/{Guid.NewGuid()}/versions/{Guid.NewGuid()}/content/batch")
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+        request.Headers.TryAddWithoutValidation("If-Match", "17");
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("\"1\"", 1L)]
+    [InlineData("\"17\"", 17L)]
+    public void Content_revision_etags_use_quoted_positive_integers(string value, long expected)
+    {
+        Assert.True(ContentRevisionEtags.TryParse(value, out var revision));
+        Assert.Equal(expected, revision);
+        Assert.Equal(value, ContentRevisionEtags.Format(revision));
+        Assert.False(ContentRevisionEtags.TryParse(expected.ToString(), out _));
     }
 
     private static WebApplicationFactory<Program> CreateFactory() =>

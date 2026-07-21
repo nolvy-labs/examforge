@@ -149,6 +149,7 @@ public sealed class AdminFillAnswerKeyService
                 request.IsCaseSensitive,
                 maximumOrder.HasValue ? maximumOrder.Value + 1 : 0);
             _answerKeys.Add(key);
+            context.Version!.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(token);
 
             var saved = await _answerKeys.GetDetailAsync(
@@ -227,6 +228,7 @@ public sealed class AdminFillAnswerKeyService
 
             if (key.Update(model.AcceptedAnswer, model.IsCaseSensitive))
             {
+                context.Version!.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(token);
             }
 
@@ -279,6 +281,7 @@ public sealed class AdminFillAnswerKeyService
             }
 
             _answerKeys.Remove(key);
+            context.Version!.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(token);
             return FillAnswerKeyError.None;
         }, FillAnswerKeyError.ConcurrencyConflict, cancellationToken);
@@ -323,7 +326,7 @@ public sealed class AdminFillAnswerKeyService
             : FillAnswerKeyError.QuestionDoesNotSupportAnswerKeys;
     }
 
-    private async Task<(Question? Question, FillAnswerKeyError Error)> LoadMutableQuestionAsync(
+    private async Task<(ExamVersion? Version, Question? Question, FillAnswerKeyError Error)> LoadMutableQuestionAsync(
         Guid examId,
         Guid versionId,
         Guid sectionId,
@@ -334,35 +337,35 @@ public sealed class AdminFillAnswerKeyService
 
         if (exam is null)
         {
-            return (null, FillAnswerKeyError.ExamNotFound);
+            return (null, null, FillAnswerKeyError.ExamNotFound);
         }
 
         if (exam.IsArchived)
         {
-            return (null, FillAnswerKeyError.ExamArchived);
+            return (null, null, FillAnswerKeyError.ExamArchived);
         }
 
         var version = await _versions.GetTrackedAsync(examId, versionId, cancellationToken);
 
         if (version is null)
         {
-            return (null, FillAnswerKeyError.VersionNotFound);
+            return (null, null, FillAnswerKeyError.VersionNotFound);
         }
 
         if (version.Status != ExamVersionStatus.Draft)
         {
-            return (null, FillAnswerKeyError.VersionNotEditable);
+            return (version, null, FillAnswerKeyError.VersionNotEditable);
         }
 
         if (await _sections.GetTrackedAsync(versionId, sectionId, cancellationToken) is null)
         {
-            return (null, FillAnswerKeyError.SectionNotFound);
+            return (version, null, FillAnswerKeyError.SectionNotFound);
         }
 
         var question = await _questions.GetTrackedAsync(sectionId, questionId, cancellationToken);
         return question is null
-            ? (null, FillAnswerKeyError.QuestionNotFound)
-            : (question, FillAnswerKeyError.None);
+            ? (version, null, FillAnswerKeyError.QuestionNotFound)
+            : (version, question, FillAnswerKeyError.None);
     }
 
     private async Task<T> ExecuteAsync<T>(
@@ -375,6 +378,10 @@ public sealed class AdminFillAnswerKeyService
             return await _unitOfWork.ExecuteInTransactionAsync(operation, cancellationToken);
         }
         catch (PersistenceConflictException)
+        {
+            return conflictResult;
+        }
+        catch (ExamVersionContentRevisionExhaustedException)
         {
             return conflictResult;
         }

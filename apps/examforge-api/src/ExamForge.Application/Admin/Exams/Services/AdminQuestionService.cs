@@ -187,6 +187,7 @@ public sealed class AdminQuestionService
                 ? graph.Children.Sum(child => child.Question.Points)
                 : graph.Question.Points;
             mutation.Version!.UpdateTotalScore(mutation.Version.TotalScore + addedScore);
+            mutation.Version.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(token);
             return DetailSuccess(NestedExamContentFactory.ToResponse(graph));
         }, DetailFailure(QuestionError.ConcurrencyConflict), cancellationToken);
@@ -250,6 +251,7 @@ public sealed class AdminQuestionService
             {
                 if (affectsScore)
                     mutation.Version!.UpdateTotalScore(mutation.Version.TotalScore - oldScore + newScore);
+                mutation.Version!.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(token);
             }
 
@@ -320,6 +322,7 @@ public sealed class AdminQuestionService
             if (!siblings.Select(question => question.Id).SequenceEqual(ids))
             {
                 AssignTemporaryOrders(siblings);
+                mutation.Version!.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(token);
                 var byId = siblings.ToDictionary(question => question.Id);
 
@@ -368,6 +371,7 @@ public sealed class AdminQuestionService
                 question.ParentQuestionId,
                 token);
             var remaining = siblings.Where(item => item.Id != questionId).ToList();
+            mutation.Version!.AdvanceContentRevision();
 
             if (remaining.Count > 0)
             {
@@ -482,6 +486,10 @@ public sealed class AdminQuestionService
             return await _unitOfWork.ExecuteInTransactionAsync(operation, cancellationToken);
         }
         catch (PersistenceConflictException)
+        {
+            return conflictResult;
+        }
+        catch (ExamVersionContentRevisionExhaustedException)
         {
             return conflictResult;
         }

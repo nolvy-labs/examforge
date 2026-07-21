@@ -308,6 +308,7 @@ public sealed class AdminExamVersionService
 
             if (version.UpdateDetails(model.Title, model.Description, model.Instructions, model.DurationMinutes))
             {
+                version.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(transactionToken);
             }
 
@@ -466,6 +467,10 @@ public sealed class AdminExamVersionService
         {
             return Failure(ExamVersionError.ConcurrencyConflict);
         }
+        catch (ExamVersionContentRevisionExhaustedException)
+        {
+            return Failure(ExamVersionError.ConcurrencyConflict);
+        }
     }
 
     private static ExamVersionError ValidateDetails(
@@ -514,6 +519,7 @@ public sealed class AdminExamVersionService
             version.Title,
             version.DurationMinutes,
             version.TotalScore,
+            version.ContentRevision,
             version.CreatedByUserId,
             version.PublishedAtUtc,
             version.RetiredAtUtc,
@@ -533,6 +539,7 @@ public sealed class AdminExamVersionService
             version.Instructions,
             version.DurationMinutes,
             version.TotalScore,
+            version.ContentRevision,
             version.CreatedByUserId,
             version.PublishedAtUtc,
             version.RetiredAtUtc,
@@ -552,6 +559,7 @@ public sealed class AdminExamVersionService
             version.Instructions,
             version.DurationMinutes,
             version.TotalScore,
+            version.ContentRevision,
             version.CreatedByUserId,
             version.PublishedAtUtc,
             version.RetiredAtUtc,

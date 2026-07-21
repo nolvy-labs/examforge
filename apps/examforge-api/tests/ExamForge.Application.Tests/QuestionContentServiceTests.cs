@@ -30,6 +30,7 @@ public sealed class QuestionContentServiceTests
         Assert.Null(result.Value!.Explanation);
         Assert.Equal(2m, result.Value.Points);
         Assert.Equal(2m, context.Version.TotalScore);
+        Assert.Equal(2, context.Version.ContentRevision);
         Assert.Equal(1, context.UnitOfWork.SaveCount);
     }
 
@@ -112,6 +113,7 @@ public sealed class QuestionContentServiceTests
         Assert.Equal(2, context.OptionRepository.Options.Count);
         Assert.Single(context.AnswerKeyRepository.Keys);
         Assert.Equal(5m, context.Version.TotalScore);
+        Assert.Equal(2, context.Version.ContentRevision);
         Assert.Equal(1, context.UnitOfWork.SaveCount);
     }
 
@@ -242,6 +244,7 @@ public sealed class QuestionContentServiceTests
         Assert.True(result.IsSuccess);
         Assert.False(first.IsCorrect);
         Assert.True(result.Value!.IsCorrect);
+        Assert.Equal(2, context.Version.ContentRevision);
         Assert.Single(context.OptionRepository.Options, option => option.IsCorrect);
     }
 
@@ -299,6 +302,41 @@ public sealed class QuestionContentServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal("Second Value", result.Value!.AcceptedAnswer);
         Assert.Equal("Second Value", key.NormalizedAnswer);
+        Assert.Equal(2, context.Version.ContentRevision);
+    }
+
+    [Fact]
+    public async Task Granular_reorders_and_deletes_advance_revision_once_per_request()
+    {
+        var questionContext = new TestContext();
+        var firstQuestion = questionContext.AddQuestion(QuestionType.FillBlank);
+        var secondQuestion = questionContext.AddQuestion(QuestionType.FillBlank);
+        Assert.True((await questionContext.Questions.ReorderAsync(
+            questionContext.Exam.Id, questionContext.Version.Id, questionContext.Section.Id,
+            new ReorderQuestionsRequest(null, [secondQuestion.Id, firstQuestion.Id]))).IsSuccess);
+        Assert.Equal(2, questionContext.Version.ContentRevision);
+        Assert.Equal(QuestionError.None, await questionContext.Questions.DeleteAsync(
+            questionContext.Exam.Id, questionContext.Version.Id, questionContext.Section.Id, firstQuestion.Id));
+        Assert.Equal(3, questionContext.Version.ContentRevision);
+
+        var optionContext = new TestContext();
+        var choice = optionContext.AddQuestion(QuestionType.MultipleChoiceMultiple);
+        var firstOption = optionContext.AddOption(choice, false);
+        var secondOption = optionContext.AddOption(choice, true);
+        Assert.True((await optionContext.Options.ReorderAsync(
+            optionContext.Exam.Id, optionContext.Version.Id, optionContext.Section.Id, choice.Id,
+            new ReorderQuestionOptionsRequest([secondOption.Id, firstOption.Id]))).IsSuccess);
+        Assert.Equal(2, optionContext.Version.ContentRevision);
+        Assert.Equal(QuestionOptionError.None, await optionContext.Options.DeleteAsync(
+            optionContext.Exam.Id, optionContext.Version.Id, optionContext.Section.Id, choice.Id, firstOption.Id));
+        Assert.Equal(3, optionContext.Version.ContentRevision);
+
+        var answerContext = new TestContext();
+        var fill = answerContext.AddQuestion(QuestionType.FillBlank);
+        var answer = answerContext.AddAnswerKey(fill, "Answer", false);
+        Assert.Equal(FillAnswerKeyError.None, await answerContext.AnswerKeys.DeleteAsync(
+            answerContext.Exam.Id, answerContext.Version.Id, answerContext.Section.Id, fill.Id, answer.Id));
+        Assert.Equal(2, answerContext.Version.ContentRevision);
     }
 
     [Fact]
@@ -706,7 +744,7 @@ public sealed class QuestionContentServiceTests
             _context.Version.Id, _context.Exam.Id, _context.Version.VersionNumber,
             _context.Version.Status, _context.Version.Title, _context.Version.Description,
             _context.Version.Instructions, _context.Version.DurationMinutes,
-            _context.Version.TotalScore, _context.Version.CreatedByUserId,
+            _context.Version.TotalScore, _context.Version.ContentRevision, _context.Version.CreatedByUserId,
             _context.Version.PublishedAtUtc, _context.Version.RetiredAtUtc,
             _context.Version.CreatedAtUtc, _context.Version.UpdatedAtUtc);
     }

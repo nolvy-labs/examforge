@@ -56,6 +56,11 @@ public static class RestrictedPatchApplier
         for (var index = 0; index < patchOperations.Count; index++)
         {
             var operation = patchOperations[index];
+            if (operation is null)
+            {
+                return Failure<TModel>(Error(
+                    index, null, "patch_operation_required", "Patch operations cannot be null."));
+            }
             var commonError = ValidateCommon(operation, index);
             if (commonError is not null)
             {

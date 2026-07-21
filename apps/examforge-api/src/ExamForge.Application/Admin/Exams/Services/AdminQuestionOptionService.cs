@@ -157,6 +157,7 @@ public sealed class AdminQuestionOptionService
                 request.Detail.Explanation,
                 maximumOrder.HasValue ? maximumOrder.Value + 1 : 0);
             _options.Add(option);
+            context.Version!.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(token);
 
             var saved = await _options.GetDetailAsync(
@@ -236,6 +237,7 @@ public sealed class AdminQuestionOptionService
 
             if (changed || changedOtherOptions)
             {
+                context.Version!.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(token);
             }
 
@@ -297,6 +299,7 @@ public sealed class AdminQuestionOptionService
             if (!current.Select(option => option.Id).SequenceEqual(ids))
             {
                 AssignTemporaryOrders(current);
+                context.Version!.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(token);
                 var byId = current.ToDictionary(option => option.Id);
 
@@ -354,6 +357,7 @@ public sealed class AdminQuestionOptionService
             }
 
             var remaining = current.Where(item => item.Id != optionId).ToList();
+            context.Version!.AdvanceContentRevision();
 
             if (remaining.Count > 0)
             {
@@ -417,7 +421,7 @@ public sealed class AdminQuestionOptionService
             : QuestionOptionError.QuestionDoesNotSupportOptions;
     }
 
-    private async Task<(Question? Question, QuestionOptionError Error)> LoadMutableQuestionAsync(
+    private async Task<(ExamVersion? Version, Question? Question, QuestionOptionError Error)> LoadMutableQuestionAsync(
         Guid examId,
         Guid versionId,
         Guid sectionId,
@@ -428,35 +432,35 @@ public sealed class AdminQuestionOptionService
 
         if (exam is null)
         {
-            return (null, QuestionOptionError.ExamNotFound);
+            return (null, null, QuestionOptionError.ExamNotFound);
         }
 
         if (exam.IsArchived)
         {
-            return (null, QuestionOptionError.ExamArchived);
+            return (null, null, QuestionOptionError.ExamArchived);
         }
 
         var version = await _versions.GetTrackedAsync(examId, versionId, cancellationToken);
 
         if (version is null)
         {
-            return (null, QuestionOptionError.VersionNotFound);
+            return (null, null, QuestionOptionError.VersionNotFound);
         }
 
         if (version.Status != ExamVersionStatus.Draft)
         {
-            return (null, QuestionOptionError.VersionNotEditable);
+            return (version, null, QuestionOptionError.VersionNotEditable);
         }
 
         if (await _sections.GetTrackedAsync(versionId, sectionId, cancellationToken) is null)
         {
-            return (null, QuestionOptionError.SectionNotFound);
+            return (version, null, QuestionOptionError.SectionNotFound);
         }
 
         var question = await _questions.GetTrackedAsync(sectionId, questionId, cancellationToken);
         return question is null
-            ? (null, QuestionOptionError.QuestionNotFound)
-            : (question, QuestionOptionError.None);
+            ? (version, null, QuestionOptionError.QuestionNotFound)
+            : (version, question, QuestionOptionError.None);
     }
 
     private async Task<T> ExecuteAsync<T>(
@@ -469,6 +473,10 @@ public sealed class AdminQuestionOptionService
             return await _unitOfWork.ExecuteInTransactionAsync(operation, cancellationToken);
         }
         catch (PersistenceConflictException)
+        {
+            return conflictResult;
+        }
+        catch (ExamVersionContentRevisionExhaustedException)
         {
             return conflictResult;
         }

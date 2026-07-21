@@ -154,6 +154,7 @@ public sealed class AdminExamVersionRepository : IAdminExamVersionRepository
             version.Instructions,
             version.DurationMinutes,
             version.TotalScore,
+            version.ContentRevision,
             version.CreatedByUserId,
             version.PublishedAtUtc,
             version.RetiredAtUtc,

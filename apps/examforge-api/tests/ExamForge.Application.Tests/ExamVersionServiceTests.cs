@@ -267,6 +267,7 @@ public sealed class ExamVersionServiceTests
         Assert.Equal(60, partial.Value.DurationMinutes);
         Assert.Equal(string.Empty, cleared.Value!.Description);
         Assert.Equal(string.Empty, cleared.Value.Instructions);
+        Assert.Equal(3, version.ContentRevision);
     }
 
     [Fact]
@@ -285,6 +286,7 @@ public sealed class ExamVersionServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(updatedAt, version.UpdatedAtUtc);
+        Assert.Equal(1, version.ContentRevision);
         Assert.Equal(savesBefore, context.UnitOfWork.SaveCount);
     }
 
@@ -732,6 +734,7 @@ public sealed class ExamVersionServiceTests
                 version.Instructions,
                 version.DurationMinutes,
                 version.TotalScore,
+                version.ContentRevision,
                 version.CreatedByUserId,
                 version.PublishedAtUtc,
                 version.RetiredAtUtc,

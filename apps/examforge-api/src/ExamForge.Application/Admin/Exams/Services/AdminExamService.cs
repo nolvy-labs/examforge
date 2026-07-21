@@ -472,7 +472,7 @@ public sealed class AdminExamService
         ExamVersion version, IReadOnlyList<ExamSectionDetailResponse> sections) =>
         new(version.Id, version.ExamId, version.VersionNumber, version.Status, version.Title,
             version.Description, version.Instructions, version.DurationMinutes, version.TotalScore,
-            version.CreatedByUserId, version.PublishedAtUtc, version.RetiredAtUtc, version.CreatedAtUtc,
+            version.ContentRevision, version.CreatedByUserId, version.PublishedAtUtc, version.RetiredAtUtc, version.CreatedAtUtc,
             version.UpdatedAtUtc, sections);
 
     private static Result<ExamResponse, ExamError> InvalidPatch(int operationIndex, string code, string message) =>

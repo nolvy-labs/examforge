@@ -29,6 +29,7 @@ public sealed class ExamVersion
         Instructions = instructions?.Trim() ?? string.Empty;
         DurationMinutes = durationMinutes;
         TotalScore = 0m;
+        ContentRevision = 1;
         CreatedByUserId = createdByUserId;
         CreatedAtUtc = DateTimeOffset.UtcNow;
     }
@@ -42,6 +43,7 @@ public sealed class ExamVersion
     public string Instructions { get; private set; } = string.Empty;
     public int? DurationMinutes { get; private set; }
     public decimal TotalScore { get; private set; }
+    public long ContentRevision { get; private set; }
     public DateTimeOffset? PublishedAtUtc { get; private set; }
     public DateTimeOffset? RetiredAtUtc { get; private set; }
     public Guid? CreatedByUserId { get; private set; }
@@ -119,6 +121,16 @@ public sealed class ExamVersion
         }
 
         TotalScore = totalScore;
+    }
+
+    public void AdvanceContentRevision()
+    {
+        if (ContentRevision == long.MaxValue)
+        {
+            throw new ExamVersionContentRevisionExhaustedException(Id);
+        }
+
+        ContentRevision++;
     }
 
     public bool Publish(DateTimeOffset publishedAtUtc)

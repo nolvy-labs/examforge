@@ -21,6 +21,7 @@ public static class DependencyInjection
 
         services.AddScoped<AdminExamService>();
         services.AddScoped<AdminExamVersionService>();
+        services.AddScoped<AdminExamVersionContentBatchService>();
         services.AddScoped<AdminExamSectionService>();
         services.AddScoped<AdminQuestionService>();
         services.AddScoped<AdminQuestionOptionService>();

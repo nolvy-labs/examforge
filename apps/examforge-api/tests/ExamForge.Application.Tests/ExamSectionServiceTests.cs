@@ -86,6 +86,7 @@ public sealed class ExamSectionServiceTests
         Assert.Equal(1, second.Value!.DisplayOrder);
         Assert.Equal("First section", first.Value.Title);
         Assert.Equal("Instructions", first.Value.Instructions);
+        Assert.Equal(3, version.ContentRevision);
         Assert.Equal(2, context.UnitOfWork.SaveCount);
     }
 
@@ -232,6 +233,7 @@ public sealed class ExamSectionServiceTests
         Assert.Equal(string.Empty, instructions.Value!.Instructions);
         Assert.Equal("New stimulus", stimulus.Value!.StimulusText);
         Assert.Equal("https://example.com/new", media.Value!.MediaUrl);
+        Assert.Equal(6, version.ContentRevision);
     }
 
     [Fact]
@@ -319,6 +321,7 @@ public sealed class ExamSectionServiceTests
 
         Assert.Equal(new[] { third.Id, first.Id, second.Id }, result.Value!.Select(item => item.Id));
         Assert.Equal(new[] { 0, 1, 2 }, result.Value!.Select(item => item.DisplayOrder));
+        Assert.Equal(2, version.ContentRevision);
         Assert.Equal(2, context.UnitOfWork.OrderSnapshots.Count);
         Assert.All(context.UnitOfWork.OrderSnapshots[0], order => Assert.True(order < 0));
         Assert.Equal(new[] { 0, 1, 2 }, context.UnitOfWork.OrderSnapshots[1].Order());
@@ -336,6 +339,7 @@ public sealed class ExamSectionServiceTests
             exam.Id, version.Id, new([first.Id, second.Id]));
 
         Assert.True(result.IsSuccess);
+        Assert.Equal(1, version.ContentRevision);
         Assert.Equal(0, context.UnitOfWork.SaveCount);
     }
 
@@ -403,6 +407,7 @@ public sealed class ExamSectionServiceTests
         var error = await context.Service.DeleteAsync(exam.Id, version.Id, removed.Id);
 
         Assert.Equal(ExamSectionError.None, error);
+        Assert.Equal(2, version.ContentRevision);
         Assert.DoesNotContain(context.Sections.Sections, section => section.Id == removed.Id);
         Assert.Equal(new[] { 0, 1 }, context.Sections.Sections.Select(section => section.DisplayOrder).Order());
         Assert.All(context.UnitOfWork.OrderSnapshots[0], order => Assert.True(order < 0));
@@ -652,6 +657,7 @@ public sealed class ExamSectionServiceTests
                     version.Instructions,
                     version.DurationMinutes,
                     version.TotalScore,
+                    version.ContentRevision,
                     version.CreatedByUserId,
                     version.PublishedAtUtc,
                     version.RetiredAtUtc,

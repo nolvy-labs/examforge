@@ -39,6 +39,11 @@ public sealed class ExamVersionConfiguration : IEntityTypeConfiguration<ExamVers
             .HasDefaultValue(0m)
             .IsRequired();
 
+        builder.Property(version => version.ContentRevision)
+            .HasDefaultValue(1L)
+            .IsConcurrencyToken()
+            .IsRequired();
+
         builder.Property(version => version.PublishedAtUtc);
         builder.Property(version => version.RetiredAtUtc);
         builder.Property(version => version.CreatedByUserId);

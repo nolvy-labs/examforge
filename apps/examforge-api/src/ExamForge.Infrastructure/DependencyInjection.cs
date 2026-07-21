@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminExamRepository, AdminExamRepository>();
         services.AddSingleton<IAdminExamSlugGenerator, AdminExamSlugGenerator>();
         services.AddScoped<IAdminExamVersionRepository, AdminExamVersionRepository>();
+        services.AddScoped<IAdminExamVersionContentBatchRepository, AdminExamVersionContentBatchRepository>();
         services.AddScoped<IAdminExamVersionContentCloner, AdminExamVersionContentCloner>();
         services.AddScoped<IAdminExamVersionPublishReadinessChecker, AdminExamVersionPublishReadinessChecker>();
         services.AddScoped<IAdminExamSectionRepository, AdminExamSectionRepository>();

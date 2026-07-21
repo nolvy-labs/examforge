@@ -144,6 +144,7 @@ public sealed class AdminExamSectionService
             {
                 _sections.Add(section);
             }
+            mutation.Version!.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(transactionToken);
             return DetailSuccess(NestedExamContentFactory.ToResponse(
                 section,
@@ -206,6 +207,7 @@ public sealed class AdminExamSectionService
 
             if (section.UpdateDetails(model.Kind, model.Title, model.Instructions, model.StimulusText, model.MediaUrl))
             {
+                mutation.Version!.AdvanceContentRevision();
                 await _unitOfWork.SaveChangesAsync(transactionToken);
             }
 
@@ -257,6 +259,7 @@ public sealed class AdminExamSectionService
             }
 
             AssignTemporaryOrders(current);
+            mutation.Version!.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(transactionToken);
 
             var sectionsById = current.ToDictionary(section => section.Id);
@@ -295,6 +298,11 @@ public sealed class AdminExamSectionService
                 return ExamSectionError.SectionNotFound;
             }
 
+            var sectionDetail = await _sections.GetDetailAsync(
+                examId, versionId, sectionId, transactionToken);
+            mutation.Version!.UpdateTotalScore(
+                mutation.Version.TotalScore - (sectionDetail?.TotalPoints ?? 0m));
+
             var remaining = current.Where(item => item.Id != sectionId).ToList();
 
             if (remaining.Count > 0)
@@ -303,6 +311,7 @@ public sealed class AdminExamSectionService
             }
 
             _sections.Remove(section);
+            mutation.Version.AdvanceContentRevision();
             await _unitOfWork.SaveChangesAsync(transactionToken);
 
             for (var index = 0; index < remaining.Count; index++)
@@ -373,6 +382,10 @@ public sealed class AdminExamSectionService
             return await _unitOfWork.ExecuteInTransactionAsync(operation, cancellationToken);
         }
         catch (PersistenceConflictException)
+        {
+            return conflictResult;
+        }
+        catch (ExamVersionContentRevisionExhaustedException)
         {
             return conflictResult;
         }

@@ -54,6 +54,11 @@ internal sealed class UnitOfWork : IUnitOfWork
 
     private static bool IsConflict(Exception exception)
     {
+        if (exception is DbUpdateConcurrencyException)
+        {
+            return true;
+        }
+
         var postgresException = exception as PostgresException ??
             exception.InnerException as PostgresException;
 

@@ -13,6 +13,7 @@ public sealed record ExamVersionData(
     string Instructions,
     int? DurationMinutes,
     decimal TotalScore,
+    long ContentRevision,
     Guid? CreatedByUserId,
     DateTimeOffset? PublishedAtUtc,
     DateTimeOffset? RetiredAtUtc,
