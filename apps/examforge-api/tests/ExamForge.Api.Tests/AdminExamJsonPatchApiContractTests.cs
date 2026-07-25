@@ -159,6 +159,10 @@ public sealed class AdminExamJsonPatchApiContractTests
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
+            builder.UseSetting(
+                "ConnectionStrings:DefaultConnection",
+                "Host=localhost;Database=examforge_tests;Username=examforge;Password=examforge");
+            builder.UseSetting("Jwt:Secret", new string('x', 64));
             builder.ConfigureLogging(logging => logging.ClearProviders());
             builder.ConfigureTestServices(services =>
             {
