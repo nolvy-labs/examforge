@@ -5,6 +5,10 @@ x-api-environment: &api-environment
   ASPNETCORE_URLS: http://+:5001
   ConnectionStrings__DefaultConnection: "${ConnectionStrings__DefaultConnection:?Set ConnectionStrings__DefaultConnection in .env}"
   Jwt__Secret: "${Jwt_Secret:?Set Jwt_Secret in .env}"
+  JWT_ISSUER: "${JWT_ISSUER:?Set JWT_ISSUER in .env}"
+  JWT_AUDIENCE: "${JWT_AUDIENCE:?Set JWT_AUDIENCE in .env}"
+  JWT_ACCESS_TOKEN_MINUTES: "${JWT_ACCESS_TOKEN_MINUTES:?Set JWT_ACCESS_TOKEN_MINUTES in .env}"
+  JWT_REFRESH_TOKEN_DAYS: "${JWT_REFRESH_TOKEN_DAYS:?Set JWT_REFRESH_TOKEN_DAYS in .env}"
 
 services:
   migrations:
