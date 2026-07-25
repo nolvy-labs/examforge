@@ -1,10 +1,6 @@
-using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
 using ExamForge.Application.Admin.Exams.Enums;
-using ExamForge.Application.Admin.Exams.Errors;
 using ExamForge.Application.Admin.Exams.Models;
-using ExamForge.Application.Admin.Exams.Services;
-using ExamForge.Application.Admin.Exams.Utils;
 using ExamForge.Domain.Exams;
 using ExamForge.Infrastructure.Persistence;
 

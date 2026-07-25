@@ -1,12 +1,11 @@
 ﻿using System.Security.Claims;
 
 using ExamForge.Api.Common.Constants;
+using ExamForge.Application.Abstractions;
 using ExamForge.Application.Auth;
-using ExamForge.Infrastructure.Auth;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 
 namespace ExamForge.Api.Controllers;
 
@@ -15,14 +14,10 @@ namespace ExamForge.Api.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
-    private readonly JwtOptions _jwtOptions;
 
-    public AuthController(
-        AuthService authService,
-        IOptions<JwtOptions> jwtOptions)
+    public AuthController(AuthService authService)
     {
         _authService = authService;
-        _jwtOptions = jwtOptions.Value;
     }
 
     [HttpPost("register")]
@@ -157,14 +152,12 @@ public sealed class AuthController : ControllerBase
         Response.Cookies.Append(
             AuthCookieNames.AccessToken,
             response.AccessToken,
-            CreateAccessTokenCookieOptions(response.AccessTokenExpiresAtUtc)
-        );
+            CreateAccessTokenCookieOptions(response.AccessTokenExpiresAtUtc));
 
         Response.Cookies.Append(
             AuthCookieNames.RefreshToken,
             response.RefreshToken,
-            CreateRefreshTokenCookieOptions()
-        );
+            CreateRefreshTokenCookieOptions(response.RefreshTokenExpiresAtUtc));
     }
 
     private CookieOptions CreateAccessTokenCookieOptions(DateTimeOffset expiresAtUtc)
@@ -179,7 +172,7 @@ public sealed class AuthController : ControllerBase
         };
     }
 
-    private CookieOptions CreateRefreshTokenCookieOptions()
+    private CookieOptions CreateRefreshTokenCookieOptions(DateTimeOffset expiresAtUtc)
     {
         return new CookieOptions
         {
@@ -187,7 +180,7 @@ public sealed class AuthController : ControllerBase
             Secure = true,
             SameSite = SameSiteMode.Lax,
             Path = ApiRoutes.Auth,
-            Expires = DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenDays)
+            Expires = expiresAtUtc
         };
     }
 

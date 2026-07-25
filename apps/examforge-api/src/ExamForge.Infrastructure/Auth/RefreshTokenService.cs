@@ -2,20 +2,44 @@
 using System.Text;
 
 using ExamForge.Application.Abstractions;
+using ExamForge.Infrastructure.Auth;
 
-namespace ExamForge.Infrastructure.Auth;
+using Microsoft.Extensions.Options;
 
 public sealed class RefreshTokenService : IRefreshTokenService
 {
-    public string GenerateRefreshToken()
+    private readonly JwtOptions _jwtOptions;
+    private readonly TimeProvider _timeProvider;
+
+    public RefreshTokenService(
+        IOptions<JwtOptions> jwtOptions,
+        TimeProvider timeProvider)
     {
-        var bytes = RandomNumberGenerator.GetBytes(64);
-        return Convert.ToBase64String(bytes);
+        _jwtOptions = jwtOptions.Value;
+        _timeProvider = timeProvider;
     }
 
-    public string HashRefreshToken(string refreshToken)
+    public GeneratedRefreshToken Generate()
     {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+        var bytes = RandomNumberGenerator.GetBytes(64);
+        var token = Convert.ToBase64String(bytes);
+        var tokenHash = Hash(token);
+
+        var expiresAtUtc = _timeProvider
+            .GetUtcNow()
+            .AddDays(_jwtOptions.RefreshTokenDays);
+
+        return new GeneratedRefreshToken(
+            token,
+            tokenHash,
+            expiresAtUtc);
+    }
+
+    public string Hash(string token)
+    {
+        var bytes = SHA256.HashData(
+            Encoding.UTF8.GetBytes(token));
+
         return Convert.ToHexString(bytes);
     }
 }

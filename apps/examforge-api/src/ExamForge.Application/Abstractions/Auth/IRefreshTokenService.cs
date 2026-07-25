@@ -2,7 +2,13 @@
 
 public interface IRefreshTokenService
 {
-    string GenerateRefreshToken();
+    GeneratedRefreshToken Generate();
 
-    string HashRefreshToken(string refreshToken);
+    string Hash(string token);
 }
+
+public sealed record GeneratedRefreshToken(
+    string Token,
+    string TokenHash,
+    DateTimeOffset ExpiresAtUtc
+);

@@ -39,7 +39,6 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
-        services.AddSingleton<IRefreshTokenLifetimeProvider, RefreshTokenLifetimeProvider>();
 
         services.AddScoped<IAdminExamTagRepository, AdminExamTagRepository>();
         services.AddScoped<IStudentExamTagQuery, StudentExamTagQuery>();

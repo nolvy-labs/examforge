@@ -18,10 +18,11 @@ public sealed record RefreshTokenRequest(
 );
 
 public sealed record AuthResponse(
+    UserProfileResponse User,
     string AccessToken,
-    string RefreshToken,
     DateTimeOffset AccessTokenExpiresAtUtc,
-    UserProfileResponse User
+    string RefreshToken,
+    DateTimeOffset RefreshTokenExpiresAtUtc
 );
 
 public sealed record UserProfileResponse(
