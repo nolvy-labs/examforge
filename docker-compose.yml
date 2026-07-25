@@ -1,0 +1,29 @@
+name: examforge-local
+
+x-api-environment: &api-environment
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://+:5001
+  ConnectionStrings__DefaultConnection: "${ConnectionStrings__DefaultConnection:?Set ConnectionStrings__DefaultConnection in .env}"
+  Jwt__Secret: "${Jwt_Secret:?Set Jwt_Secret in .env}"
+
+services:
+  migrations:
+    build:
+      context: ./apps/examforge-api
+      dockerfile: Dockerfile
+      target: migrations
+    environment: *api-environment
+    restart: "on-failure:3"
+
+  api:
+    build:
+      context: ./apps/examforge-api
+      dockerfile: Dockerfile
+      target: final
+    restart: unless-stopped
+    environment: *api-environment
+    ports:
+      - "${API_PORT:-5001}:5001"
+    depends_on:
+      migrations:
+        condition: service_completed_successfully

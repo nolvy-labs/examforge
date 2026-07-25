@@ -1,0 +1,31 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Node.js dependencies and build output
+**/node_modules/
+**/.next/
+**/dist/
+**/coverage/
+**/.npm/
+**/.yarn/
+**/.pnpm-store/
+
+# IDE and user-specific files
+**/.vs/
+**/.vscode/
+**/*.suo
+**/*.user
+
+# Logs and local environment files
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+
+# Source control
+.git/
+.gitignore
+
+# Files not needed to build the API image
+tests/
