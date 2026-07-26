@@ -2,6 +2,7 @@ using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.ExamClassifications.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
 using ExamForge.Application.Student.ExamClassifications.Abstractions;
+using ExamForge.Application.Student.ExamAttempts.Abstractions;
 using ExamForge.Application.Student.Exams.Abstractions;
 using ExamForge.Infrastructure.Auth;
 using ExamForge.Infrastructure.ExamAttempts;
@@ -59,8 +60,6 @@ public static class DependencyInjection
         services.AddScoped<IAdminFillAnswerKeyRepository, AdminFillAnswerKeyRepository>();
 
         services.AddScoped<IExamAttemptRepository, ExamAttemptRepository>();
-        services.AddScoped<IExamAttemptAnswerRepository, ExamAttemptAnswerRepository>();
-        services.AddScoped<IExamAttemptSelectedOptionRepository, ExamAttemptSelectedOptionRepository>();
 
         return services;
     }

@@ -1,48 +1,44 @@
-﻿using ExamForge.Domain.ExamAttempts;
+using ExamForge.Domain.ExamAttempts;
+using ExamForge.Domain.Exams;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class ExamAttemptAnswerConfiguration : IEntityTypeConfiguration<ExamAttemptAnswer>
+public sealed class ExamAttemptAnswerConfiguration : IEntityTypeConfiguration<ExamAttemptAnswer>
 {
     public void Configure(EntityTypeBuilder<ExamAttemptAnswer> builder)
     {
         builder.ToTable("exam_attempt_answers");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(answer => answer.Id);
 
-        builder.Property(e => e.ExamAttemptId)
-            .IsRequired();
+        builder.Property(answer => answer.ExamAttemptId).IsRequired();
+        builder.Property(answer => answer.QuestionId).IsRequired();
+        builder.Property(answer => answer.TextAnswer)
+            .HasMaxLength(FillAnswerKeyConstraints.AcceptedAnswerMaxLength);
+        builder.Property(answer => answer.AwardedScore)
+            .HasColumnType("decimal(18,6)");
+        builder.Property(answer => answer.MaximumScore)
+            .HasColumnType("decimal(18,6)");
+        builder.Property(answer => answer.GradingStatus)
+            .HasConversion<string>()
+            .HasMaxLength(32);
+        builder.Property(answer => answer.CreatedAtUtc).IsRequired();
+        builder.Property(answer => answer.UpdatedAtUtc);
 
-        builder.Property(e => e.QuestionId)
-            .IsRequired();
-
-        builder.Property(e => e.TextAnswer);
-
-        builder.Property(e => e.IsCorrect);
-
-        builder.Property(e => e.Score)
-            .HasColumnType("decimal(8,2)");
-
-        builder.Property(e => e.CreatedAtUtc)
-            .IsRequired();
-
-        builder.Property(e => e.UpdatedAtUtc);
-
-        builder.HasIndex(e => new { e.ExamAttemptId, e.QuestionId })
+        builder.HasIndex(answer => new { answer.ExamAttemptId, answer.QuestionId })
             .IsUnique();
+        builder.HasIndex(answer => answer.QuestionId);
 
-        builder.HasIndex(e => e.QuestionId);
-
-        builder.HasOne(e => e.ExamAttempt)
-            .WithMany(a => a.Answers)
-            .HasForeignKey(e => e.ExamAttemptId)
+        builder.HasOne(answer => answer.ExamAttempt)
+            .WithMany(attempt => attempt.Answers)
+            .HasForeignKey(answer => answer.ExamAttemptId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(e => e.Question)
+        builder.HasOne(answer => answer.Question)
             .WithMany()
-            .HasForeignKey(e => e.QuestionId)
+            .HasForeignKey(answer => answer.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

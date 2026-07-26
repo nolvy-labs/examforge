@@ -1,14 +1,201 @@
-﻿using ExamForge.Application.Abstractions;
+using ExamForge.Application.Student.ExamAttempts.Abstractions;
+using ExamForge.Application.Student.ExamAttempts.Models;
+using ExamForge.Domain.ExamAttempts;
+using ExamForge.Domain.Exams;
 using ExamForge.Infrastructure.Persistence;
+
+using Microsoft.EntityFrameworkCore;
+
+using Npgsql;
 
 namespace ExamForge.Infrastructure.ExamAttempts;
 
 public sealed class ExamAttemptRepository : IExamAttemptRepository
 {
+    private const string ActiveAttemptIndexName = "ux_exam_attempts_one_in_progress";
     private readonly ExamForgeDbContext _dbContext;
 
     public ExamAttemptRepository(ExamForgeDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    public Task<bool> ExamExistsAsync(
+        Guid examId,
+        CancellationToken cancellationToken = default) =>
+        _dbContext.Exams.AsNoTracking().AnyAsync(
+            exam => exam.Id == examId && !exam.IsArchived,
+            cancellationToken);
+
+    public Task<ExamVersion?> GetPublishedVersionAsync(
+        Guid examId,
+        CancellationToken cancellationToken = default) =>
+        VersionGraph(_dbContext.ExamVersions.AsNoTracking())
+            .SingleOrDefaultAsync(
+                version =>
+                    version.ExamId == examId &&
+                    !version.Exam.IsArchived &&
+                    version.Status == ExamVersionStatus.Published,
+                cancellationToken);
+
+    public Task<ExamAttempt?> GetActiveAsync(
+        Guid studentId,
+        Guid examId,
+        CancellationToken cancellationToken = default) =>
+        AttemptGraph()
+            .SingleOrDefaultAsync(
+                attempt =>
+                    attempt.StudentId == studentId &&
+                    attempt.ExamId == examId &&
+                    attempt.Status == ExamAttemptStatus.InProgress,
+                cancellationToken);
+
+    public Task<ExamAttempt?> GetOwnedAsync(
+        Guid attemptId,
+        Guid studentId,
+        CancellationToken cancellationToken = default) =>
+        AttemptGraph()
+            .SingleOrDefaultAsync(
+                attempt =>
+                    attempt.Id == attemptId &&
+                    attempt.StudentId == studentId,
+                cancellationToken);
+
+    public async Task<IReadOnlyList<ExamAttempt>> GetExpiredAsync(
+        Guid studentId,
+        DateTimeOffset nowUtc,
+        CancellationToken cancellationToken = default) =>
+        await AttemptGraph()
+            .Where(attempt =>
+                attempt.StudentId == studentId &&
+                attempt.Status == ExamAttemptStatus.InProgress &&
+                attempt.ExpiresAtUtc.HasValue &&
+                attempt.ExpiresAtUtc.Value <= nowUtc)
+            .OrderBy(attempt => attempt.ExpiresAtUtc)
+            .ThenBy(attempt => attempt.Id)
+            .ToListAsync(cancellationToken);
+
+    public async Task<AttemptCreatePersistenceResult> AddAsync(
+        ExamAttempt attempt,
+        CancellationToken cancellationToken = default)
+    {
+        _dbContext.ExamAttempts.Add(attempt);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return new AttemptCreatePersistenceResult(true, null);
+        }
+        catch (DbUpdateException exception) when (IsActiveAttemptViolation(exception))
+        {
+            _dbContext.ChangeTracker.Clear();
+            var existingId = await _dbContext.ExamAttempts
+                .AsNoTracking()
+                .Where(existing =>
+                    existing.StudentId == attempt.StudentId &&
+                    existing.ExamId == attempt.ExamId &&
+                    existing.Status == ExamAttemptStatus.InProgress)
+                .Select(existing => (Guid?)existing.Id)
+                .SingleOrDefaultAsync(cancellationToken);
+            return new AttemptCreatePersistenceResult(false, existingId);
+        }
+    }
+
+    public async Task<AttemptSavePersistenceResult> SaveAsync(
+        ExamAttempt attempt,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return new AttemptSavePersistenceResult(true, attempt.Revision, attempt.Status);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            _dbContext.ChangeTracker.Clear();
+            var current = await _dbContext.ExamAttempts
+                .AsNoTracking()
+                .Where(item => item.Id == attempt.Id)
+                .Select(item => new
+                {
+                    item.Revision,
+                    item.Status
+                })
+                .SingleOrDefaultAsync(cancellationToken);
+            return new AttemptSavePersistenceResult(
+                false,
+                current?.Revision,
+                current?.Status);
+        }
+    }
+
+    public async Task<ExamAttemptPageModel> GetPageAsync(
+        Guid studentId,
+        bool completed,
+        int skip,
+        int take,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.ExamAttempts.AsNoTracking()
+            .Where(attempt => attempt.StudentId == studentId);
+        query = completed
+            ? query.Where(attempt => attempt.Status != ExamAttemptStatus.InProgress)
+            : query.Where(attempt => attempt.Status == ExamAttemptStatus.InProgress);
+
+        var totalItems = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(attempt => attempt.UpdatedAtUtc)
+            .ThenByDescending(attempt => attempt.Id)
+            .Skip(skip)
+            .Take(take)
+            .Select(attempt => new ExamAttemptListModel(
+                attempt.Id,
+                attempt.ExamId,
+                attempt.ExamVersionId,
+                attempt.Exam.Title,
+                attempt.Exam.Slug,
+                attempt.Status,
+                attempt.StartedAtUtc,
+                attempt.ExpiresAtUtc,
+                attempt.SubmittedAtUtc,
+                attempt.AbandonedAtUtc,
+                attempt.Score,
+                attempt.MaximumScore,
+                attempt.Revision,
+                attempt.UpdatedAtUtc))
+            .ToListAsync(cancellationToken);
+        return new ExamAttemptPageModel(items, totalItems);
+    }
+
+    private IQueryable<ExamAttempt> AttemptGraph() =>
+        _dbContext.ExamAttempts
+            .AsSplitQuery()
+            .Include(attempt => attempt.Exam)
+            .Include(attempt => attempt.ExamVersion)
+                .ThenInclude(version => version.Sections)
+                    .ThenInclude(section => section.Questions)
+                        .ThenInclude(question => question.Options)
+            .Include(attempt => attempt.ExamVersion)
+                .ThenInclude(version => version.Sections)
+                    .ThenInclude(section => section.Questions)
+                        .ThenInclude(question => question.FillAnswerKeys)
+            .Include(attempt => attempt.Answers)
+                .ThenInclude(answer => answer.SelectedOptions);
+
+    private static IQueryable<ExamVersion> VersionGraph(IQueryable<ExamVersion> query) =>
+        query
+            .AsSplitQuery()
+            .Include(version => version.Exam)
+            .Include(version => version.Sections)
+                .ThenInclude(section => section.Questions)
+                    .ThenInclude(question => question.Options)
+            .Include(version => version.Sections)
+                .ThenInclude(section => section.Questions)
+                    .ThenInclude(question => question.FillAnswerKeys);
+
+    private static bool IsActiveAttemptViolation(DbUpdateException exception)
+    {
+        var postgresException = exception.InnerException as PostgresException;
+        return postgresException?.SqlState == PostgresErrorCodes.UniqueViolation &&
+            postgresException.ConstraintName == ActiveAttemptIndexName;
     }
 }

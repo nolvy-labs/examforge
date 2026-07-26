@@ -1,0 +1,666 @@
+using System.Text.Json;
+using ExamForge.Application.Abstractions;
+using ExamForge.Application.Admin.Exams.Dtos;
+using ExamForge.Application.Common;
+using ExamForge.Application.Student.ExamAttempts.Abstractions;
+using ExamForge.Application.Student.ExamAttempts.Dtos;
+using ExamForge.Application.Student.ExamAttempts.Errors;
+using ExamForge.Application.Student.ExamAttempts.Models;
+using ExamForge.Application.Student.ExamAttempts.Patch;
+using ExamForge.Application.Student.ExamAttempts.Scoring;
+using ExamForge.Domain.ExamAttempts;
+using ExamForge.Domain.Exams;
+
+namespace ExamForge.Application.Student.ExamAttempts.Services;
+
+public sealed class ExamAttemptService
+{
+    private readonly IExamAttemptRepository _repository;
+    private readonly ICurrentUserContext _currentUser;
+    private readonly ExamAttemptScoringService _scoring;
+    private readonly TimeProvider _timeProvider;
+
+    public ExamAttemptService(
+        IExamAttemptRepository repository,
+        ICurrentUserContext currentUser,
+        ExamAttemptScoringService scoring,
+        TimeProvider timeProvider)
+    {
+        _repository = repository;
+        _currentUser = currentUser;
+        _scoring = scoring;
+        _timeProvider = timeProvider;
+    }
+
+    public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> CreateAsync(
+        Guid examId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_currentUser.UserId.HasValue)
+        {
+            return Failure(ExamAttemptError.CurrentUserUnavailable);
+        }
+
+        var studentId = _currentUser.UserId.Value;
+        var nowUtc = _timeProvider.GetUtcNow();
+        var existing = await _repository.GetActiveAsync(studentId, examId, cancellationToken);
+        if (existing is not null)
+        {
+            var finalized = await FinalizeIfExpiredAsync(existing, nowUtc, cancellationToken);
+            if (!finalized.IsSuccess)
+            {
+                return Failure(finalized.Error, finalized.AdditionalData);
+            }
+
+            if (finalized.Value!.Status == ExamAttemptStatus.InProgress)
+            {
+                return Failure(
+                    ExamAttemptError.ActiveAttemptExists,
+                    new ActiveAttemptConflict(finalized.Value.Id));
+            }
+        }
+
+        var version = await _repository.GetPublishedVersionAsync(examId, cancellationToken);
+        if (version is null)
+        {
+            var exists = await _repository.ExamExistsAsync(examId, cancellationToken);
+            return Failure(
+                exists
+                    ? ExamAttemptError.PublishedVersionNotFound
+                    : ExamAttemptError.ExamNotFound);
+        }
+
+        DateTimeOffset? expiresAtUtc = version.DurationMinutes.HasValue
+            ? nowUtc.AddMinutes(version.DurationMinutes.Value)
+            : null;
+        var questionIds = version.Sections
+            .SelectMany(section => section.Questions)
+            .Where(question => question.Type != QuestionType.Group)
+            .Select(question => question.Id)
+            .ToList();
+        var attempt = new ExamAttempt(
+            studentId,
+            examId,
+            version.Id,
+            nowUtc,
+            expiresAtUtc,
+            questionIds);
+
+        var create = await _repository.AddAsync(attempt, cancellationToken);
+        if (!create.Created)
+        {
+            var racedAttempt = await _repository.GetActiveAsync(
+                studentId,
+                examId,
+                cancellationToken);
+            if (racedAttempt is not null)
+            {
+                var finalized = await FinalizeIfExpiredAsync(
+                    racedAttempt,
+                    nowUtc,
+                    cancellationToken);
+                if (!finalized.IsSuccess)
+                {
+                    return Failure(finalized.Error, finalized.AdditionalData);
+                }
+
+                if (finalized.Value!.Status == ExamAttemptStatus.InProgress)
+                {
+                    return Failure(
+                        ExamAttemptError.ActiveAttemptExists,
+                        new ActiveAttemptConflict(finalized.Value.Id));
+                }
+            }
+
+            create = await _repository.AddAsync(attempt, cancellationToken);
+            if (!create.Created)
+            {
+                return create.ExistingAttemptId.HasValue
+                    ? Failure(
+                        ExamAttemptError.ActiveAttemptExists,
+                        new ActiveAttemptConflict(create.ExistingAttemptId.Value))
+                    : Failure(ExamAttemptError.ConcurrencyConflict);
+            }
+        }
+
+        var created = await _repository.GetOwnedAsync(attempt.Id, studentId, cancellationToken);
+        return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+            ToDetailResponse(created!, nowUtc));
+    }
+
+    public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> GetDetailAsync(
+        Guid attemptId,
+        CancellationToken cancellationToken = default)
+    {
+        var loaded = await LoadOwnedAsync(attemptId, cancellationToken);
+        if (!loaded.IsSuccess)
+        {
+            return Failure(loaded.Error);
+        }
+
+        var nowUtc = _timeProvider.GetUtcNow();
+        var finalized = await FinalizeIfExpiredAsync(loaded.Value!, nowUtc, cancellationToken);
+        return finalized.IsSuccess
+            ? Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(finalized.Value!, nowUtc))
+            : Failure(finalized.Error, finalized.AdditionalData);
+    }
+
+    public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> PatchAsync(
+        Guid attemptId,
+        long expectedRevision,
+        IReadOnlyList<PatchOperation>? operations,
+        CancellationToken cancellationToken = default)
+    {
+        var loaded = await LoadOwnedAsync(attemptId, cancellationToken);
+        if (!loaded.IsSuccess)
+        {
+            return Failure(loaded.Error);
+        }
+
+        var nowUtc = _timeProvider.GetUtcNow();
+        var finalized = await FinalizeIfExpiredAsync(loaded.Value!, nowUtc, cancellationToken);
+        if (!finalized.IsSuccess)
+        {
+            return Failure(finalized.Error, finalized.AdditionalData);
+        }
+
+        var attempt = finalized.Value!;
+        if (attempt.Status != ExamAttemptStatus.InProgress)
+        {
+            return Failure(TerminalStateError(attempt.Status));
+        }
+
+        if (attempt.Revision != expectedRevision)
+        {
+            return Failure(
+                ExamAttemptError.RevisionMismatch,
+                new AttemptRevisionConflict(attempt.Revision));
+        }
+
+        var plan = ExamAttemptPatchApplier.Apply(operations, attempt);
+        if (!plan.IsSuccess)
+        {
+            return Failure(ExamAttemptError.InvalidPatch, plan.Error);
+        }
+
+        attempt.ApplyAnswers(
+            plan.Value!.Answers.Select(patch => new ExamAttemptAnswerUpdate(
+                    patch.QuestionId,
+                    patch.TextAnswer,
+                    patch.SelectedOptionIds,
+                    patch.ReplaceText,
+                    patch.ReplaceSelectedOptions))
+                .ToList(),
+            nowUtc);
+        var save = await _repository.SaveAsync(attempt, cancellationToken);
+        if (!save.Saved)
+        {
+            return Failure(
+                ExamAttemptError.RevisionMismatch,
+                new AttemptRevisionConflict(save.CurrentRevision ?? expectedRevision));
+        }
+
+        return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+            ToDetailResponse(attempt, nowUtc));
+    }
+
+    public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> SubmitAsync(
+        Guid attemptId,
+        long expectedRevision,
+        CancellationToken cancellationToken = default)
+    {
+        var loaded = await LoadOwnedAsync(attemptId, cancellationToken);
+        if (!loaded.IsSuccess)
+        {
+            return Failure(loaded.Error);
+        }
+
+        var nowUtc = _timeProvider.GetUtcNow();
+        var attempt = loaded.Value!;
+        if (attempt.Status == ExamAttemptStatus.Submitted)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(attempt, nowUtc));
+        }
+
+        if (attempt.Status == ExamAttemptStatus.Abandoned)
+        {
+            return Failure(ExamAttemptError.AttemptAlreadyAbandoned);
+        }
+
+        var finalized = await FinalizeIfExpiredAsync(attempt, nowUtc, cancellationToken);
+        if (!finalized.IsSuccess)
+        {
+            return Failure(finalized.Error, finalized.AdditionalData);
+        }
+
+        attempt = finalized.Value!;
+        if (attempt.Status == ExamAttemptStatus.Submitted)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(attempt, nowUtc));
+        }
+
+        if (attempt.Revision != expectedRevision)
+        {
+            return Failure(
+                ExamAttemptError.RevisionMismatch,
+                new AttemptRevisionConflict(attempt.Revision));
+        }
+
+        var score = _scoring.Calculate(attempt);
+        if (!score.IsSuccess)
+        {
+            return Failure(ExamAttemptError.InvalidScoringConfiguration);
+        }
+
+        _scoring.Apply(attempt, score.Value!, nowUtc);
+        var save = await _repository.SaveAsync(attempt, cancellationToken);
+        if (save.Saved)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(attempt, nowUtc));
+        }
+
+        var current = await ReloadOwnedAsync(attemptId, cancellationToken);
+        if (current?.Status == ExamAttemptStatus.Submitted)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(current, nowUtc));
+        }
+
+        return Failure(
+            ExamAttemptError.RevisionMismatch,
+            new AttemptRevisionConflict(save.CurrentRevision ?? expectedRevision));
+    }
+
+    public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> AbandonAsync(
+        Guid attemptId,
+        long expectedRevision,
+        CancellationToken cancellationToken = default)
+    {
+        var loaded = await LoadOwnedAsync(attemptId, cancellationToken);
+        if (!loaded.IsSuccess)
+        {
+            return Failure(loaded.Error);
+        }
+
+        var nowUtc = _timeProvider.GetUtcNow();
+        var attempt = loaded.Value!;
+        if (attempt.Status == ExamAttemptStatus.Abandoned)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(attempt, nowUtc));
+        }
+
+        if (attempt.Status == ExamAttemptStatus.Submitted)
+        {
+            return Failure(ExamAttemptError.AttemptAlreadySubmitted);
+        }
+
+        var finalized = await FinalizeIfExpiredAsync(attempt, nowUtc, cancellationToken);
+        if (!finalized.IsSuccess)
+        {
+            return Failure(finalized.Error, finalized.AdditionalData);
+        }
+
+        attempt = finalized.Value!;
+        if (attempt.Status == ExamAttemptStatus.Submitted)
+        {
+            return Failure(ExamAttemptError.AttemptAlreadySubmitted);
+        }
+
+        if (attempt.Revision != expectedRevision)
+        {
+            return Failure(
+                ExamAttemptError.RevisionMismatch,
+                new AttemptRevisionConflict(attempt.Revision));
+        }
+
+        attempt.Abandon(nowUtc);
+        var save = await _repository.SaveAsync(attempt, cancellationToken);
+        if (save.Saved)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(attempt, nowUtc));
+        }
+
+        var current = await ReloadOwnedAsync(attemptId, cancellationToken);
+        if (current?.Status == ExamAttemptStatus.Abandoned)
+        {
+            return Result<ExamAttemptDetailResponse, ExamAttemptError>.Success(
+                ToDetailResponse(current, nowUtc));
+        }
+
+        if (current?.Status == ExamAttemptStatus.Submitted)
+        {
+            return Failure(ExamAttemptError.AttemptAlreadySubmitted);
+        }
+
+        return Failure(
+            ExamAttemptError.RevisionMismatch,
+            new AttemptRevisionConflict(save.CurrentRevision ?? expectedRevision));
+    }
+
+    public async Task<Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>> GetPageAsync(
+        GetExamAttemptsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_currentUser.UserId.HasValue)
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.CurrentUserUnavailable);
+        }
+
+        var normalizedState = request.State.Trim().ToLowerInvariant();
+        if (normalizedState is not ("in-progress" or "completed"))
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.InvalidState);
+        }
+
+        if (request.Page < 1 ||
+            request.PageSize is < 1 or > 100 ||
+            request.Page - 1 > int.MaxValue / request.PageSize)
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.InvalidPagination);
+        }
+
+        var studentId = _currentUser.UserId.Value;
+        var nowUtc = _timeProvider.GetUtcNow();
+        var expired = await _repository.GetExpiredAsync(studentId, nowUtc, cancellationToken);
+        foreach (var attempt in expired)
+        {
+            var finalized = await FinalizeIfExpiredAsync(attempt, nowUtc, cancellationToken);
+            if (!finalized.IsSuccess)
+            {
+                return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                    finalized.Error);
+            }
+        }
+
+        var page = await _repository.GetPageAsync(
+            studentId,
+            normalizedState == "completed",
+            checked((request.Page - 1) * request.PageSize),
+            request.PageSize,
+            cancellationToken);
+        var totalPages = page.TotalItems == 0
+            ? 0
+            : (int)Math.Ceiling(page.TotalItems / (double)request.PageSize);
+        var response = new CollectionResponse<ExamAttemptListItemResponse>(
+            page.Items.Select(ToListItem).ToList(),
+            new CollectionMeta(
+                request.Page,
+                request.PageSize,
+                page.TotalItems,
+                totalPages,
+                request.Page > 1 && page.TotalItems > 0,
+                request.Page < totalPages));
+        return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Success(response);
+    }
+
+    private async Task<Result<ExamAttempt, ExamAttemptError>> LoadOwnedAsync(
+        Guid attemptId,
+        CancellationToken cancellationToken)
+    {
+        if (!_currentUser.UserId.HasValue)
+        {
+            return Result<ExamAttempt, ExamAttemptError>.Failure(
+                ExamAttemptError.CurrentUserUnavailable);
+        }
+
+        var attempt = await _repository.GetOwnedAsync(
+            attemptId,
+            _currentUser.UserId.Value,
+            cancellationToken);
+        return attempt is null
+            ? Result<ExamAttempt, ExamAttemptError>.Failure(ExamAttemptError.AttemptNotFound)
+            : Result<ExamAttempt, ExamAttemptError>.Success(attempt);
+    }
+
+    private Task<ExamAttempt?> ReloadOwnedAsync(
+        Guid attemptId,
+        CancellationToken cancellationToken) =>
+        _repository.GetOwnedAsync(
+            attemptId,
+            _currentUser.UserId!.Value,
+            cancellationToken);
+
+    private async Task<Result<ExamAttempt, ExamAttemptError>> FinalizeIfExpiredAsync(
+        ExamAttempt attempt,
+        DateTimeOffset nowUtc,
+        CancellationToken cancellationToken)
+    {
+        for (var retry = 0; retry < 3; retry++)
+        {
+            if (!attempt.IsExpired(nowUtc))
+            {
+                return Result<ExamAttempt, ExamAttemptError>.Success(attempt);
+            }
+
+            var score = _scoring.Calculate(attempt);
+            if (!score.IsSuccess)
+            {
+                return Result<ExamAttempt, ExamAttemptError>.Failure(
+                    ExamAttemptError.InvalidScoringConfiguration);
+            }
+
+            _scoring.Apply(attempt, score.Value!, attempt.ExpiresAtUtc!.Value);
+            var save = await _repository.SaveAsync(attempt, cancellationToken);
+            if (save.Saved)
+            {
+                return Result<ExamAttempt, ExamAttemptError>.Success(attempt);
+            }
+
+            var current = await ReloadOwnedAsync(attempt.Id, cancellationToken);
+            if (current is null)
+            {
+                return Result<ExamAttempt, ExamAttemptError>.Failure(
+                    ExamAttemptError.ConcurrencyConflict);
+            }
+
+            attempt = current;
+        }
+
+        return Result<ExamAttempt, ExamAttemptError>.Failure(
+            ExamAttemptError.ConcurrencyConflict);
+    }
+
+    private static ExamAttemptError TerminalStateError(ExamAttemptStatus status) =>
+        status switch
+        {
+            ExamAttemptStatus.Submitted => ExamAttemptError.AttemptAlreadySubmitted,
+            ExamAttemptStatus.Abandoned => ExamAttemptError.AttemptAlreadyAbandoned,
+            _ => ExamAttemptError.InvalidAttemptState
+        };
+
+    private static ExamAttemptDetailResponse ToDetailResponse(
+        ExamAttempt attempt,
+        DateTimeOffset nowUtc)
+    {
+        var showSolutions = attempt.Status == ExamAttemptStatus.Submitted;
+        var answers = attempt.Answers.ToDictionary(answer => answer.QuestionId);
+        var allQuestions = attempt.ExamVersion.Sections
+            .SelectMany(section => section.Questions)
+            .ToList();
+        var children = allQuestions
+            .Where(question => question.ParentQuestionId.HasValue)
+            .GroupBy(question => question.ParentQuestionId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => group.OrderBy(question => question.DisplayOrder)
+                    .ThenBy(question => question.Id)
+                    .ToList());
+
+        ExamAttemptQuestionResponse MapQuestion(Question question)
+        {
+            answers.TryGetValue(question.Id, out var answer);
+            var answerResponse = answer is null
+                ? null
+                : new ExamAttemptAnswerResponse(
+                    answer.TextAnswer,
+                    answer.SelectedOptions
+                        .Select(selection => selection.QuestionOptionId)
+                        .Order()
+                        .ToList(),
+                    showSolutions ? answer.AwardedScore : null,
+                    showSolutions ? answer.MaximumScore : null,
+                    showSolutions ? answer.GradingStatus : null);
+            var solution = showSolutions
+                ? new ExamAttemptSolutionResponse(
+                    question.Explanation,
+                    question.Options
+                        .OrderBy(option => option.DisplayOrder)
+                        .ThenBy(option => option.Id)
+                        .Select(option => new ExamAttemptOptionSolutionResponse(
+                            option.Id,
+                            option.IsCorrect,
+                            option.Explanation))
+                        .ToList(),
+                    question.FillAnswerKeys
+                        .OrderBy(key => key.DisplayOrder)
+                        .ThenBy(key => key.Id)
+                        .Select(key => new ExamAttemptFillAnswerSolutionResponse(
+                            key.BlankKey,
+                            key.AcceptedAnswer,
+                            key.IsCaseSensitive,
+                            key.DisplayOrder))
+                        .ToList())
+                : null;
+            return new ExamAttemptQuestionResponse(
+                question.Id,
+                question.ParentQuestionId,
+                question.Type,
+                question.Prompt,
+                question.Points,
+                question.DisplayOrder,
+                ParseMetadata(question.MetadataJson),
+                question.Options
+                    .OrderBy(option => option.DisplayOrder)
+                    .ThenBy(option => option.Id)
+                    .Select(option => new ExamAttemptOptionResponse(
+                        option.Id,
+                        option.Label,
+                        option.Text,
+                        option.DisplayOrder))
+                    .ToList(),
+                children.GetValueOrDefault(question.Id, []).Select(MapQuestion).ToList(),
+                answerResponse,
+                solution);
+        }
+
+        var percentage = attempt.Status == ExamAttemptStatus.Submitted
+            ? CalculatePercentage(attempt.Score, attempt.MaximumScore)
+            : null;
+        long? remainingSeconds = attempt.Status == ExamAttemptStatus.InProgress &&
+            attempt.ExpiresAtUtc.HasValue
+                ? (long)Math.Max(
+                    0d,
+                    Math.Ceiling((attempt.ExpiresAtUtc.Value - nowUtc).TotalSeconds))
+                : null;
+        return new ExamAttemptDetailResponse(
+            attempt.Id,
+            attempt.ExamId,
+            attempt.ExamVersionId,
+            attempt.Status,
+            attempt.Revision,
+            attempt.StartedAtUtc,
+            attempt.ExpiresAtUtc,
+            remainingSeconds,
+            attempt.SubmittedAtUtc,
+            attempt.AbandonedAtUtc,
+            showSolutions ? attempt.Score : null,
+            showSolutions ? attempt.MaximumScore : null,
+            percentage,
+            new ExamAttemptExamResponse(
+                attempt.Exam.Title,
+                attempt.Exam.Slug,
+                attempt.Exam.Description,
+                attempt.Exam.Type),
+            new ExamAttemptVersionResponse(
+                attempt.ExamVersion.VersionNumber,
+                attempt.ExamVersion.Title,
+                attempt.ExamVersion.Description,
+                attempt.ExamVersion.Instructions,
+                attempt.ExamVersion.DurationMinutes),
+            attempt.ExamVersion.Sections
+                .OrderBy(section => section.DisplayOrder)
+                .ThenBy(section => section.Id)
+                .Select(section => new ExamAttemptSectionResponse(
+                    section.Id,
+                    section.Kind,
+                    section.Title,
+                    section.Instructions,
+                    section.StimulusText,
+                    section.MediaUrl,
+                    section.DisplayOrder,
+                    ParseMetadata(section.MetadataJson),
+                    section.Questions
+                        .Where(question => question.ParentQuestionId is null)
+                        .OrderBy(question => question.DisplayOrder)
+                        .ThenBy(question => question.Id)
+                        .Select(MapQuestion)
+                        .ToList()))
+                .ToList());
+    }
+
+    private static ExamAttemptListItemResponse ToListItem(ExamAttemptListModel attempt) =>
+        new(
+            attempt.AttemptId,
+            attempt.ExamId,
+            attempt.ExamVersionId,
+            attempt.ExamTitle,
+            attempt.ExamSlug,
+            attempt.Status,
+            attempt.StartedAtUtc,
+            attempt.ExpiresAtUtc,
+            attempt.SubmittedAtUtc,
+            attempt.AbandonedAtUtc,
+            attempt.Status == ExamAttemptStatus.Submitted ? attempt.Score : null,
+            attempt.Status == ExamAttemptStatus.Submitted ? attempt.MaximumScore : null,
+            attempt.Status == ExamAttemptStatus.Submitted
+                ? CalculatePercentage(attempt.Score, attempt.MaximumScore)
+                : null,
+            attempt.Revision,
+            attempt.UpdatedAtUtc);
+
+    private static decimal? CalculatePercentage(decimal? score, decimal? maximumScore)
+    {
+        if (!score.HasValue || !maximumScore.HasValue)
+        {
+            return null;
+        }
+
+        return maximumScore.Value == 0m
+            ? 0m
+            : score.Value / maximumScore.Value * 100m;
+    }
+
+    private static JsonElement? ParseMetadata(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.Clone();
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static Result<ExamAttemptDetailResponse, ExamAttemptError> Failure(
+        ExamAttemptError error,
+        object? additionalData = null) =>
+        additionalData is null
+            ? Result<ExamAttemptDetailResponse, ExamAttemptError>.Failure(error)
+            : Result<ExamAttemptDetailResponse, ExamAttemptError>.Failure(error, additionalData);
+}

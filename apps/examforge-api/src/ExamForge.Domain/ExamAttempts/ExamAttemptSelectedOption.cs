@@ -1,16 +1,20 @@
-﻿
 using ExamForge.Domain.Exams;
 
 namespace ExamForge.Domain.ExamAttempts;
 
-public class ExamAttemptSelectedOption
+public sealed class ExamAttemptSelectedOption
 {
-    public ExamAttemptAnswer ExamAttemptAnswer { get; set; } = null!;
-    public QuestionOption QuestionOption { get; set; } = null!;
-
     private ExamAttemptSelectedOption() { }
 
-    public Guid ExamAttemptAnswerId { get; set; }
-    public Guid QuestionOptionId { get; set; }
+    internal ExamAttemptSelectedOption(Guid examAttemptAnswerId, Guid questionOptionId)
+    {
+        ExamAttemptAnswerId = examAttemptAnswerId;
+        QuestionOptionId = questionOptionId;
+    }
 
+    public Guid ExamAttemptAnswerId { get; private set; }
+    public Guid QuestionOptionId { get; private set; }
+
+    public ExamAttemptAnswer ExamAttemptAnswer { get; private set; } = null!;
+    public QuestionOption QuestionOption { get; private set; } = null!;
 }

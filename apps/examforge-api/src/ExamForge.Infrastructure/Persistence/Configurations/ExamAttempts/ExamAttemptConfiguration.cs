@@ -1,68 +1,71 @@
-﻿using ExamForge.Domain.ExamAttempts;
+using ExamForge.Domain.ExamAttempts;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace ExamForge.Infrastructure.Persistence.Configurations;
 
-public class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
+public sealed class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAttempt>
 {
     public void Configure(EntityTypeBuilder<ExamAttempt> builder)
     {
         builder.ToTable("exam_attempts");
-        builder.HasKey(e => e.Id);
+        builder.HasKey(attempt => attempt.Id);
 
-        builder.Property(e => e.UserId)
-            .IsRequired();
+        builder.Property(attempt => attempt.StudentId).IsRequired();
+        builder.Property(attempt => attempt.ExamId).IsRequired();
+        builder.Property(attempt => attempt.ExamVersionId).IsRequired();
 
-        builder.Property(e => e.ExamId)
-            .IsRequired();
-
-        builder.Property(e => e.ExamVersionId)
-            .IsRequired();
-
-        builder.Property(e => e.Status)
-            .IsRequired()
+        builder.Property(attempt => attempt.Status)
             .HasConversion<string>()
-            .HasMaxLength(50);
-
-        builder.Property(e => e.StartedAtUtc)
+            .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(e => e.SubmittedAtUtc);
+        builder.Property(attempt => attempt.StartedAtUtc).IsRequired();
+        builder.Property(attempt => attempt.ExpiresAtUtc);
+        builder.Property(attempt => attempt.SubmittedAtUtc);
+        builder.Property(attempt => attempt.AbandonedAtUtc);
 
-        builder.Property(e => e.TotalScore)
-            .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(0m);
+        builder.Property(attempt => attempt.Score)
+            .HasColumnType("decimal(18,6)");
+        builder.Property(attempt => attempt.MaximumScore)
+            .HasColumnType("decimal(18,6)");
 
-        builder.Property(e => e.MaxScore)
-            .HasColumnType("decimal(8,2)")
-            .HasDefaultValue(0m);
-
-        builder.Property(e => e.CreatedAtUtc)
+        builder.Property(attempt => attempt.Revision)
+            .HasDefaultValue(1L)
+            .IsConcurrencyToken()
             .IsRequired();
 
-        builder.Property(e => e.UpdatedAtUtc);
+        builder.Property(attempt => attempt.CreatedAtUtc).IsRequired();
+        builder.Property(attempt => attempt.UpdatedAtUtc).IsRequired();
 
-        builder.HasIndex(e => new { e.UserId, e.StartedAtUtc });
+        builder.HasIndex(attempt => attempt.ExamVersionId);
+        builder.HasIndex(attempt => new { attempt.StudentId, attempt.ExamId })
+            .IsUnique()
+            .HasDatabaseName("ux_exam_attempts_one_in_progress")
+            .HasFilter("\"Status\" = 'InProgress'");
+        builder.HasIndex(attempt => new
+            {
+                attempt.StudentId,
+                attempt.Status,
+                attempt.UpdatedAtUtc,
+                attempt.Id
+            })
+            .HasDatabaseName("ix_exam_attempts_student_status_history");
 
-        builder.HasIndex(e => new { e.ExamId, e.UserId });
-
-        builder.HasIndex(e => e.ExamVersionId);
-
-        builder.HasOne(e => e.User)
+        builder.HasOne(attempt => attempt.Student)
             .WithMany()
-            .HasForeignKey(e => e.UserId)
+            .HasForeignKey(attempt => attempt.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.Exam)
-            .WithMany(e => e.Attempts)
-            .HasForeignKey(e => e.ExamId)
+        builder.HasOne(attempt => attempt.Exam)
+            .WithMany(exam => exam.Attempts)
+            .HasForeignKey(attempt => attempt.ExamId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.ExamVersion)
-            .WithMany(ev => ev.Attempts)
-            .HasForeignKey(e => e.ExamVersionId)
+        builder.HasOne(attempt => attempt.ExamVersion)
+            .WithMany(version => version.Attempts)
+            .HasForeignKey(attempt => attempt.ExamVersionId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
