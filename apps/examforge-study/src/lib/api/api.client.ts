@@ -8,13 +8,16 @@ import { ApiError, toApiError } from "@/lib/api/api.error"
 const AUTH_ROUTE = "/api/v1/auth"
 const REFRESH_ROUTE = `${AUTH_ROUTE}/refresh`
 const PUBLIC_AUTH_ROUTES = new Set([
-	`${AUTH_ROUTE}/signin`,
+	`${AUTH_ROUTE}/login`,
 	`${AUTH_ROUTE}/register`,
 	REFRESH_ROUTE,
+	`${AUTH_ROUTE}/logout`,
+	`${AUTH_ROUTE}/forgot-password`,
+	`${AUTH_ROUTE}/reset-password`,
 ])
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
-	_authRetry?: boolean
+	_authRetry?: true
 }
 
 type AuthFailureHandler = () => void
@@ -53,7 +56,17 @@ export const apiClient = axios.create({
 	},
 })
 
-apiClient.interceptors.request.use((config) => {
+const refreshClient = axios.create({
+	baseURL: apiBaseUrl,
+	timeout: 10_000,
+	withCredentials: true,
+	headers: {
+		Accept: "application/json",
+		"Content-Type": "application/json",
+	},
+})
+
+function ensureConfigured<T extends InternalAxiosRequestConfig>(config: T) {
 	if (!configuredApiUrl) {
 		return Promise.reject(
 			new ApiError({
@@ -65,7 +78,27 @@ apiClient.interceptors.request.use((config) => {
 	}
 
 	return config
-})
+}
+
+apiClient.interceptors.request.use(ensureConfigured)
+refreshClient.interceptors.request.use(ensureConfigured)
+
+function getRefreshPromise() {
+	if (!refreshPromise) {
+		refreshPromise = refreshClient
+			.post(REFRESH_ROUTE)
+			.then(() => undefined)
+			.catch((error: unknown) => {
+				authFailureHandler?.()
+				throw toApiError(error)
+			})
+			.finally(() => {
+				refreshPromise = null
+			})
+	}
+
+	return refreshPromise
+}
 
 apiClient.interceptors.response.use(
 	(response) => response,
@@ -84,14 +117,10 @@ apiClient.interceptors.response.use(
 		request._authRetry = true
 
 		try {
-			refreshPromise ??= apiClient.post(REFRESH_ROUTE).then(() => undefined)
-			await refreshPromise
+			await getRefreshPromise()
 			return await apiClient.request(request)
 		} catch (refreshError) {
-			authFailureHandler?.()
 			return Promise.reject(toApiError(refreshError))
-		} finally {
-			refreshPromise = null
 		}
 	}
 )

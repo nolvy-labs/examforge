@@ -7,7 +7,7 @@ import {
 } from "@/components/shadcn/card"
 import { SignupForm } from "@/features/auth/components/signup.form"
 
-export function SignupPage() {
+export function SignupPage({ callbackUrl }: { callbackUrl?: string }) {
 	return (
 		<Card className="shadow-lg shadow-foreground/5">
 			<CardHeader className="gap-2">
@@ -19,7 +19,7 @@ export function SignupPage() {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<SignupForm />
+				<SignupForm callbackUrl={callbackUrl} />
 			</CardContent>
 		</Card>
 	)

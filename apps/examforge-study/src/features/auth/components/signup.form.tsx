@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/shadcn/input"
 import {
 	AUTH_ROUTES,
-	STUDENT_LANDING_ROUTE,
+	getSafeAuthRedirect,
 } from "@/features/auth/auth.constants"
 import { PasswordInput } from "@/features/auth/components/password.input"
 import { useSignupMutation } from "@/features/auth/hooks/auth.hook"
@@ -31,7 +31,7 @@ import {
 } from "@/features/auth/schemas/auth.schema"
 import { ApiError } from "@/lib/api/api.error"
 
-export function SignupForm() {
+export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 	const router = useRouter()
 	const signupMutation = useSignupMutation()
 	const form = useForm<SignupFormValues>({
@@ -60,7 +60,7 @@ export function SignupForm() {
 			{
 				onSuccess: () => {
 					form.reset()
-					router.replace(STUDENT_LANDING_ROUTE)
+					router.replace(getSafeAuthRedirect(callbackUrl))
 				},
 				onError: (error) => {
 					if (!(error instanceof ApiError)) {

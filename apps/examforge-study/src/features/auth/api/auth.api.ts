@@ -27,4 +27,8 @@ export const authApi = {
 		const response = await apiClient.get<AuthUser>(AUTH_API_ROUTES.me)
 		return response.data
 	},
+
+	async logout() {
+		await apiClient.post(AUTH_API_ROUTES.logout)
+	},
 }
