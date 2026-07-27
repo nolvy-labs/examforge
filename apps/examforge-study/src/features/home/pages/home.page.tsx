@@ -14,7 +14,7 @@ import {
 	Target,
 } from "lucide-react"
 
-import { PublicHeader } from "@/components/layout/public.header"
+import { MainHeader } from "@/components/layout/header/header"
 import { buttonVariants } from "@/components/shadcn/button"
 import {
 	AUTH_ROUTES,
@@ -111,7 +111,7 @@ export function HomePage() {
 
 	return (
 		<div className="min-h-svh overflow-x-hidden bg-slate-50 text-slate-950">
-			<PublicHeader />
+			<MainHeader />
 			<main>
 				<section className="relative isolate overflow-hidden">
 					<div className="absolute inset-x-0 top-0 -z-10 h-96 bg-linear-to-b from-indigo-50 to-transparent" />

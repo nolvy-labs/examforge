@@ -12,23 +12,27 @@ export class ApiError extends Error {
 	readonly code: ApiErrorCode
 	readonly status?: number
 	readonly fieldErrors: ApiFieldErrors
+	readonly problem?: ApiProblemDetails
 
 	constructor({
 		code,
 		message,
 		status,
 		fieldErrors = {},
+		problem,
 	}: {
 		code: ApiErrorCode
 		message: string
 		status?: number
 		fieldErrors?: ApiFieldErrors
+		problem?: ApiProblemDetails
 	}) {
 		super(message)
 		this.name = "ApiError"
 		this.code = code
 		this.status = status
 		this.fieldErrors = fieldErrors
+		this.problem = problem
 	}
 
 	getFieldMessages(fieldName: string) {
@@ -114,6 +118,7 @@ export function toApiError(error: unknown): ApiError {
 		code,
 		status,
 		fieldErrors,
+		problem,
 		message: getMessageForStatus(status, problem),
 	})
 }
