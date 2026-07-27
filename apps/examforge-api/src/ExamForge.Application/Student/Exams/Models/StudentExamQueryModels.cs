@@ -1,3 +1,4 @@
+using ExamForge.Application.Student.ExamClassifications.Models;
 using ExamForge.Application.Student.Exams.Enums;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Exams;
@@ -5,8 +6,12 @@ using ExamForge.Domain.Exams;
 namespace ExamForge.Application.Student.Exams.Models;
 
 public sealed record StudentExamPageQuery(
-    int Skip, int Take, string? Search, Guid? TagId, ExamTagType? TagType, string? TagSlug,
-    Guid? CategoryId, string? CategorySlug, StudentExamSortOrder Sort);
+    int Skip,
+    int Take,
+    string? Search,
+    IReadOnlyCollection<Guid> TagIds,
+    StudentExamCategoryRuleModel? Category,
+    StudentExamSortOrder Sort);
 
 public sealed record StudentExamPageModel(IReadOnlyList<StudentExamListModel> Items, int TotalItems);
 public sealed record StudentExamListModel(

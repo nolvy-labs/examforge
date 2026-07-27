@@ -7,42 +7,41 @@ namespace ExamForge.Api.Controllers.Student.ExamClassifications;
 
 public sealed class ExamCategoriesController : StudentBaseController
 {
-    private readonly StudentExamCategoryService _examCategoryService;
+    private readonly StudentExamDiscoveryService _service;
 
-    public ExamCategoriesController(StudentExamCategoryService examCategoryService)
+    public ExamCategoriesController(StudentExamDiscoveryService service)
     {
-        _examCategoryService = examCategoryService;
+        _service = service;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<StudentExamCategoryResponse>>> GetList(
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<StudentExamCategoryResponse>>> GetList(
+        [FromQuery] bool featuredOnly = false,
+        CancellationToken cancellationToken = default)
     {
-        var categories = await _examCategoryService.ListActiveAsync(cancellationToken);
-
+        var categories = await _service.GetCategoriesAsync(
+            featuredOnly,
+            cancellationToken);
         return Ok(categories);
     }
 
-    [HttpGet("{idOrSlug}")]
-    public async Task<ActionResult<StudentExamCategoryResponse>> GetByIdOrSlug(
-        string idOrSlug,
+    [HttpGet("{slug}")]
+    public async Task<ActionResult<StudentExamCategoryResponse>> GetBySlug(
+        string slug,
         CancellationToken cancellationToken)
     {
-        var category = await _examCategoryService.GetActiveByIdOrSlugAsync(
-            idOrSlug,
-            cancellationToken);
-
-        if (category is null)
+        var result = await _service.GetCategoryAsync(slug, cancellationToken);
+        if (result.IsSuccess)
         {
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Not Found",
-                Detail = "Exam category was not found.",
-                Instance = HttpContext.Request.Path
-            });
+            return Ok(result.Value);
         }
 
-        return Ok(category);
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Not Found",
+            Detail = "Exam category was not found.",
+            Instance = HttpContext.Request.Path
+        });
     }
 }

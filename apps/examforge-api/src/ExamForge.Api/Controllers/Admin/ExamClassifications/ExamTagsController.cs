@@ -66,7 +66,7 @@ public sealed class ExamTagsController : AdminBaseController
         var response = result.Value!;
 
         return CreatedAtAction(
-            nameof(Controllers.Student.ExamClassifications.ExamTagsController.GetById),
+            nameof(GetById),
             "ExamTags",
             new { id = response.Id },
             response);

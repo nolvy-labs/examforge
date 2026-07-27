@@ -1,8 +1,8 @@
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.ExamClassifications.Abstractions;
 using ExamForge.Application.Admin.Exams.Abstractions;
-using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.ExamAttempts.Abstractions;
+using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.Exams.Abstractions;
 using ExamForge.Infrastructure.Auth;
 using ExamForge.Infrastructure.ExamAttempts;
@@ -43,9 +43,8 @@ public static class DependencyInjection
         services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
 
         services.AddScoped<IAdminExamTagRepository, AdminExamTagRepository>();
-        services.AddScoped<IStudentExamTagQuery, StudentExamTagQuery>();
         services.AddScoped<IAdminExamCategoryRepository, AdminExamCategoryRepository>();
-        services.AddScoped<IStudentExamCategoryQuery, StudentExamCategoryQuery>();
+        services.AddScoped<IStudentExamDiscoveryQuery, StudentExamDiscoveryQuery>();
         services.AddScoped<IStudentExamQuery, StudentExamQuery>();
 
         services.AddScoped<IAdminExamRepository, AdminExamRepository>();

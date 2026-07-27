@@ -1,19 +1,28 @@
 using System.Text.Json;
+
 using ExamForge.Application.Common;
+using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.Exams.Abstractions;
 using ExamForge.Application.Student.Exams.Dtos;
 using ExamForge.Application.Student.Exams.Errors;
 using ExamForge.Application.Student.Exams.Models;
 using ExamForge.Domain.Common;
-using ExamForge.Domain.ExamClassifications;
 
 namespace ExamForge.Application.Student.Exams.Services;
 
 public sealed class StudentExamService
 {
+    public const int MaximumTagValues = 20;
     private readonly IStudentExamQuery _query;
+    private readonly IStudentExamDiscoveryQuery _discoveryQuery;
 
-    public StudentExamService(IStudentExamQuery query) => _query = query;
+    public StudentExamService(
+        IStudentExamQuery query,
+        IStudentExamDiscoveryQuery discoveryQuery)
+    {
+        _query = query;
+        _discoveryQuery = discoveryQuery;
+    }
 
     public async Task<Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>> GetPageAsync(
         GetStudentExamsRequest request,
@@ -28,34 +37,57 @@ public sealed class StudentExamService
         if (request.Page - 1 > int.MaxValue / request.PageSize)
             return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(StudentExamError.InvalidPage);
 
-        var tagSelectorSupplied = request.TagId.HasValue || request.TagType.HasValue || request.TagSlug is not null;
-        if ((request.TagId.HasValue && request.TagSlug is not null) ||
-            (request.TagSlug is null) != (!request.TagType.HasValue) ||
-            (request.TagType.HasValue && (!Enum.IsDefined(request.TagType.Value) || request.TagType == ExamTagType.Unknown)) ||
-            (request.TagSlug is not null && string.IsNullOrWhiteSpace(request.TagSlug)))
+        var tagValues = request.TagIds ?? [];
+        if (tagValues.Count > MaximumTagValues)
         {
-            return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(StudentExamError.InvalidTagSelector);
+            return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(
+                StudentExamError.TooManyTagValues);
         }
 
-        if (!tagSelectorSupplied &&
-            ((request.CategoryId.HasValue && request.CategorySlug is not null) ||
-             (request.CategorySlug is not null && string.IsNullOrWhiteSpace(request.CategorySlug))))
+        if (request.CategorySlug is not null &&
+            string.IsNullOrWhiteSpace(request.CategorySlug))
         {
-            return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(StudentExamError.InvalidCategorySelector);
+            return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(
+                StudentExamError.InvalidCategorySelector);
+        }
+
+        var tagIds = tagValues.Distinct().ToList();
+        var activeTagIds = await _discoveryQuery.GetActiveTagIdsAsync(
+            tagIds,
+            cancellationToken);
+        var invalidTagIds = tagIds.Except(activeTagIds).ToList();
+        if (invalidTagIds.Count > 0)
+        {
+            return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(
+                StudentExamError.InvalidTagIds,
+                invalidTagIds);
+        }
+
+        var categorySlug = request.CategorySlug is null
+            ? null
+            : TextNormalizer.NormalizeSlug(request.CategorySlug);
+        var category = categorySlug is null
+            ? null
+            : await _discoveryQuery.GetCategoryRuleBySlugAsync(
+                categorySlug,
+                cancellationToken);
+        if (categorySlug is not null && category is null)
+        {
+            return Result<CollectionResponse<StudentExamListItemResponse>, StudentExamError>.Failure(
+                StudentExamError.CategoryNotFound);
         }
 
         var search = string.IsNullOrWhiteSpace(request.Search)
             ? null
             : TextNormalizer.NormalizeName(request.Search);
-        var tagSlug = request.TagSlug is null ? null : TextNormalizer.NormalizeSlug(request.TagSlug);
-        var categorySlug = tagSelectorSupplied || request.CategorySlug is null
-            ? null
-            : TextNormalizer.NormalizeSlug(request.CategorySlug);
 
         var page = await _query.GetPageAsync(new StudentExamPageQuery(
-            checked((request.Page - 1) * request.PageSize), request.PageSize, search,
-            request.TagId, request.TagType, tagSlug,
-            tagSelectorSupplied ? null : request.CategoryId, categorySlug, request.Sort), cancellationToken);
+            checked((request.Page - 1) * request.PageSize),
+            request.PageSize,
+            search,
+            tagIds,
+            category,
+            request.Sort), cancellationToken);
 
         var totalPages = page.TotalItems == 0
             ? 0

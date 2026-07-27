@@ -2,6 +2,13 @@ using ExamForge.Domain.ExamClassifications;
 
 namespace ExamForge.Application.Student.ExamClassifications.Models;
 
+public sealed record StudentExamFilterTagModel(
+    Guid Id,
+    string Name,
+    string Slug,
+    ExamTagType Type,
+    int ExamCount);
+
 public sealed record StudentExamCategoryTagModel(
     Guid Id,
     string Name,
@@ -13,9 +20,10 @@ public sealed record StudentExamCategoryModel(
     string Name,
     string Slug,
     string Description,
-    ExamCategoryMatchMode MatchMode,
     bool IsFeatured,
-    int DisplayOrder,
-    DateTimeOffset CreatedAtUtc,
-    DateTimeOffset? UpdatedAtUtc,
-    IReadOnlyCollection<StudentExamCategoryTagModel> Tags);
+    int ExamCount,
+    IReadOnlyList<StudentExamCategoryTagModel> Tags);
+
+public sealed record StudentExamCategoryRuleModel(
+    ExamCategoryMatchMode MatchMode,
+    IReadOnlyList<Guid> TagIds);

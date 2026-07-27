@@ -1,9 +1,11 @@
+using ExamForge.Application.Student.ExamClassifications.Models;
 using ExamForge.Application.Student.Exams.Abstractions;
 using ExamForge.Application.Student.Exams.Enums;
 using ExamForge.Application.Student.Exams.Models;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Exams;
 using ExamForge.Infrastructure.Persistence;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace ExamForge.Infrastructure.Exams.Student;
@@ -17,49 +19,13 @@ public sealed class StudentExamQuery : IStudentExamQuery
     public async Task<StudentExamPageModel> GetPageAsync(
         StudentExamPageQuery request, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Exams.AsNoTracking().Where(exam =>
-            !exam.IsArchived && exam.Versions.Any(version => version.Status == ExamVersionStatus.Published));
+        var query = _dbContext.Exams
+            .AsNoTracking()
+            .StudentVisible();
 
         query = ApplySearch(query, request.Search);
 
-        if (request.TagId.HasValue || request.TagSlug is not null)
-        {
-            Guid? tagId = request.TagId;
-            if (!tagId.HasValue)
-            {
-                tagId = await _dbContext.ExamTags.AsNoTracking()
-                    .Where(tag => !tag.IsArchived && tag.Type == request.TagType!.Value && tag.Slug == request.TagSlug)
-                    .Select(tag => (Guid?)tag.Id).FirstOrDefaultAsync(cancellationToken);
-            }
-            else
-            {
-                tagId = await _dbContext.ExamTags.AsNoTracking()
-                    .Where(tag => !tag.IsArchived && tag.Id == tagId.Value)
-                    .Select(tag => (Guid?)tag.Id).FirstOrDefaultAsync(cancellationToken);
-            }
-
-            if (!tagId.HasValue) return new StudentExamPageModel([], 0);
-            query = query.Where(exam => exam.ExamTagMappings.Any(mapping => mapping.ExamTagId == tagId.Value));
-        }
-        else if (request.CategoryId.HasValue || request.CategorySlug is not null)
-        {
-            var category = await _dbContext.ExamCategories.AsNoTracking()
-                .Where(item => !item.IsArchived &&
-                    (request.CategoryId.HasValue ? item.Id == request.CategoryId.Value : item.Slug == request.CategorySlug))
-                .Select(item => new
-                {
-                    item.MatchMode,
-                    TagIds = item.ExamCategoryTags.Where(categoryTag => !categoryTag.ExamTag.IsArchived)
-                        .Select(categoryTag => categoryTag.ExamTagId).ToList()
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (category is null || category.TagIds.Count == 0) return new StudentExamPageModel([], 0);
-            query = category.MatchMode == ExamCategoryMatchMode.All
-                ? query.Where(exam => exam.ExamTagMappings.Count(mapping =>
-                    category.TagIds.Contains(mapping.ExamTagId)) == category.TagIds.Count)
-                : query.Where(exam => exam.ExamTagMappings.Any(mapping => category.TagIds.Contains(mapping.ExamTagId)));
-        }
+        query = ApplyDiscoveryFilters(query, request.TagIds, request.Category);
 
         var totalItems = await query.CountAsync(cancellationToken);
         query = request.Sort == StudentExamSortOrder.Oldest
@@ -217,6 +183,12 @@ public sealed class StudentExamQuery : IStudentExamQuery
         var pattern = $"%{EscapeLikePattern(search)}%";
         return query.Where(exam => EF.Functions.ILike(exam.Title, pattern, "\\"));
     }
+
+    private static IQueryable<Exam> ApplyDiscoveryFilters(
+        IQueryable<Exam> query,
+        IReadOnlyCollection<Guid> tagIds,
+        StudentExamCategoryRuleModel? category) =>
+        query.ApplyCategoryRule(category).ApplySelectedTags(tagIds);
 
     private sealed record StudentExamListCore(
         Guid Id, string Title, string Slug, string Description, ExamType Type,

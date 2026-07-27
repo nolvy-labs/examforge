@@ -1,5 +1,6 @@
 using System.Reflection;
 
+using ExamForge.Application.Student.ExamClassifications.Models;
 using ExamForge.Application.Student.Exams.Enums;
 using ExamForge.Application.Student.Exams.Models;
 using ExamForge.Domain.ExamClassifications;
@@ -44,57 +45,83 @@ public sealed class StudentExamQueryTests
     }
 
     [Fact]
-    public async Task GetPage_FiltersActiveTagAndReturnsEmptyForArchivedTag()
-    {
-        await using var db = CreateContext();
-        var activeTag = new ExamTag("Active", "active", "", ExamTagType.Topic);
-        var archivedTag = new ExamTag("Archived", "archived", "", ExamTagType.Topic); archivedTag.Archive();
-        var published = CreateExamWithVersion(ExamVersionStatus.Published, "Visible");
-        published.Exam.AddTags([activeTag.Id, archivedTag.Id]);
-        db.AddRange(activeTag, archivedTag, published.Exam, published.Version);
-        await db.SaveChangesAsync();
-        var query = new StudentExamQuery(db);
-
-        var active = await query.GetPageAsync(DefaultPage() with { TagId = activeTag.Id });
-        var archived = await query.GetPageAsync(DefaultPage() with { TagId = archivedTag.Id });
-        var slug = await query.GetPageAsync(DefaultPage() with
-        { TagType = ExamTagType.Topic, TagSlug = "active" });
-
-        Assert.Single(active.Items);
-        Assert.Single(slug.Items);
-        Assert.Empty(archived.Items);
-    }
-
-    [Fact]
-    public async Task GetPage_CategoryAnyAllAndZeroActiveTagsBehaveCorrectly()
+    public async Task GetPage_RepeatedTagsUseAllSemantics()
     {
         await using var db = CreateContext();
         var firstTag = new ExamTag("First", "first", "", ExamTagType.Topic);
         var secondTag = new ExamTag("Second", "second", "", ExamTagType.Topic);
-        var archivedTag = new ExamTag("Old", "old", "", ExamTagType.Topic); archivedTag.Archive();
-        var partial = CreateExamWithVersion(ExamVersionStatus.Published, "Partial"); partial.Exam.AddTags([firstTag.Id]);
-        var complete = CreateExamWithVersion(ExamVersionStatus.Published, "Complete"); complete.Exam.AddTags([firstTag.Id, secondTag.Id]);
-        var any = new ExamCategory("Any", "any", "", ExamCategoryMatchMode.Any, 1); any.ReplaceTags([firstTag.Id, secondTag.Id]);
-        var all = new ExamCategory("All", "all", "", ExamCategoryMatchMode.All, 2); all.ReplaceTags([firstTag.Id, secondTag.Id, archivedTag.Id]);
-        var empty = new ExamCategory("Empty", "empty", "", ExamCategoryMatchMode.All, 3); empty.ReplaceTags([archivedTag.Id]);
-        db.AddRange(firstTag, secondTag, archivedTag, partial.Exam, partial.Version,
-            complete.Exam, complete.Version, any, all, empty);
+        var partial = CreateExamWithVersion(ExamVersionStatus.Published, "Partial");
+        partial.Exam.AddTags([firstTag.Id]);
+        var complete = CreateExamWithVersion(ExamVersionStatus.Published, "Complete");
+        complete.Exam.AddTags([firstTag.Id, secondTag.Id]);
+        db.AddRange(firstTag, secondTag, partial.Exam, partial.Version,
+            complete.Exam, complete.Version);
         await db.SaveChangesAsync();
         var query = new StudentExamQuery(db);
 
-        var anyPage = await query.GetPageAsync(DefaultPage() with { CategorySlug = "any" });
-        var allPage = await query.GetPageAsync(DefaultPage() with { CategoryId = all.Id });
-        var emptyPage = await query.GetPageAsync(DefaultPage() with { CategoryId = empty.Id });
-        any.Archive();
+        var oneTag = await query.GetPageAsync(DefaultPage() with
+        {
+            TagIds = [firstTag.Id]
+        });
+        var bothTags = await query.GetPageAsync(DefaultPage() with
+        {
+            TagIds = [firstTag.Id, secondTag.Id]
+        });
+
+        Assert.Equal(2, oneTag.TotalItems);
+        Assert.Equal(complete.Exam.Id, Assert.Single(bothTags.Items).Id);
+    }
+
+    [Fact]
+    public async Task GetPage_CategoryAnyAndAllRulesBehaveCorrectly()
+    {
+        await using var db = CreateContext();
+        var firstTag = new ExamTag("First", "first", "", ExamTagType.Topic);
+        var secondTag = new ExamTag("Second", "second", "", ExamTagType.Topic);
+        var partial = CreateExamWithVersion(ExamVersionStatus.Published, "Partial"); partial.Exam.AddTags([firstTag.Id]);
+        var complete = CreateExamWithVersion(ExamVersionStatus.Published, "Complete"); complete.Exam.AddTags([firstTag.Id, secondTag.Id]);
+        db.AddRange(firstTag, secondTag, partial.Exam, partial.Version,
+            complete.Exam, complete.Version);
         await db.SaveChangesAsync();
-        var archivedPage = await query.GetPageAsync(DefaultPage() with { CategoryId = any.Id });
-        var missingPage = await query.GetPageAsync(DefaultPage() with { CategoryId = Guid.NewGuid() });
+        var query = new StudentExamQuery(db);
+
+        var anyPage = await query.GetPageAsync(DefaultPage() with
+        {
+            Category = new StudentExamCategoryRuleModel(
+                ExamCategoryMatchMode.Any, [firstTag.Id, secondTag.Id])
+        });
+        var allPage = await query.GetPageAsync(DefaultPage() with
+        {
+            Category = new StudentExamCategoryRuleModel(
+                ExamCategoryMatchMode.All, [firstTag.Id, secondTag.Id])
+        });
 
         Assert.Equal(2, anyPage.TotalItems);
         Assert.Equal(complete.Exam.Id, Assert.Single(allPage.Items).Id);
-        Assert.Empty(emptyPage.Items);
-        Assert.Empty(archivedPage.Items);
-        Assert.Empty(missingPage.Items);
+    }
+
+    [Fact]
+    public async Task GetPage_ComposesCategoryAndExplicitTags()
+    {
+        await using var db = CreateContext();
+        var categoryTag = new ExamTag("Category", "category", "", ExamTagType.Subject);
+        var explicitTag = new ExamTag("Explicit", "explicit", "", ExamTagType.Level);
+        var categoryOnly = CreateExamWithVersion(ExamVersionStatus.Published, "Category Only");
+        categoryOnly.Exam.AddTags([categoryTag.Id]);
+        var both = CreateExamWithVersion(ExamVersionStatus.Published, "Both");
+        both.Exam.AddTags([categoryTag.Id, explicitTag.Id]);
+        db.AddRange(categoryTag, explicitTag, categoryOnly.Exam, categoryOnly.Version,
+            both.Exam, both.Version);
+        await db.SaveChangesAsync();
+
+        var page = await new StudentExamQuery(db).GetPageAsync(DefaultPage() with
+        {
+            Category = new StudentExamCategoryRuleModel(
+                ExamCategoryMatchMode.Any, [categoryTag.Id]),
+            TagIds = [explicitTag.Id]
+        });
+
+        Assert.Equal(both.Exam.Id, Assert.Single(page.Items).Id);
     }
 
     [Fact]
@@ -158,8 +185,37 @@ public sealed class StudentExamQueryTests
         Assert.Contains("100\\%\\_\\\\", sql, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void DiscoveryFilters_TranslateToPostgresAndComposeCategoryWithTags()
+    {
+        var options = new DbContextOptionsBuilder<ExamForgeDbContext>()
+            .UseNpgsql(
+                "Host=localhost;Database=examforge;Username=examforge;Password=examforge")
+            .Options;
+        using var db = new ExamForgeDbContext(options);
+        var method = typeof(StudentExamQuery).GetMethod(
+            "ApplyDiscoveryFilters",
+            BindingFlags.Static | BindingFlags.NonPublic);
+        var categoryTag = Guid.NewGuid();
+        var selectedTag = Guid.NewGuid();
+        var query = (IQueryable<Exam>)method!.Invoke(
+            null,
+            [
+                db.Exams.AsNoTracking(),
+                new[] { selectedTag },
+                new StudentExamCategoryRuleModel(
+                    ExamCategoryMatchMode.All, [categoryTag])
+            ])!;
+
+        var sql = query.ToQueryString();
+
+        Assert.Contains("exam_tag_mappings", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(categoryTag.ToString(), sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(selectedTag.ToString(), sql, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static StudentExamPageQuery DefaultPage() => new(
-        0, 20, null, null, null, null, null, null, StudentExamSortOrder.Newest);
+        0, 20, null, [], null, StudentExamSortOrder.Newest);
 
     private static ExamForgeDbContext CreateContext() => new(
         new DbContextOptionsBuilder<ExamForgeDbContext>()

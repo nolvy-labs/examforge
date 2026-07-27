@@ -9,10 +9,7 @@ public sealed record GetStudentExamsRequest(
     int Page = 1,
     int PageSize = 20,
     string? Search = null,
-    Guid? TagId = null,
-    ExamTagType? TagType = null,
-    string? TagSlug = null,
-    Guid? CategoryId = null,
+    IReadOnlyList<Guid>? TagIds = null,
     string? CategorySlug = null,
     StudentExamSortOrder Sort = StudentExamSortOrder.Newest);
 
@@ -76,3 +73,4 @@ public sealed record StudentExamSectionSummaryResponse(
     int QuestionCount,
     decimal TotalPoints,
     System.Text.Json.JsonElement? Metadata);
+    

@@ -1,12 +1,13 @@
 using System.Text.Json;
 
+using ExamForge.Application.Student.ExamClassifications.Abstractions;
+using ExamForge.Application.Student.ExamClassifications.Models;
 using ExamForge.Application.Student.Exams.Abstractions;
 using ExamForge.Application.Student.Exams.Dtos;
 using ExamForge.Application.Student.Exams.Enums;
 using ExamForge.Application.Student.Exams.Errors;
 using ExamForge.Application.Student.Exams.Models;
 using ExamForge.Application.Student.Exams.Services;
-using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Exams;
 
 namespace ExamForge.Application.Tests;
@@ -21,50 +22,106 @@ public sealed class StudentExamServiceTests
     public async Task GetPage_RejectsInvalidPaginationAndSort(
         int page, int pageSize, StudentExamSortOrder sort, StudentExamError expected)
     {
-        var result = await new StudentExamService(new FakeQuery()).GetPageAsync(
+        var result = await CreateService(new FakeQuery()).GetPageAsync(
             new GetStudentExamsRequest(Page: page, PageSize: pageSize, Sort: sort));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(expected, result.Error);
     }
 
-    [Theory]
-    [MemberData(nameof(InvalidTagSelectors))]
-    public async Task GetPage_RejectsInvalidTagSelectors(GetStudentExamsRequest request)
+    [Fact]
+    public async Task GetPage_RejectsMoreThanTwentyRawTagValuesWithoutQueryingDiscovery()
     {
-        var result = await new StudentExamService(new FakeQuery()).GetPageAsync(request);
-        Assert.Equal(StudentExamError.InvalidTagSelector, result.Error);
+        var discovery = new FakeDiscoveryQuery();
+        var ids = Enumerable.Range(0, 21).Select(_ => Guid.NewGuid()).ToList();
+
+        var result = await CreateService(new FakeQuery(), discovery).GetPageAsync(
+            new GetStudentExamsRequest(TagIds: ids));
+
+        Assert.Equal(StudentExamError.TooManyTagValues, result.Error);
+        Assert.Equal(0, discovery.ActiveTagCalls);
     }
 
-    public static TheoryData<GetStudentExamsRequest> InvalidTagSelectors => new()
-    {
-        new(TagSlug: "topic"),
-        new(TagType: ExamTagType.Topic),
-        new(TagId: Guid.NewGuid(), TagSlug: "topic", TagType: ExamTagType.Topic),
-        new(TagSlug: " ", TagType: ExamTagType.Topic),
-        new(TagSlug: "topic", TagType: ExamTagType.Unknown)
-    };
-
     [Fact]
-    public async Task GetPage_TagSelectorTakesPriorityAndNormalizesSlug()
+    public async Task GetPage_DeduplicatesTagsAndComposesThemWithNormalizedCategory()
     {
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+        var category = new StudentExamCategoryRuleModel(
+            ExamForge.Domain.ExamClassifications.ExamCategoryMatchMode.All,
+            [second]);
         var query = new FakeQuery();
-        var service = new StudentExamService(query);
-        var result = await service.GetPageAsync(new GetStudentExamsRequest(
-            TagType: ExamTagType.Topic, TagSlug: "  Dot Net  ",
-            CategoryId: Guid.NewGuid(), CategorySlug: "invalid ignored"));
+        var discovery = new FakeDiscoveryQuery { Category = category };
+
+        var result = await CreateService(query, discovery).GetPageAsync(
+            new GetStudentExamsRequest(
+                TagIds: [first, first, second],
+                CategorySlug: "  Data Science  "));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("dot-net", query.PageRequest!.TagSlug);
-        Assert.Null(query.PageRequest.CategoryId);
-        Assert.Null(query.PageRequest.CategorySlug);
+        Assert.Equal([first, second], query.PageRequest!.TagIds);
+        Assert.Same(category, query.PageRequest.Category);
+        Assert.Equal("data-science", discovery.LastCategorySlug);
+    }
+
+    [Fact]
+    public async Task GetPage_ReturnsInvalidTagIdsWithMissingOrArchivedIds()
+    {
+        var active = Guid.NewGuid();
+        var invalid = Guid.NewGuid();
+        var discovery = new FakeDiscoveryQuery { ActiveTagIds = [active] };
+
+        var result = await CreateService(new FakeQuery(), discovery).GetPageAsync(
+            new GetStudentExamsRequest(TagIds: [active, invalid]));
+
+        Assert.Equal(StudentExamError.InvalidTagIds, result.Error);
+        Assert.Equal([invalid], Assert.IsAssignableFrom<IReadOnlyCollection<Guid>>(
+            result.AdditionalData));
+    }
+
+    [Fact]
+    public async Task GetPage_ReturnsNotFoundForNonDiscoverableCategory()
+    {
+        var result = await CreateService(new FakeQuery()).GetPageAsync(
+            new GetStudentExamsRequest(CategorySlug: "missing"));
+
+        Assert.Equal(StudentExamError.CategoryNotFound, result.Error);
+    }
+
+    [Fact]
+    public async Task GetPage_ValidCategoryWithNoMatchingExams_ReturnsEmptyCollection()
+    {
+        var discovery = new FakeDiscoveryQuery
+        {
+            Category = new StudentExamCategoryRuleModel(
+                ExamForge.Domain.ExamClassifications.ExamCategoryMatchMode.All,
+                [Guid.NewGuid()])
+        };
+
+        var result = await CreateService(
+            new FakeQuery { Page = new StudentExamPageModel([], 0) },
+            discovery).GetPageAsync(
+            new GetStudentExamsRequest(CategorySlug: "empty-results"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!.Items);
+        Assert.Equal(0, result.Value.Meta.TotalItems);
+    }
+
+    [Fact]
+    public async Task GetPage_RejectsWhitespaceCategory()
+    {
+        var result = await CreateService(new FakeQuery()).GetPageAsync(
+            new GetStudentExamsRequest(CategorySlug: " "));
+
+        Assert.Equal(StudentExamError.InvalidCategorySelector, result.Error);
     }
 
     [Fact]
     public async Task GetPage_WhitespaceSearchIsIgnoredAndMetadataIsCorrect()
     {
         var query = new FakeQuery { Page = new StudentExamPageModel([], 0) };
-        var result = await new StudentExamService(query).GetPageAsync(
+        var result = await CreateService(query).GetPageAsync(
             new GetStudentExamsRequest(Page: 2, PageSize: 10, Search: " \t "));
 
         Assert.True(result.IsSuccess);
@@ -85,7 +142,7 @@ public sealed class StudentExamServiceTests
                 new StudentPublishedVersionSummaryModel(exam.VersionId, exam.VersionNumber,
                     exam.VersionTitle, exam.DurationMinutes, exam.TotalScore, 3, 7, exam.PublishedAtUtc), [])], 25);
 
-        var result = await new StudentExamService(fixture).GetPageAsync(
+        var result = await CreateService(fixture).GetPageAsync(
             new GetStudentExamsRequest(Page: 2, PageSize: 10));
 
         Assert.True(result.IsSuccess);
@@ -101,7 +158,7 @@ public sealed class StudentExamServiceTests
         var fixture = FakeQuery.WithPublishedContent();
         var second = fixture.Sections[0] with { Id = Guid.NewGuid(), DisplayOrder = 2 };
         fixture.Sections.Add(second);
-        var result = await new StudentExamService(fixture).GetSummaryAsync("  Sample Exam ");
+        var result = await CreateService(fixture).GetSummaryAsync("  Sample Exam ");
 
         Assert.True(result.IsSuccess);
         Assert.Equal("sample-exam", fixture.LastLookup);
@@ -112,7 +169,7 @@ public sealed class StudentExamServiceTests
     [Fact]
     public async Task Summary_ReturnsGenericNotFoundWhenPublishedExamIsUnavailable()
     {
-        var result = await new StudentExamService(new FakeQuery()).GetSummaryAsync(Guid.NewGuid().ToString());
+        var result = await CreateService(new FakeQuery()).GetSummaryAsync(Guid.NewGuid().ToString());
         Assert.Equal(StudentExamError.PublishedExamNotFound, result.Error);
     }
 
@@ -120,7 +177,7 @@ public sealed class StudentExamServiceTests
     public async Task FullTest_NestsChildren_HandlesInvalidMetadata_AndDoesNotLoadSolutionsByDefault()
     {
         var fixture = FakeQuery.WithPublishedContent();
-        var result = await new StudentExamService(fixture).GetFullTestAsync("Sample Exam", false);
+        var result = await CreateService(fixture).GetFullTestAsync("Sample Exam", false);
 
         Assert.True(result.IsSuccess);
         var response = result.Value!;
@@ -144,7 +201,7 @@ public sealed class StudentExamServiceTests
     public async Task FullTest_IncludesRecursiveOptionAndFillSolutionsWhenRequested()
     {
         var fixture = FakeQuery.WithPublishedContent();
-        var result = await new StudentExamService(fixture).GetFullTestAsync(fixture.Exam!.ExamId.ToString(), true);
+        var result = await CreateService(fixture).GetFullTestAsync(fixture.Exam!.ExamId.ToString(), true);
 
         Assert.True(result.IsSuccess);
         var child = result.Value!.Sections[0].Questions[0].ChildQuestions[0];
@@ -165,7 +222,7 @@ public sealed class StudentExamServiceTests
         var second = first with { Id = Guid.NewGuid(), DisplayOrder = 2, Title = "Second" };
         var third = first with { Id = Guid.NewGuid(), DisplayOrder = 3, Title = "Third" };
         fixture.Sections = [first, second, third];
-        var result = await new StudentExamService(fixture).GetSectionAsync("sample-exam", second.Id, false);
+        var result = await CreateService(fixture).GetSectionAsync("sample-exam", second.Id, false);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.Navigation.Position);
@@ -180,8 +237,51 @@ public sealed class StudentExamServiceTests
     {
         var fixture = FakeQuery.WithPublishedContent();
         fixture.Sections = [];
-        var result = await new StudentExamService(fixture).GetFirstSectionAsync("sample-exam", false);
+        var result = await CreateService(fixture).GetFirstSectionAsync("sample-exam", false);
         Assert.Equal(StudentExamError.SectionNotFound, result.Error);
+    }
+
+    private static StudentExamService CreateService(
+        FakeQuery query,
+        FakeDiscoveryQuery? discovery = null) =>
+        new(query, discovery ?? new FakeDiscoveryQuery());
+
+    private sealed class FakeDiscoveryQuery : IStudentExamDiscoveryQuery
+    {
+        public IReadOnlyCollection<Guid>? ActiveTagIds { get; set; }
+        public StudentExamCategoryRuleModel? Category { get; set; }
+        public int ActiveTagCalls { get; private set; }
+        public string? LastCategorySlug { get; private set; }
+
+        public Task<IReadOnlyList<StudentExamFilterTagModel>> GetFilterTagsAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<StudentExamFilterTagModel>>([]);
+
+        public Task<IReadOnlyList<StudentExamCategoryModel>> GetCategoriesAsync(
+            bool featuredOnly,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<StudentExamCategoryModel>>([]);
+
+        public Task<StudentExamCategoryModel?> GetCategoryBySlugAsync(
+            string slug,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<StudentExamCategoryModel?>(null);
+
+        public Task<StudentExamCategoryRuleModel?> GetCategoryRuleBySlugAsync(
+            string slug,
+            CancellationToken cancellationToken = default)
+        {
+            LastCategorySlug = slug;
+            return Task.FromResult(Category);
+        }
+
+        public Task<IReadOnlyCollection<Guid>> GetActiveTagIdsAsync(
+            IReadOnlyCollection<Guid> tagIds,
+            CancellationToken cancellationToken = default)
+        {
+            ActiveTagCalls++;
+            return Task.FromResult(ActiveTagIds ?? tagIds);
+        }
     }
 
     private sealed class FakeQuery : IStudentExamQuery

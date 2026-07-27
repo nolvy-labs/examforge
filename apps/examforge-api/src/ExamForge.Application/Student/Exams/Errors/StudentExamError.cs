@@ -5,8 +5,10 @@ public enum StudentExamError
     InvalidPage,
     InvalidPageSize,
     InvalidSort,
-    InvalidTagSelector,
+    TooManyTagValues,
+    InvalidTagIds,
     InvalidCategorySelector,
+    CategoryNotFound,
     PublishedExamNotFound,
     SectionNotFound
 }

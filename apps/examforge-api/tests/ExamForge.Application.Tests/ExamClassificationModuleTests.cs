@@ -11,65 +11,77 @@ namespace ExamForge.Application.Tests;
 public sealed class ExamClassificationModuleTests
 {
     [Fact]
-    public async Task StudentExamTagService_UsesOnlyActiveQueryOperations()
+    public async Task DiscoveryService_GroupsAndOrdersFiltersDeterministically()
     {
-        var tag = new StudentExamTagModel(
-            Guid.NewGuid(),
-            "Algorithms",
-            "algorithms",
-            "Algorithm practice",
-            ExamTagType.Topic,
-            DateTimeOffset.UtcNow,
-            null);
-        var query = new RecordingStudentExamTagQuery(tag);
-        var service = new StudentExamTagService(query);
+        var subject = new StudentExamFilterTagModel(
+            Guid.NewGuid(), "Mathematics", "mathematics", ExamTagType.Subject, 3);
+        var topicB = new StudentExamFilterTagModel(
+            Guid.NewGuid(), "Sorting", "sorting", ExamTagType.Topic, 2);
+        var topicA = new StudentExamFilterTagModel(
+            Guid.NewGuid(), "Algorithms", "algorithms", ExamTagType.Topic, 1);
+        var query = new RecordingDiscoveryQuery
+        {
+            Filters = [topicB, subject, topicA]
+        };
 
-        await service.ListActiveAsync(ExamTagType.Topic);
-        await service.GetActiveByIdAsync(tag.Id);
-        await service.GetActiveByTypeAndSlugAsync(tag.Type, tag.Slug);
+        var response = await new StudentExamDiscoveryService(query).GetFiltersAsync();
 
-        Assert.Equal(1, query.ListActiveCalls);
-        Assert.Equal(1, query.GetActiveByIdCalls);
-        Assert.Equal(1, query.GetActiveByTypeAndSlugCalls);
+        Assert.Equal([ExamTagType.Subject, ExamTagType.Topic],
+            response.Groups.Select(group => group.Type));
+        Assert.Equal(["Algorithms", "Sorting"],
+            response.Groups[1].Items.Select(item => item.Name));
+        Assert.Equal([1, 2],
+            response.Groups[1].Items.Select(item => item.ExamCount));
     }
 
     [Fact]
-    public async Task StudentExamCategoryService_UsesOnlyActiveQueryOperations()
+    public async Task DiscoveryService_MapsOnlyStudentSafeCategoryFieldsAndNormalizesSlug()
     {
+        var tag = new StudentExamCategoryTagModel(
+            Guid.NewGuid(), "Algorithms", "algorithms", ExamTagType.Topic);
         var category = new StudentExamCategoryModel(
-            Guid.NewGuid(),
-            "Backend",
-            "backend",
-            "Backend exams",
-            ExamCategoryMatchMode.All,
-            true,
-            1,
-            DateTimeOffset.UtcNow,
-            null,
-            []);
-        var query = new RecordingStudentExamCategoryQuery(category);
-        var service = new StudentExamCategoryService(query);
+            Guid.NewGuid(), "Backend", "backend", "Backend exams", true, 4, [tag]);
+        var query = new RecordingDiscoveryQuery
+        {
+            Categories = [category],
+            Category = category
+        };
+        var service = new StudentExamDiscoveryService(query);
 
-        await service.ListActiveAsync();
-        await service.GetActiveByIdOrSlugAsync(category.Slug);
+        var categories = await service.GetCategoriesAsync(featuredOnly: true);
+        var detail = await service.GetCategoryAsync("  Back End  ");
 
-        Assert.Equal(1, query.ListActiveCalls);
-        Assert.Equal(1, query.GetActiveByIdOrSlugCalls);
+        Assert.Single(categories);
+        Assert.True(query.LastFeaturedOnly);
+        Assert.True(detail.IsSuccess);
+        Assert.Equal("back-end", query.LastCategorySlug);
+        Assert.Equal(category.Id, detail.Value!.Id);
+        Assert.Equal(tag.Id, detail.Value.Tags[0].Id);
+
+        var exposedNames = typeof(ExamForge.Application.Student.ExamClassifications.Dtos.StudentExamCategoryResponse)
+            .GetProperties()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Assert.DoesNotContain("MatchMode", exposedNames);
+        Assert.DoesNotContain("DisplayOrder", exposedNames);
+        Assert.DoesNotContain("CreatedAtUtc", exposedNames);
+        Assert.DoesNotContain("UpdatedAtUtc", exposedNames);
+        Assert.DoesNotContain("IsArchived", exposedNames);
     }
 
-    [Theory]
-    [InlineData(typeof(StudentExamTagService))]
-    [InlineData(typeof(StudentExamCategoryService))]
-    public void StudentClassificationServices_DoNotExposeVisibilityBooleans(Type serviceType)
+    [Fact]
+    public async Task DiscoveryService_ReturnsNotFoundForBlankOrMissingCategory()
     {
-        var publicParameters = serviceType
-            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
-            .SelectMany(method => method.GetParameters())
-            .ToList();
+        var query = new RecordingDiscoveryQuery();
+        var service = new StudentExamDiscoveryService(query);
 
-        Assert.DoesNotContain(publicParameters, parameter => parameter.ParameterType == typeof(bool));
-        Assert.DoesNotContain(publicParameters, parameter =>
-            parameter.Name?.Contains("archived", StringComparison.OrdinalIgnoreCase) == true);
+        var blank = await service.GetCategoryAsync(" ");
+        var missing = await service.GetCategoryAsync("missing");
+
+        Assert.False(blank.IsSuccess);
+        Assert.False(missing.IsSuccess);
+        Assert.Equal(1, query.CategoryLookupCalls);
+        Assert.Equal("missing", query.LastCategorySlug);
     }
 
     [Theory]
@@ -98,70 +110,44 @@ public sealed class ExamClassificationModuleTests
         }
     };
 
-    private sealed class RecordingStudentExamTagQuery : IStudentExamTagQuery
+    private sealed class RecordingDiscoveryQuery : IStudentExamDiscoveryQuery
     {
-        private readonly StudentExamTagModel _tag;
+        public IReadOnlyList<StudentExamFilterTagModel> Filters { get; set; } = [];
+        public IReadOnlyList<StudentExamCategoryModel> Categories { get; set; } = [];
+        public StudentExamCategoryModel? Category { get; set; }
+        public bool LastFeaturedOnly { get; private set; }
+        public string? LastCategorySlug { get; private set; }
+        public int CategoryLookupCalls { get; private set; }
 
-        public RecordingStudentExamTagQuery(StudentExamTagModel tag)
-        {
-            _tag = tag;
-        }
+        public Task<IReadOnlyList<StudentExamFilterTagModel>> GetFilterTagsAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Filters);
 
-        public int ListActiveCalls { get; private set; }
-        public int GetActiveByIdCalls { get; private set; }
-        public int GetActiveByTypeAndSlugCalls { get; private set; }
-
-        public Task<IReadOnlyList<StudentExamTagModel>> ListActiveAsync(
-            ExamTagType? type,
+        public Task<IReadOnlyList<StudentExamCategoryModel>> GetCategoriesAsync(
+            bool featuredOnly,
             CancellationToken cancellationToken = default)
         {
-            ListActiveCalls++;
-            return Task.FromResult<IReadOnlyList<StudentExamTagModel>>([_tag]);
+            LastFeaturedOnly = featuredOnly;
+            return Task.FromResult(Categories);
         }
 
-        public Task<StudentExamTagModel?> GetActiveByIdAsync(
-            Guid id,
-            CancellationToken cancellationToken = default)
-        {
-            GetActiveByIdCalls++;
-            return Task.FromResult<StudentExamTagModel?>(_tag);
-        }
-
-        public Task<StudentExamTagModel?> GetActiveByTypeAndSlugAsync(
-            ExamTagType type,
+        public Task<StudentExamCategoryModel?> GetCategoryBySlugAsync(
             string slug,
             CancellationToken cancellationToken = default)
         {
-            GetActiveByTypeAndSlugCalls++;
-            return Task.FromResult<StudentExamTagModel?>(_tag);
-        }
-    }
-
-    private sealed class RecordingStudentExamCategoryQuery : IStudentExamCategoryQuery
-    {
-        private readonly StudentExamCategoryModel _category;
-
-        public RecordingStudentExamCategoryQuery(StudentExamCategoryModel category)
-        {
-            _category = category;
+            CategoryLookupCalls++;
+            LastCategorySlug = slug;
+            return Task.FromResult(Category);
         }
 
-        public int ListActiveCalls { get; private set; }
-        public int GetActiveByIdOrSlugCalls { get; private set; }
+        public Task<StudentExamCategoryRuleModel?> GetCategoryRuleBySlugAsync(
+            string slug,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<StudentExamCategoryRuleModel?>(null);
 
-        public Task<IReadOnlyCollection<StudentExamCategoryModel>> ListActiveAsync(
-            CancellationToken cancellationToken = default)
-        {
-            ListActiveCalls++;
-            return Task.FromResult<IReadOnlyCollection<StudentExamCategoryModel>>([_category]);
-        }
-
-        public Task<StudentExamCategoryModel?> GetActiveByIdOrSlugAsync(
-            string idOrSlug,
-            CancellationToken cancellationToken = default)
-        {
-            GetActiveByIdOrSlugCalls++;
-            return Task.FromResult<StudentExamCategoryModel?>(_category);
-        }
+        public Task<IReadOnlyCollection<Guid>> GetActiveTagIdsAsync(
+            IReadOnlyCollection<Guid> tagIds,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(tagIds);
     }
 }
