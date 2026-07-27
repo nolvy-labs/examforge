@@ -8,12 +8,10 @@ import {
 import {
 	createStudentExamAttempt,
 	getStudentExamAttempts,
-	getStudentExamDetail,
 } from "../api/exam-detail.api"
 import { ATTEMPT_HISTORY_PAGE_SIZE } from "../model/exam-detail.model"
 
 export const examDetailKeys = {
-	detail: (slug: string) => ["student-exam-detail", slug] as const,
 	activeAttempt: (examId: string) =>
 		["student-exam-attempts", examId, "in-progress", 1, 1] as const,
 	history: (examId: string, page: number) =>
@@ -26,14 +24,6 @@ export const examDetailKeys = {
 		] as const,
 	allAttempts: (examId: string) =>
 		["student-exam-attempts", examId] as const,
-}
-
-export function useStudentExamDetail(slug: string) {
-	return useQuery({
-		queryKey: examDetailKeys.detail(slug),
-		queryFn: ({ signal }) => getStudentExamDetail(slug, signal),
-		staleTime: 5 * 60 * 1000,
-	})
 }
 
 export function useActiveExamAttempt(examId: string, enabled: boolean) {

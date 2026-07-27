@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils"
 import { useCreateExamAttempt } from "../hooks/exam-detail.hook"
 import {
 	formatNumber,
-	getAttemptStatus,
 	getExamCounts,
 	getLatestAttempt,
 	isGuid,
@@ -81,10 +80,7 @@ export function ExamAttemptAction({
 			},
 			onError: (error) => {
 				if (!(error instanceof ApiError)) return
-				const code =
-					typeof error.problem?.code === "string"
-						? error.problem.code
-						: undefined
+				const code = error.problemCode
 
 				if (error.status === 401) {
 					setDialogMode(null)
@@ -93,7 +89,7 @@ export function ExamAttemptAction({
 				}
 
 				if (code === "active_attempt_exists") {
-					const existingAttemptId = error.problem?.existingAttemptId
+					const existingAttemptId = error.existingAttemptId
 					setDialogMode(null)
 					onRefreshAttemptState()
 					if (isGuid(existingAttemptId)) {
@@ -181,9 +177,7 @@ export function ExamAttemptAction({
 		)
 	}
 
-	const latestStatus = latestAttempt
-		? getAttemptStatus(latestAttempt.status)
-		: null
+	const latestStatus = latestAttempt?.status ?? null
 
 	return (
 		<>
@@ -232,12 +226,6 @@ export function ExamAttemptAction({
 						Retake
 					</Button>
 				)}
-				{latestAttempt && latestStatus === "unknown" && (
-					<ActionError
-						message="Your latest attempt has an unfamiliar status."
-						onRetry={onRetryLatest}
-					/>
-				)}
 			</div>
 
 			<StartAttemptDialog
@@ -276,7 +264,7 @@ function ActionError({ message, onRetry }: { message: string; onRetry: () => voi
 
 function getMutationMessage(error: unknown) {
 	if (!(error instanceof ApiError)) return ""
-	const code = typeof error.problem?.code === "string" ? error.problem.code : ""
+	const code = error.problemCode
 	if (
 		code === "active_attempt_exists" ||
 		code === "published_version_not_found"

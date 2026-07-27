@@ -81,10 +81,7 @@ export function useAttemptAutosave(
 			}
 			return true
 		} catch (error) {
-			const code =
-				error instanceof ApiError && typeof error.problem?.code === "string"
-					? error.problem.code
-					: ""
+			const code = error instanceof ApiError ? error.problemCode ?? "" : ""
 			if (
 				(code === "revision_mismatch" || code === "concurrency_conflict") &&
 				!conflictRetryRef.current

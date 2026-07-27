@@ -1,4 +1,10 @@
 export type ApiFieldErrors = Record<string, string[]>
+export interface ApiPatchValidationError {
+	operationIndex: number
+	path: string | null
+	code: string
+	message: string
+}
 
 export interface ApiProblemDetails {
 	type?: string
@@ -6,8 +12,11 @@ export interface ApiProblemDetails {
 	status?: number
 	detail?: string
 	instance?: string
-	errors?: ApiFieldErrors
-	[extension: string]: unknown
+	errors?: ApiFieldErrors | ApiPatchValidationError[]
+	code?: string
+	existingAttemptId?: string
+	currentRevision?: number
+	invalidTagIds?: string[]
 }
 
 export type ApiErrorCode =
@@ -18,4 +27,5 @@ export type ApiErrorCode =
 	| "timeout"
 	| "network"
 	| "server"
+	| "invalid-response"
 	| "unknown"

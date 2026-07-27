@@ -165,10 +165,7 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 			const response = await mutation.mutateAsync(useAttemptStore.getState().etag)
 			if (getAttemptStatus(response.data.status) !== "in-progress") goToResult()
 		} catch (error) {
-			const code =
-				error instanceof ApiError && typeof error.problem?.code === "string"
-					? error.problem.code
-					: ""
+			const code = error instanceof ApiError ? error.problemCode ?? "" : ""
 			if (
 				[
 					"attempt_already_submitted",

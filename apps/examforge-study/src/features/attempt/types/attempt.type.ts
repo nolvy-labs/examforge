@@ -15,7 +15,7 @@ export interface AttemptAnswer {
 	selectedOptionIds: string[]
 	awardedScore?: number | null
 	maximumScore?: number | null
-	gradingStatus?: string | number | null
+	gradingStatus?: GradingStatus | null
 }
 
 export interface AttemptOption {
@@ -39,7 +39,7 @@ export interface AttemptSolution {
 export interface AttemptQuestion {
 	id: string
 	parentQuestionId: string | null
-	type: string | number
+	type: QuestionType
 	prompt: string
 	points: number
 	displayOrder: number
@@ -52,7 +52,7 @@ export interface AttemptQuestion {
 
 export interface AttemptSection {
 	id: string
-	kind: string | number
+	kind: import("@/features/exams/model/exam.schema").ExamSectionKind
 	title: string
 	instructions: string
 	stimulusText: string | null
@@ -66,7 +66,7 @@ export interface AttemptDetail {
 	attemptId: string
 	examId: string
 	examVersionId: string
-	status: string | number
+	status: AttemptStatus
 	revision: number
 	startedAtUtc: string
 	expiresAtUtc: string | null
@@ -76,7 +76,12 @@ export interface AttemptDetail {
 	score?: number | null
 	maximumScore?: number | null
 	percentage?: number | null
-	exam: { title: string; slug: string; description: string; type: string | number }
+	exam: {
+		title: string
+		slug: string
+		description: string
+		type: import("@/features/exams/model/exam.schema").ExamType
+	}
 	examVersion: {
 		versionNumber: number
 		title: string
@@ -103,32 +108,16 @@ export interface AttemptPatchOperation {
 	value: string | null | string[]
 }
 
-export function getAttemptStatus(value: string | number): AttemptStatus {
-	if (value === 0 || String(value).toLowerCase().replaceAll("_", "") === "inprogress") {
-		return "in-progress"
-	}
-	if (value === 1 || String(value).toLowerCase() === "submitted") return "submitted"
-	return "abandoned"
+export function getAttemptStatus(value: AttemptStatus) {
+	return value
 }
 
-export function getQuestionType(value: string | number): QuestionType {
-	if (value === 0 || String(value).toLowerCase() === "fillblank") return "fill-blank"
-	if (value === 1 || String(value).toLowerCase() === "multiplechoicesingle") {
-		return "multiple-choice-single"
-	}
-	if (value === 2 || String(value).toLowerCase() === "multiplechoicemultiple") {
-		return "multiple-choice-multiple"
-	}
-	return "group"
+export function getQuestionType(value: QuestionType) {
+	return value
 }
 
-export function getGradingStatus(value?: string | number | null): GradingStatus | null {
-	if (value == null) return null
-	const normalized = String(value).toLowerCase()
-	if (value === 0 || normalized === "unanswered") return "unanswered"
-	if (value === 1 || normalized === "incorrect") return "incorrect"
-	if (value === 2 || normalized === "partiallycorrect") return "partially-correct"
-	return "correct"
+export function getGradingStatus(value?: GradingStatus | null) {
+	return value ?? null
 }
 
 export function answerFromQuestion(question: AttemptQuestion): DraftAnswer {

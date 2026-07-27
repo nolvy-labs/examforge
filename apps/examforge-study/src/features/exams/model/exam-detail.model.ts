@@ -1,5 +1,4 @@
 import type {
-	ExamAttemptStatus,
 	StudentExamAttempt,
 	StudentExamDetail,
 	StudentExamSection,
@@ -7,46 +6,26 @@ import type {
 
 export const ATTEMPT_HISTORY_PAGE_SIZE = 5
 
-const EXAM_TYPE_LABELS: Record<string, string> = {
-	"0": "Standard exam",
-	"1": "IELTS",
+const EXAM_TYPE_LABELS = {
 	simple: "Standard exam",
 	ielts: "IELTS",
-}
+} as const
 
-const SECTION_KIND_LABELS: Record<string, string> = {
-	"0": "General",
-	"1": "Reading",
-	"2": "Listening",
-	"3": "Writing",
-	"4": "Speaking",
-	"5": "Custom",
+const SECTION_KIND_LABELS = {
 	default: "General",
 	reading: "Reading",
 	listening: "Listening",
 	writing: "Writing",
 	speaking: "Speaking",
 	custom: "Custom",
+} as const
+
+export function getExamTypeLabel(type: StudentExamDetail["exam"]["type"]) {
+	return EXAM_TYPE_LABELS[type]
 }
 
-function enumKey(value: string | number) {
-	return String(value).replaceAll("_", "").replaceAll("-", "").toLowerCase()
-}
-
-export function getExamTypeLabel(type: string | number) {
-	return EXAM_TYPE_LABELS[enumKey(type)] ?? "Exam"
-}
-
-export function getSectionKindLabel(kind: string | number) {
-	return SECTION_KIND_LABELS[enumKey(kind)] ?? "Section"
-}
-
-export function getAttemptStatus(status: string | number): ExamAttemptStatus {
-	const key = enumKey(status)
-	if (key === "0" || key === "inprogress") return "in-progress"
-	if (key === "1" || key === "submitted") return "submitted"
-	if (key === "2" || key === "abandoned") return "abandoned"
-	return "unknown"
+export function getSectionKindLabel(kind: StudentExamSection["kind"]) {
+	return SECTION_KIND_LABELS[kind]
 }
 
 export function getOrderedSections(detail: StudentExamDetail) {
@@ -73,7 +52,7 @@ export function formatNumber(value: number) {
 
 export function formatAttemptScore(attempt: StudentExamAttempt) {
 	if (
-		getAttemptStatus(attempt.status) !== "submitted" ||
+		attempt.status !== "submitted" ||
 		attempt.score == null ||
 		attempt.maximumScore == null
 	) {

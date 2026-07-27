@@ -82,10 +82,10 @@ export function AttemptResultPage({ attemptId }: { attemptId: string }) {
 			onError: (error) => {
 				if (
 					error instanceof ApiError &&
-					error.problem?.code === "active_attempt_exists" &&
-					typeof error.problem.existingAttemptId === "string"
+					error.problemCode === "active_attempt_exists" &&
+					error.existingAttemptId
 				) {
-					router.push(`/attempts/${error.problem.existingAttemptId}`)
+					router.push(`/attempts/${error.existingAttemptId}`)
 				}
 			},
 		})

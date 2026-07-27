@@ -1,20 +1,22 @@
 import { apiClient } from "@/lib/api/api.client"
+import { parseApiResponse } from "@/lib/api/api.schema"
 
 import type {
-	AttemptDetail,
 	AttemptPatchOperation,
 	AttemptResponse,
 } from "../types/attempt.type"
+import { attemptDetailSchema } from "../types/attempt.schema"
 
-function withEtag(data: AttemptDetail, etag: unknown): AttemptResponse {
+function withEtag(data: unknown, etag: unknown): AttemptResponse {
+	const detail = parseApiResponse(attemptDetailSchema, data, "exam attempt detail")
 	return {
-		data,
-		etag: typeof etag === "string" ? etag : `"${data.revision}"`,
+		data: detail,
+		etag: typeof etag === "string" ? etag : `"${detail.revision}"`,
 	}
 }
 
 export async function getAttempt(attemptId: string, signal?: AbortSignal) {
-	const response = await apiClient.get<AttemptDetail>(
+	const response = await apiClient.get<unknown>(
 		`/api/v1/exam-attempts/${encodeURIComponent(attemptId)}`,
 		{ signal }
 	)
@@ -26,7 +28,7 @@ export async function patchAttempt(
 	etag: string,
 	operations: AttemptPatchOperation[]
 ) {
-	const response = await apiClient.patch<AttemptDetail>(
+	const response = await apiClient.patch<unknown>(
 		`/api/v1/exam-attempts/${encodeURIComponent(attemptId)}`,
 		operations,
 		{
@@ -44,7 +46,7 @@ async function transitionAttempt(
 	action: "submit" | "abandon",
 	etag: string
 ) {
-	const response = await apiClient.post<AttemptDetail>(
+	const response = await apiClient.post<unknown>(
 		`/api/v1/exam-attempts/${encodeURIComponent(attemptId)}/${action}`,
 		undefined,
 		{ headers: { "If-Match": etag } }

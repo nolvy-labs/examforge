@@ -30,6 +30,10 @@ import {
 	getNormalizedBrowseQuery,
 	parseExamBrowseParams,
 } from "../model/exam-browse.params"
+import {
+	getInvalidExamTagIds,
+	isInvalidExamCategoryError,
+} from "../model/exam-browse.error"
 
 export function ExamBrowsePage() {
 	const pathname = usePathname()
@@ -91,7 +95,7 @@ export function ExamBrowsePage() {
 		const signature = `error:${rawQuery}`
 		if (correctionAttempts.current.has(signature)) return
 
-		const invalidTagIds = getInvalidTagIds(error)
+		const invalidTagIds = getInvalidExamTagIds(error)
 		if (invalidTagIds.length) {
 			const invalid = new Set(invalidTagIds.map((id) => id.toLowerCase()))
 			const remaining = state.tagIds.filter((id) => !invalid.has(id))
@@ -102,13 +106,7 @@ export function ExamBrowsePage() {
 			}
 		}
 
-		const detail = error.problem?.detail
-		if (
-			state.category &&
-			error.status === 404 &&
-			typeof detail === "string" &&
-			detail.toLowerCase().includes("category")
-		) {
+		if (state.category && isInvalidExamCategoryError(error)) {
 			correctionAttempts.current.add(signature)
 			update({ category: "" }, { replace: true })
 		}
@@ -368,13 +366,6 @@ export function ExamBrowsePage() {
 			</div>
 		</main>
 	)
-}
-
-function getInvalidTagIds(error: ApiError) {
-	const value = error.problem?.invalidTagIds
-	return Array.isArray(value)
-		? value.filter((item): item is string => typeof item === "string")
-		: []
 }
 
 function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {

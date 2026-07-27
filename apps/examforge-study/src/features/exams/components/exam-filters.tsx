@@ -9,33 +9,24 @@ import { Checkbox } from "@/components/shadcn/checkbox"
 import { cn } from "@/lib/utils"
 
 import type {
+	ExamTagType,
 	StudentExamCategory,
 	StudentExamFilterGroup,
 } from "../model/exam-browse.types"
 
-const TAG_TYPE_LABELS: Record<string, string> = {
-	"0": "Other",
-	"1": "Subject",
-	"2": "Exam type",
-	"3": "Year",
-	"4": "Grade",
-	"5": "Skill",
-	"6": "Level",
-	"7": "Topic",
-	"8": "Language",
+const TAG_TYPE_LABELS: Record<ExamTagType, string> = {
 	unknown: "Other",
 	subject: "Subject",
-	examtype: "Exam type",
+	"exam-type": "Exam type",
 	year: "Year",
 	grade: "Grade",
 	skill: "Skill",
 	level: "Level",
 	topic: "Topic",
-	language: "Language",
 }
 
-export function getTagTypeLabel(type: string | number) {
-	return TAG_TYPE_LABELS[String(type).replaceAll("_", "").toLowerCase()] ?? "Tags"
+export function getTagTypeLabel(type: ExamTagType) {
+	return TAG_TYPE_LABELS[type]
 }
 
 interface FilterPanelProps {

@@ -1,8 +1,10 @@
 import axios from "axios"
+import { z } from "zod"
 
 import type {
 	ApiErrorCode,
 	ApiFieldErrors,
+	ApiPatchValidationError,
 	ApiProblemDetails,
 } from "@/lib/api/api.type"
 
@@ -13,6 +15,10 @@ export class ApiError extends Error {
 	readonly status?: number
 	readonly fieldErrors: ApiFieldErrors
 	readonly problem?: ApiProblemDetails
+	readonly problemCode?: string
+	readonly existingAttemptId?: string
+	readonly invalidTagIds: string[]
+	readonly patchErrors: ApiPatchValidationError[]
 
 	constructor({
 		code,
@@ -33,6 +39,10 @@ export class ApiError extends Error {
 		this.status = status
 		this.fieldErrors = fieldErrors
 		this.problem = problem
+		this.problemCode = problem?.code
+		this.existingAttemptId = problem?.existingAttemptId
+		this.invalidTagIds = problem?.invalidTagIds ?? []
+		this.patchErrors = Array.isArray(problem?.errors) ? problem.errors : []
 	}
 
 	getFieldMessages(fieldName: string) {
@@ -44,12 +54,29 @@ export class ApiError extends Error {
 	}
 }
 
-function isProblemDetails(value: unknown): value is ApiProblemDetails {
-	return typeof value === "object" && value !== null
-}
+const fieldErrorsSchema = z.record(z.string(), z.array(z.string()))
+const patchErrorsSchema = z.array(z.object({
+	operationIndex: z.number().int().nonnegative(),
+	path: z.string().nullable(),
+	code: z.string().min(1),
+	message: z.string(),
+}))
+const problemDetailsSchema = z.object({
+	type: z.string().optional().catch(undefined),
+	title: z.string().optional().catch(undefined),
+	status: z.number().int().optional().catch(undefined),
+	detail: z.string().optional().catch(undefined),
+	instance: z.string().optional().catch(undefined),
+	errors: z.union([fieldErrorsSchema, patchErrorsSchema]).optional().catch(undefined),
+	code: z.string().min(1).optional().catch(undefined),
+	existingAttemptId: z.uuid().optional().catch(undefined),
+	currentRevision: z.number().int().nonnegative().optional().catch(undefined),
+	invalidTagIds: z.array(z.uuid()).optional().catch(undefined),
+})
 
-function getProblemDetails(data: unknown): ApiProblemDetails {
-	return isProblemDetails(data) ? data : {}
+export function parseApiProblemDetails(data: unknown): ApiProblemDetails {
+	const result = problemDetailsSchema.safeParse(data)
+	return result.success ? result.data : {}
 }
 
 function getMessageForStatus(status: number, problem: ApiProblemDetails) {
@@ -100,8 +127,9 @@ export function toApiError(error: unknown): ApiError {
 	}
 
 	const status = error.response.status
-	const problem = getProblemDetails(error.response.data)
-	const fieldErrors = problem.errors ?? {}
+	const problem = parseApiProblemDetails(error.response.data)
+	const fieldErrors =
+		problem.errors && !Array.isArray(problem.errors) ? problem.errors : {}
 	let code: ApiErrorCode = "unknown"
 
 	if (Object.keys(fieldErrors).length > 0) {

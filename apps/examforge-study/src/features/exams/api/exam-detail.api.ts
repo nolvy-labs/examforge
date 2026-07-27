@@ -1,19 +1,11 @@
 import { apiClient } from "@/lib/api/api.client"
+import { parseApiResponse } from "@/lib/api/api.schema"
 
-import type {
-	CreatedExamAttempt,
-	ExamAttemptState,
-	StudentExamAttemptPage,
-	StudentExamDetail,
-} from "../model/exam-detail.types"
-
-export async function getStudentExamDetail(slug: string, signal?: AbortSignal) {
-	const response = await apiClient.get<StudentExamDetail>(
-		`/api/v1/exams/${encodeURIComponent(slug)}`,
-		{ signal }
-	)
-	return response.data
-}
+import type { ExamAttemptState } from "../model/exam-detail.types"
+import {
+	createdExamAttemptSchema,
+	studentExamAttemptPageSchema,
+} from "../model/exam.schema"
 
 export async function getStudentExamAttempts(
 	examId: string,
@@ -28,19 +20,30 @@ export async function getStudentExamAttempts(
 		page: String(page),
 		pageSize: String(pageSize),
 	})
-	const response = await apiClient.get<StudentExamAttemptPage>(
+	const response = await apiClient.get<unknown>(
 		`/api/v1/exam-attempts?${params.toString()}`,
 		{ signal }
 	)
-	return response.data
+	return parseApiResponse(
+		studentExamAttemptPageSchema,
+		response.data,
+		"student exam attempts"
+	)
 }
 
 export async function createStudentExamAttempt(examId: string) {
-	const response = await apiClient.post<Omit<CreatedExamAttempt, "etag">>(
+	const response = await apiClient.post<unknown>(
 		`/api/v1/exams/${encodeURIComponent(examId)}/attempts`
 	)
+	const attempt = parseApiResponse(
+		createdExamAttemptSchema,
+		response.data,
+		"created exam attempt"
+	)
 	return {
-		...response.data,
-		etag: response.headers.etag as string | undefined,
+		...attempt,
+		etag: typeof response.headers.etag === "string"
+			? response.headers.etag
+			: undefined,
 	}
 }

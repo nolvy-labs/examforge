@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/api.client"
+import { parseApiResponse } from "@/lib/api/api.schema"
 
 import {
 	serializeExamApiParams,
@@ -6,10 +7,12 @@ import {
 } from "../model/exam-browse.params"
 import type {
 	ExamBrowseState,
-	StudentExamCategory,
-	StudentExamFilters,
-	StudentExamPage,
 } from "../model/exam-browse.types"
+import {
+	studentExamCategoriesSchema,
+	studentExamFiltersSchema,
+	studentExamPageSchema,
+} from "../model/exam.schema"
 
 export async function getStudentExams(
 	state: ExamBrowseState,
@@ -17,25 +20,33 @@ export async function getStudentExams(
 ) {
 	const params = toExamApiParams(state)
 	const query = serializeExamApiParams(params)
-	const response = await apiClient.get<StudentExamPage>(
+	const response = await apiClient.get<unknown>(
 		`/api/v1/exams?${query}`,
 		{ signal }
 	)
-	return response.data
+	return parseApiResponse(studentExamPageSchema, response.data, "student exams")
 }
 
 export async function getStudentExamFilters(signal?: AbortSignal) {
-	const response = await apiClient.get<StudentExamFilters>(
+	const response = await apiClient.get<unknown>(
 		"/api/v1/exams/filters",
 		{ signal }
 	)
-	return response.data
+	return parseApiResponse(
+		studentExamFiltersSchema,
+		response.data,
+		"student exam filters"
+	)
 }
 
 export async function getStudentExamCategories(signal?: AbortSignal) {
-	const response = await apiClient.get<StudentExamCategory[]>(
+	const response = await apiClient.get<unknown>(
 		"/api/v1/exam-categories",
 		{ params: { featuredOnly: false }, signal }
 	)
-	return response.data
+	return parseApiResponse(
+		studentExamCategoriesSchema,
+		response.data,
+		"student exam categories"
+	)
 }

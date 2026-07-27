@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils"
 import {
 	formatAttemptScore,
 	formatNumber,
-	getAttemptStatus,
 	getExamCounts,
 	getExamTypeLabel,
 	getOrderedSections,
@@ -348,7 +347,7 @@ function HistoryCard({ attempt }: { attempt: StudentExamAttempt }) {
 }
 
 function getAttemptPresentation(attempt: StudentExamAttempt) {
-	const status = getAttemptStatus(attempt.status)
+	const status = attempt.status
 	if (status === "submitted") {
 		return {
 			status,
@@ -374,7 +373,7 @@ function StatusBadge({
 	status,
 	label,
 }: {
-	status: ReturnType<typeof getAttemptStatus>
+	status: StudentExamAttempt["status"]
 	label: string
 }) {
 	return (
