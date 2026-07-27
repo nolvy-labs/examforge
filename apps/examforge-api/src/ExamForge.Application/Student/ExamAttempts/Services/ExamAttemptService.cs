@@ -1,4 +1,5 @@
 using System.Text.Json;
+
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Common;
@@ -384,6 +385,7 @@ public sealed class ExamAttemptService
         var page = await _repository.GetPageAsync(
             studentId,
             normalizedState == "completed",
+            request.ExamId,
             checked((request.Page - 1) * request.PageSize),
             request.PageSize,
             cancellationToken);

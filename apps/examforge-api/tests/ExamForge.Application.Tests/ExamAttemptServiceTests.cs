@@ -1,4 +1,5 @@
 using System.Text.Json;
+
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Student.ExamAttempts.Abstractions;
@@ -237,6 +238,48 @@ public sealed class ExamAttemptServiceTests
         Assert.Equal(ExamAttemptError.AttemptNotFound, result.Error);
     }
 
+    [Fact]
+    public async Task Page_forwards_exam_filter_and_uses_filtered_pagination()
+    {
+        var examId = Guid.NewGuid();
+        var studentId = Guid.NewGuid();
+        var repository = new FakeRepository(null, null)
+        {
+            Page = new ExamAttemptPageModel([], 7)
+        };
+
+        var result = await CreateService(repository, studentId).GetPageAsync(
+            new GetExamAttemptsRequest(
+                State: "completed",
+                Page: 2,
+                PageSize: 5,
+                ExamId: examId));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(studentId, repository.LastPageStudentId);
+        Assert.True(repository.LastPageCompleted);
+        Assert.Equal(examId, repository.LastPageExamId);
+        Assert.Equal(5, repository.LastPageSkip);
+        Assert.Equal(5, repository.LastPageTake);
+        Assert.Equal(7, result.Value!.Meta.TotalItems);
+        Assert.Equal(2, result.Value.Meta.TotalPages);
+    }
+
+    [Fact]
+    public async Task Page_omits_exam_filter_without_changing_existing_request_behavior()
+    {
+        var repository = new FakeRepository(null, null);
+
+        var result = await CreateService(repository, Guid.NewGuid()).GetPageAsync(
+            new GetExamAttemptsRequest());
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(repository.LastPageExamId);
+        Assert.False(repository.LastPageCompleted);
+        Assert.Equal(0, repository.LastPageSkip);
+        Assert.Equal(20, repository.LastPageTake);
+    }
+
     private static ExamAttemptService CreateService(
         FakeRepository repository,
         Guid studentId,
@@ -272,7 +315,13 @@ public sealed class ExamAttemptServiceTests
         public ExamVersion? Version { get; }
         public ExamAttempt? Active { get; set; }
         public ExamAttempt? Owned { get; set; }
+        public ExamAttemptPageModel Page { get; set; } = new([], 0);
         public int SaveCount { get; private set; }
+        public Guid? LastPageStudentId { get; private set; }
+        public bool LastPageCompleted { get; private set; }
+        public Guid? LastPageExamId { get; private set; }
+        public int LastPageSkip { get; private set; }
+        public int LastPageTake { get; private set; }
 
         public Task<bool> ExamExistsAsync(
             Guid examId,
@@ -341,9 +390,17 @@ public sealed class ExamAttemptServiceTests
         public Task<ExamAttemptPageModel> GetPageAsync(
             Guid studentId,
             bool completed,
+            Guid? examId,
             int skip,
             int take,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new ExamAttemptPageModel([], 0));
+            CancellationToken cancellationToken = default)
+        {
+            LastPageStudentId = studentId;
+            LastPageCompleted = completed;
+            LastPageExamId = examId;
+            LastPageSkip = skip;
+            LastPageTake = take;
+            return Task.FromResult(Page);
+        }
     }
 }

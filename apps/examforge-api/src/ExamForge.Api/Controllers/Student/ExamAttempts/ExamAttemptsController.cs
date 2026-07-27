@@ -13,7 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ExamForge.Api.Controllers.Student.ExamAttempts;
 
-[Authorize(Roles = nameof(UserRole.Student))]
 public sealed class ExamAttemptsController : StudentBaseController
 {
     private readonly ExamAttemptService _service;

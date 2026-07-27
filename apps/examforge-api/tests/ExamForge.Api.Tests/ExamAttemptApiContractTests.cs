@@ -1,4 +1,5 @@
 using System.Reflection;
+
 using ExamForge.Api.Controllers.Student.ExamAttempts;
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Infrastructure.Persistence;
@@ -24,22 +25,22 @@ public sealed class ExamAttemptApiContractTests
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
             .ToDictionary(method => method.Name);
         Assert.Equal(
-            "~/api/v1/student/exams/{examId:guid}/attempts",
+            "~/api/v1/exams/{examId:guid}/attempts",
             Assert.Single(actions["Create"].GetCustomAttributes<HttpPostAttribute>()).Template);
         Assert.Equal(
-            "~/api/v1/student/exam-attempts/{attemptId:guid}",
+            "~/api/v1/exam-attempts/{attemptId:guid}",
             Assert.Single(actions["GetDetail"].GetCustomAttributes<HttpGetAttribute>()).Template);
         Assert.Equal(
-            "~/api/v1/student/exam-attempts",
+            "~/api/v1/exam-attempts",
             Assert.Single(actions["GetPage"].GetCustomAttributes<HttpGetAttribute>()).Template);
         Assert.Equal(
-            "~/api/v1/student/exam-attempts/{attemptId:guid}",
+            "~/api/v1/exam-attempts/{attemptId:guid}",
             Assert.Single(actions["Patch"].GetCustomAttributes<HttpPatchAttribute>()).Template);
         Assert.Equal(
-            "~/api/v1/student/exam-attempts/{attemptId:guid}/submit",
+            "~/api/v1/exam-attempts/{attemptId:guid}/submit",
             Assert.Single(actions["Submit"].GetCustomAttributes<HttpPostAttribute>()).Template);
         Assert.Equal(
-            "~/api/v1/student/exam-attempts/{attemptId:guid}/abandon",
+            "~/api/v1/exam-attempts/{attemptId:guid}/abandon",
             Assert.Single(actions["Abandon"].GetCustomAttributes<HttpPostAttribute>()).Template);
     }
 

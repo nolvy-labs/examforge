@@ -131,6 +131,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
     public async Task<ExamAttemptPageModel> GetPageAsync(
         Guid studentId,
         bool completed,
+        Guid? examId,
         int skip,
         int take,
         CancellationToken cancellationToken = default)
@@ -140,6 +141,10 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
         query = completed
             ? query.Where(attempt => attempt.Status != ExamAttemptStatus.InProgress)
             : query.Where(attempt => attempt.Status == ExamAttemptStatus.InProgress);
+        if (examId.HasValue)
+        {
+            query = query.Where(attempt => attempt.ExamId == examId.Value);
+        }
 
         var totalItems = await query.CountAsync(cancellationToken);
         var items = await query

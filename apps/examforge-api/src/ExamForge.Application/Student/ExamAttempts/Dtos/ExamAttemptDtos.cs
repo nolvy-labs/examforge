@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Domain.Exams;
 
@@ -13,7 +14,8 @@ public sealed class ExamAttemptPatchDocumentModel
 public sealed record GetExamAttemptsRequest(
     string State = "in-progress",
     int Page = 1,
-    int PageSize = 20);
+    int PageSize = 20,
+    Guid? ExamId = null);
 
 public sealed record ExamAttemptListItemResponse(
     Guid AttemptId,

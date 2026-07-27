@@ -23,6 +23,7 @@ public interface IExamAttemptRepository
     Task<ExamAttemptPageModel> GetPageAsync(
         Guid studentId,
         bool completed,
+        Guid? examId,
         int skip,
         int take,
         CancellationToken cancellationToken = default);
