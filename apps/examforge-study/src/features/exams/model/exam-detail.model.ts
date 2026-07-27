@@ -50,6 +50,15 @@ export function formatNumber(value: number) {
 	}).format(value)
 }
 
+export function formatDate(value: string, includeTime = true) {
+	const date = new Date(value)
+	if (Number.isNaN(date.getTime())) return "Unavailable"
+	return new Intl.DateTimeFormat(undefined, {
+		dateStyle: "medium",
+		...(includeTime ? { timeStyle: "short" as const } : {}),
+	}).format(date)
+}
+
 export function formatAttemptScore(attempt: StudentExamAttempt) {
 	if (
 		attempt.status !== "submitted" ||

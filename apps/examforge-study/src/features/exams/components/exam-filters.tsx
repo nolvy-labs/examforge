@@ -29,35 +29,42 @@ export function getTagTypeLabel(type: ExamTagType) {
 	return TAG_TYPE_LABELS[type]
 }
 
-interface FilterPanelProps {
-	idPrefix?: string
-	category: string
-	tagIds: string[]
+export interface ExamFilterData {
 	categories?: StudentExamCategory[]
 	groups?: StudentExamFilterGroup[]
 	categoryError?: boolean
 	tagError?: boolean
-	onCategoryChange: (slug: string) => void
-	onTagChange: (id: string, checked: boolean) => void
-	onClear: () => void
 	onRetryCategories: () => void
 	onRetryTags: () => void
 }
 
+interface FilterPanelProps {
+	data: ExamFilterData
+	idPrefix?: string
+	category: string
+	tagIds: string[]
+	onCategoryChange: (slug: string) => void
+	onTagChange: (id: string, checked: boolean) => void
+	onClear: () => void
+}
+
 export function ExamFilterPanel({
+	data,
 	idPrefix = "desktop",
 	category,
 	tagIds,
-	categories,
-	groups,
-	categoryError,
-	tagError,
 	onCategoryChange,
 	onTagChange,
 	onClear,
-	onRetryCategories,
-	onRetryTags,
 }: FilterPanelProps) {
+	const {
+		categories,
+		groups,
+		categoryError,
+		tagError,
+		onRetryCategories,
+		onRetryTags,
+	} = data
 	const [expandedGroups, setExpandedGroups] = useState<string[]>([])
 	const hasFilters = Boolean(category || tagIds.length)
 	const visibleCategories = categories?.filter(
@@ -238,7 +245,8 @@ function MetadataError({ label, onRetry }: { label: string; onRetry: () => void 
 	)
 }
 
-interface MobileFiltersProps extends Omit<FilterPanelProps, "category" | "tagIds"> {
+interface MobileFiltersProps {
+	data: ExamFilterData
 	category: string
 	tagIds: string[]
 	activeCount: number
@@ -246,11 +254,11 @@ interface MobileFiltersProps extends Omit<FilterPanelProps, "category" | "tagIds
 }
 
 export function ExamFilterDrawer({
+	data,
 	category,
 	tagIds,
 	activeCount,
 	onApply,
-	...panelProps
 }: MobileFiltersProps) {
 	const [open, setOpen] = useState(false)
 	const [draftCategory, setDraftCategory] = useState(category)
@@ -291,7 +299,7 @@ export function ExamFilterDrawer({
 					</div>
 					<div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
 						<ExamFilterPanel
-							{...panelProps}
+							data={data}
 							idPrefix="mobile"
 							category={draftCategory}
 							tagIds={draftTagIds}

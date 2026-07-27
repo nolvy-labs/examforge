@@ -1,14 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-
 import { useAuthStore } from "@/features/auth/stores/auth.store"
 
 import { ExamAttemptAction } from "./exam-attempt.action"
-import { AttemptHistory } from "./exam-detail.content"
+import { AttemptHistory } from "./exam-attempt-history"
+import { useExamAttemptActionController } from "../hooks/exam-attempt-action.controller"
 import {
-	useActiveExamAttempt,
 	useExamAttemptHistory,
 } from "../hooks/exam-detail.hook"
 import type { StudentExamDetail } from "../model/exam-detail.types"
@@ -58,33 +56,6 @@ export function ExamAttemptActionClient({
 }: {
 	detail: StudentExamDetail
 }) {
-	const router = useRouter()
-	const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-	const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-	const enabled = Boolean(isAuthInitialized && isAuthenticated)
-	const activeQuery = useActiveExamAttempt(detail.exam.id, enabled)
-	const latestHistoryQuery = useExamAttemptHistory(detail.exam.id, 1, enabled)
-
-	function refreshAttemptState() {
-		void activeQuery.refetch()
-		void latestHistoryQuery.refetch()
-	}
-
-	return (
-		<ExamAttemptAction
-			detail={detail}
-			isAuthInitialized={isAuthInitialized}
-			isAuthenticated={isAuthenticated}
-			activeData={activeQuery.data}
-			latestData={latestHistoryQuery.data}
-			isActivePending={activeQuery.isPending}
-			isLatestPending={latestHistoryQuery.isPending}
-			isActiveError={activeQuery.isError}
-			isLatestError={latestHistoryQuery.isError}
-			onRetryActive={() => void activeQuery.refetch()}
-			onRetryLatest={() => void latestHistoryQuery.refetch()}
-			onRefreshAttemptState={refreshAttemptState}
-			onRefreshDetail={() => router.refresh()}
-		/>
-	)
+	const controller = useExamAttemptActionController(detail)
+	return <ExamAttemptAction controller={controller} />
 }

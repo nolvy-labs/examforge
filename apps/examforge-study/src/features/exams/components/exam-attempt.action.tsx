@@ -1,244 +1,122 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Dialog } from "@base-ui/react/dialog"
 import { ArrowRight, LoaderCircle, RotateCcw, X } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Button, buttonVariants } from "@/components/shadcn/button"
-import { AUTH_ROUTES } from "@/features/auth/auth.constants"
-import { ApiError } from "@/lib/api/api.error"
 import { cn } from "@/lib/utils"
 
-import { useCreateExamAttempt } from "../hooks/exam-detail.hook"
-import {
-	formatNumber,
-	getExamCounts,
-	getLatestAttempt,
-	isGuid,
-} from "../model/exam-detail.model"
-import type {
-	StudentExamAttemptPage,
-	StudentExamDetail,
-} from "../model/exam-detail.types"
-
-interface ExamAttemptActionProps {
-	detail: StudentExamDetail
-	isAuthInitialized: boolean
-	isAuthenticated: boolean
-	activeData?: StudentExamAttemptPage
-	latestData?: StudentExamAttemptPage
-	isActivePending: boolean
-	isLatestPending: boolean
-	isActiveError: boolean
-	isLatestError: boolean
-	onRetryActive: () => void
-	onRetryLatest: () => void
-	onRefreshAttemptState: () => void
-	onRefreshDetail: () => void
-}
+import type { AttemptActionController } from "../model/exam-attempt-action.model"
+import { formatNumber, getExamCounts } from "../model/exam-detail.model"
 
 export function ExamAttemptAction({
-	detail,
-	isAuthInitialized,
-	isAuthenticated,
-	activeData,
-	latestData,
-	isActivePending,
-	isLatestPending,
-	isActiveError,
-	isLatestError,
-	onRetryActive,
-	onRetryLatest,
-	onRefreshAttemptState,
-	onRefreshDetail,
-}: ExamAttemptActionProps) {
-	const router = useRouter()
-	const mutation = useCreateExamAttempt(detail.exam.id)
-	const [dialogMode, setDialogMode] = useState<"start" | "retake" | null>(null)
-	const [actionUnavailable, setActionUnavailable] = useState(false)
-	const [customError, setCustomError] = useState("")
-	const activeAttempt = activeData?.items[0]
-	const latestAttempt = getLatestAttempt(latestData?.items ?? [])
-	const returnUrl = `/exams/${encodeURIComponent(detail.exam.slug)}`
-	const signinHref = `${AUTH_ROUTES.signin}?callbackUrl=${encodeURIComponent(returnUrl)}`
-
-	function openDialog(mode: "start" | "retake") {
-		mutation.reset()
-		setCustomError("")
-		setDialogMode(mode)
-	}
-
-	function handleCreate() {
-		if (mutation.isPending) return
-		setCustomError("")
-		mutation.mutate(undefined, {
-			onSuccess: (attempt) => {
-				router.push(`/attempts/${attempt.attemptId}`)
-			},
-			onError: (error) => {
-				if (!(error instanceof ApiError)) return
-				const code = error.problemCode
-
-				if (error.status === 401) {
-					setDialogMode(null)
-					router.replace(signinHref)
-					return
-				}
-
-				if (code === "active_attempt_exists") {
-					const existingAttemptId = error.existingAttemptId
-					setDialogMode(null)
-					onRefreshAttemptState()
-					if (isGuid(existingAttemptId)) {
-						router.replace(`/attempts/${existingAttemptId}`)
-					}
-					return
-				}
-
-				if (code === "published_version_not_found") {
-					setDialogMode(null)
-					setActionUnavailable(true)
-					onRefreshDetail()
-					return
-				}
-
-				if (code === "concurrency_conflict") {
-					setCustomError(
-						"Your attempt status changed. Refreshing it now; please try again."
-					)
-					onRefreshAttemptState()
-				}
-			},
-		})
-	}
-
-	if (!isAuthInitialized) return <ActionSkeleton />
-
-	if (!isAuthenticated) {
-		return (
-			<Link
-				href={signinHref}
-				className={cn(
-					buttonVariants({ size: "lg" }),
-					"w-full bg-indigo-600 text-white hover:bg-indigo-700"
-				)}
-			>
-				Sign in to start
-				<ArrowRight aria-hidden="true" />
-			</Link>
-		)
-	}
-
-	if (isActivePending) return <ActionSkeleton />
-
-	if (isActiveError) {
-		return (
-			<ActionError
-				message="We couldn’t check for an active attempt. Starting is disabled until your status is known."
-				onRetry={onRetryActive}
-			/>
-		)
-	}
-
-	if (activeAttempt) {
-		return (
-			<Link
-				href={`/attempts/${activeAttempt.attemptId}`}
-				className={cn(
-					buttonVariants({ size: "lg" }),
-					"w-full bg-indigo-600 text-white hover:bg-indigo-700"
-				)}
-			>
-				Continue Exam
-				<ArrowRight aria-hidden="true" />
-			</Link>
-		)
-	}
-
-	if (isLatestPending) return <ActionSkeleton />
-
-	if (isLatestError) {
-		return (
-			<ActionError
-				message="We couldn’t determine your latest attempt. Try again before starting."
-				onRetry={onRetryLatest}
-			/>
-		)
-	}
-
-	if (actionUnavailable) {
-		return (
-			<p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-				This exam is not currently available for a new attempt.
-			</p>
-		)
-	}
-
-	const latestStatus = latestAttempt?.status ?? null
+	controller,
+}: {
+	controller: AttemptActionController
+}) {
+	const content = renderAction(controller)
 
 	return (
 		<>
-			<div className="space-y-2">
-				{!latestAttempt && (
-					<Button
-						type="button"
-						size="lg"
-						className="w-full bg-indigo-600 hover:bg-indigo-700"
-						onClick={() => openDialog("start")}
-					>
-						Start Exam
-					</Button>
-				)}
-				{latestAttempt && latestStatus === "submitted" && (
-					<>
-						<Link
-							href={`/attempts/${latestAttempt.attemptId}/result`}
-							className={cn(
-								buttonVariants({ size: "lg" }),
-								"w-full bg-indigo-600 text-white hover:bg-indigo-700"
-							)}
-						>
-							View Result
-						</Link>
-						<Button
-							type="button"
-							variant="outline"
-							size="lg"
-							className="w-full"
-							onClick={() => openDialog("retake")}
-						>
-							<RotateCcw aria-hidden="true" />
-							Retake
-						</Button>
-					</>
-				)}
-				{latestAttempt && latestStatus === "abandoned" && (
-					<Button
-						type="button"
-						size="lg"
-						className="w-full bg-indigo-600 hover:bg-indigo-700"
-						onClick={() => openDialog("retake")}
-					>
-						<RotateCcw aria-hidden="true" />
-						Retake
-					</Button>
-				)}
-			</div>
-
-			<StartAttemptDialog
-				detail={detail}
-				mode={dialogMode}
-				isPending={mutation.isPending}
-				error={customError || getMutationMessage(mutation.error)}
-				onOpenChange={(open) => {
-					if (!open && !mutation.isPending) setDialogMode(null)
-				}}
-				onConfirm={handleCreate}
-			/>
+			{content}
+			<StartAttemptDialog controller={controller} />
 		</>
+	)
+}
+
+function renderAction(controller: AttemptActionController) {
+	switch (controller.state.kind) {
+		case "initializing":
+			return <ActionSkeleton />
+		case "sign-in":
+			return <PrimaryLink href={controller.state.href} label="Sign in to start" />
+		case "continue":
+			return <PrimaryLink href={controller.state.href} label="Continue Exam" />
+		case "start":
+			return (
+				<Button
+					type="button"
+					size="lg"
+					className="w-full bg-indigo-600 hover:bg-indigo-700"
+					onClick={() => controller.openDialog("start")}
+				>
+					Start Exam
+				</Button>
+			)
+		case "result":
+			return (
+				<div className="space-y-2">
+					<Link
+						href={controller.state.href}
+						className={cn(
+							buttonVariants({ size: "lg" }),
+							"w-full bg-indigo-600 text-white hover:bg-indigo-700"
+						)}
+					>
+						View Result
+					</Link>
+					<RetakeButton onClick={() => controller.openDialog("retake")} />
+				</div>
+			)
+		case "retake":
+			return <RetakeButton onClick={() => controller.openDialog("retake")} />
+		case "unavailable":
+			return (
+				<div className="space-y-3">
+					<p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+						This exam is not currently available for a new attempt.
+					</p>
+					<Button
+						type="button"
+						variant="outline"
+						className="w-full"
+						onClick={controller.state.retry}
+					>
+						Check availability again
+					</Button>
+				</div>
+			)
+		case "error":
+			return (
+				<ActionError
+					message={controller.state.message}
+					onRetry={controller.state.retry}
+				/>
+			)
+		default:
+			return assertNever(controller.state)
+	}
+}
+
+function PrimaryLink({ href, label }: { href: string; label: string }) {
+	return (
+		<Link
+			href={href}
+			className={cn(
+				buttonVariants({ size: "lg" }),
+				"w-full bg-indigo-600 text-white hover:bg-indigo-700"
+			)}
+		>
+			{label}
+			<ArrowRight aria-hidden="true" />
+		</Link>
+	)
+}
+
+function RetakeButton({ onClick }: { onClick: () => void }) {
+	return (
+		<Button
+			type="button"
+			variant="outline"
+			size="lg"
+			className="w-full"
+			onClick={onClick}
+		>
+			<RotateCcw aria-hidden="true" />
+			Retake
+		</Button>
 	)
 }
 
@@ -262,51 +140,35 @@ function ActionError({ message, onRetry }: { message: string; onRetry: () => voi
 	)
 }
 
-function getMutationMessage(error: unknown) {
-	if (!(error instanceof ApiError)) return ""
-	const code = error.problemCode
-	if (
-		code === "active_attempt_exists" ||
-		code === "published_version_not_found"
-	) {
-		return ""
-	}
-	return error.message
-}
-
 function StartAttemptDialog({
-	detail,
-	mode,
-	isPending,
-	error,
-	onOpenChange,
-	onConfirm,
+	controller,
 }: {
-	detail: StudentExamDetail
-	mode: "start" | "retake" | null
-	isPending: boolean
-	error: string
-	onOpenChange: (open: boolean) => void
-	onConfirm: () => void
+	controller: AttemptActionController
 }) {
-	const counts = getExamCounts(detail)
+	const dialog = controller.dialog
+	const counts = getExamCounts(controller.detail)
 	return (
-		<Dialog.Root open={mode !== null} onOpenChange={onOpenChange}>
+		<Dialog.Root
+			open={dialog !== null}
+			onOpenChange={(open) => {
+				if (!open) controller.closeDialog()
+			}}
+		>
 			<Dialog.Portal>
 				<Dialog.Backdrop className="fixed inset-0 z-40 bg-slate-950/45" />
 				<Dialog.Popup className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100svh-2rem)] w-[min(calc(100vw-2rem),32rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl outline-none">
 					<div className="flex items-start justify-between gap-4">
 						<div>
 							<Dialog.Title className="text-xl font-semibold text-slate-950">
-								{mode === "retake" ? "Retake exam?" : "Start exam?"}
+								{dialog?.mode === "retake" ? "Retake exam?" : "Start exam?"}
 							</Dialog.Title>
 							<Dialog.Description className="mt-2 text-sm leading-6 text-slate-600">
-								A new attempt will be created for {detail.exam.title}.
+								A new attempt will be created for {controller.detail.exam.title}.
 							</Dialog.Description>
 						</div>
 						<Dialog.Close
 							aria-label="Close confirmation"
-							disabled={isPending}
+							disabled={dialog?.isPending}
 							className={buttonVariants({ variant: "ghost", size: "icon" })}
 						>
 							<X aria-hidden="true" />
@@ -319,50 +181,50 @@ function StartAttemptDialog({
 						<Fact
 							label="Duration"
 							value={
-								detail.publishedVersion.durationMinutes == null
+								controller.detail.publishedVersion.durationMinutes == null
 									? "No time limit"
-									: `${detail.publishedVersion.durationMinutes} min`
+									: `${controller.detail.publishedVersion.durationMinutes} min`
 							}
 						/>
 						<Fact
 							label="Total points"
-							value={formatNumber(detail.publishedVersion.totalScore)}
+							value={formatNumber(controller.detail.publishedVersion.totalScore)}
 						/>
 					</dl>
 
-					{detail.publishedVersion.durationMinutes != null && (
+					{controller.detail.publishedVersion.durationMinutes != null && (
 						<p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-900">
 							The timed attempt begins immediately after it is created.
 						</p>
 					)}
-					{error && (
+					{dialog?.error && (
 						<Alert variant="destructive" className="mt-4">
-							<AlertDescription>{error}</AlertDescription>
+							<AlertDescription>{dialog.error}</AlertDescription>
 						</Alert>
 					)}
 
 					<div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 						<Dialog.Close
-							disabled={isPending}
+							disabled={dialog?.isPending}
 							className={buttonVariants({ variant: "outline" })}
 						>
 							Cancel
 						</Dialog.Close>
 						<Button
 							type="button"
-							disabled={isPending}
-							onClick={onConfirm}
+							disabled={dialog?.isPending}
+							onClick={controller.confirmDialog}
 							className="bg-indigo-600 hover:bg-indigo-700"
 						>
-							{isPending && (
+							{dialog?.isPending && (
 								<LoaderCircle
 									className="animate-spin motion-reduce:animate-none"
 									aria-hidden="true"
 								/>
 							)}
-							{isPending
+							{dialog?.isPending
 								? "Creating attempt…"
-								: mode === "retake"
+								: dialog?.mode === "retake"
 									? "Create retake"
 									: "Start now"}
 						</Button>
@@ -380,4 +242,8 @@ function Fact({ label, value }: { label: string; value: string }) {
 			<dd className="mt-1 font-medium text-slate-900">{value}</dd>
 		</div>
 	)
+}
+
+function assertNever(value: never): never {
+	throw new Error(`Unexpected attempt action state: ${JSON.stringify(value)}`)
 }
