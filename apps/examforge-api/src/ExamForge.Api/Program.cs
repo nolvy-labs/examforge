@@ -1,4 +1,5 @@
 using ExamForge.Api.Auth;
+using ExamForge.Api.Background;
 using ExamForge.Api.Common;
 using ExamForge.Api.Extensions;
 using ExamForge.Api.Middleware;
@@ -22,6 +23,7 @@ builder.Services.AddScoped<ExamForge.Application.Abstractions.ICurrentUserContex
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration);
+builder.Services.AddHostedService<ExamAttemptExpirationWorker>();
 
 builder.Services.AddCors(options =>
 {
@@ -35,6 +37,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
+            .WithExposedHeaders("ETag")
             .AllowCredentials();
     });
 });

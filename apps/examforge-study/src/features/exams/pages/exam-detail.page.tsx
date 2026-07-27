@@ -41,7 +41,8 @@ export function ExamDetailPage({ slug }: { slug: string }) {
 	)
 
 	useEffect(() => {
-		setHistoryPage(1)
+		const timeout = window.setTimeout(() => setHistoryPage(1), 0)
+		return () => window.clearTimeout(timeout)
 	}, [examId])
 
 	useEffect(() => {
@@ -54,7 +55,10 @@ export function ExamDetailPage({ slug }: { slug: string }) {
 		const data = historyQuery.data
 		if (!data || historyQuery.isPlaceholderData) return
 		const finalPage = data.meta.totalPages === 0 ? 1 : data.meta.totalPages
-		if (historyPage > finalPage) setHistoryPage(finalPage)
+		if (historyPage > finalPage) {
+			const timeout = window.setTimeout(() => setHistoryPage(finalPage), 0)
+			return () => window.clearTimeout(timeout)
+		}
 	}, [historyPage, historyQuery.data, historyQuery.isPlaceholderData])
 
 	function refreshAttemptState() {

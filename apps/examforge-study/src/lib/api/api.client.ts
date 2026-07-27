@@ -52,7 +52,6 @@ export const apiClient = axios.create({
 	withCredentials: true,
 	headers: {
 		Accept: "application/json",
-		"Content-Type": "application/json",
 	},
 })
 
@@ -62,7 +61,6 @@ const refreshClient = axios.create({
 	withCredentials: true,
 	headers: {
 		Accept: "application/json",
-		"Content-Type": "application/json",
 	},
 })
 

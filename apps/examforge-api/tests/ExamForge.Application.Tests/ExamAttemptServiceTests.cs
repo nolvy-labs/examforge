@@ -228,6 +228,32 @@ public sealed class ExamAttemptServiceTests
     }
 
     [Fact]
+    public async Task Background_batch_is_bounded_and_finalizes_expired_attempts()
+    {
+        var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank, 2m);
+        ExamAttemptTestFactory.AddFillKey(fill, "answer", false);
+        var attempt = ExamAttemptTestFactory.CreateAttempt(fill);
+        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion)
+        {
+            Owned = attempt,
+            ExpiredBatch = [attempt]
+        };
+        var scoring = new ExamAttemptScoringService();
+        var processor = new ExamAttemptExpirationBatchProcessor(
+            repository,
+            new ExamAttemptExpirationFinalizer(repository, scoring),
+            new FakeTimeProvider(DateTimeOffset.Parse("2026-07-26T02:00:00Z")));
+
+        var result = await processor.ProcessBatchAsync();
+
+        Assert.Equal(ExamAttemptExpirationBatchProcessor.BatchSize, repository.LastBatchTake);
+        Assert.Equal(1, result.FinalizedCount);
+        Assert.Empty(result.Failures);
+        Assert.Equal(ExamAttemptStatus.Submitted, attempt.Status);
+        Assert.Equal(attempt.ExpiresAtUtc, attempt.SubmittedAtUtc);
+    }
+
+    [Fact]
     public async Task Non_owner_receives_not_found()
     {
         var repository = new FakeRepository(null, null);
@@ -284,11 +310,21 @@ public sealed class ExamAttemptServiceTests
         FakeRepository repository,
         Guid studentId,
         DateTimeOffset? now = null) =>
-        new(
+        CreateServiceCore(repository, studentId, new FakeTimeProvider(now ?? Now));
+
+    private static ExamAttemptService CreateServiceCore(
+        FakeRepository repository,
+        Guid studentId,
+        TimeProvider timeProvider)
+    {
+        var scoring = new ExamAttemptScoringService();
+        return new(
             repository,
             new FakeCurrentUser(studentId),
-            new ExamAttemptScoringService(),
-            new FakeTimeProvider(now ?? Now));
+            scoring,
+            new ExamAttemptExpirationFinalizer(repository, scoring),
+            timeProvider);
+    }
 
     private static PatchOperation Replace(string path, object? value) =>
         new("replace", path, JsonSerializer.SerializeToElement(value));
@@ -322,6 +358,8 @@ public sealed class ExamAttemptServiceTests
         public Guid? LastPageExamId { get; private set; }
         public int LastPageSkip { get; private set; }
         public int LastPageTake { get; private set; }
+        public IReadOnlyList<ExamAttempt> ExpiredBatch { get; set; } = [];
+        public int LastBatchTake { get; private set; }
 
         public Task<bool> ExamExistsAsync(
             Guid examId,
@@ -356,11 +394,25 @@ public sealed class ExamAttemptServiceTests
                     ? Owned
                     : null);
 
+        public Task<ExamAttempt?> GetAsync(
+            Guid attemptId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Owned?.Id == attemptId ? Owned : null);
+
         public Task<IReadOnlyList<ExamAttempt>> GetExpiredAsync(
             Guid studentId,
             DateTimeOffset nowUtc,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<ExamAttempt>>([]);
+
+        public Task<IReadOnlyList<ExamAttempt>> GetExpiredBatchAsync(
+            DateTimeOffset nowUtc,
+            int take,
+            CancellationToken cancellationToken = default)
+        {
+            LastBatchTake = take;
+            return Task.FromResult(ExpiredBatch);
+        }
 
         public Task<AttemptCreatePersistenceResult> AddAsync(
             ExamAttempt attempt,

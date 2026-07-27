@@ -61,6 +61,13 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
                     attempt.StudentId == studentId,
                 cancellationToken);
 
+    public Task<ExamAttempt?> GetAsync(
+        Guid attemptId,
+        CancellationToken cancellationToken = default) =>
+        AttemptGraph().SingleOrDefaultAsync(
+            attempt => attempt.Id == attemptId,
+            cancellationToken);
+
     public async Task<IReadOnlyList<ExamAttempt>> GetExpiredAsync(
         Guid studentId,
         DateTimeOffset nowUtc,
@@ -73,6 +80,20 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
                 attempt.ExpiresAtUtc.Value <= nowUtc)
             .OrderBy(attempt => attempt.ExpiresAtUtc)
             .ThenBy(attempt => attempt.Id)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<ExamAttempt>> GetExpiredBatchAsync(
+        DateTimeOffset nowUtc,
+        int take,
+        CancellationToken cancellationToken = default) =>
+        await AttemptGraph()
+            .Where(attempt =>
+                attempt.Status == ExamAttemptStatus.InProgress &&
+                attempt.ExpiresAtUtc.HasValue &&
+                attempt.ExpiresAtUtc.Value <= nowUtc)
+            .OrderBy(attempt => attempt.ExpiresAtUtc)
+            .ThenBy(attempt => attempt.Id)
+            .Take(take)
             .ToListAsync(cancellationToken);
 
     public async Task<AttemptCreatePersistenceResult> AddAsync(

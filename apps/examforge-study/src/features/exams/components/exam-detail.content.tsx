@@ -402,7 +402,7 @@ function ReviewLink({
 }) {
 	return (
 		<Link
-			href={`/exam-attempts/${attempt.attemptId}/review`}
+			href={`/attempts/${attempt.attemptId}/result`}
 			className={cn(buttonVariants({ variant: "outline", size: "sm" }), className)}
 		>
 			{label}

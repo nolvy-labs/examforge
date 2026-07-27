@@ -77,7 +77,7 @@ export function ExamAttemptAction({
 		setCustomError("")
 		mutation.mutate(undefined, {
 			onSuccess: (attempt) => {
-				router.push(`/exam-attempts/${attempt.attemptId}`)
+				router.push(`/attempts/${attempt.attemptId}`)
 			},
 			onError: (error) => {
 				if (!(error instanceof ApiError)) return
@@ -97,7 +97,7 @@ export function ExamAttemptAction({
 					setDialogMode(null)
 					onRefreshAttemptState()
 					if (isGuid(existingAttemptId)) {
-						router.replace(`/exam-attempts/${existingAttemptId}`)
+						router.replace(`/attempts/${existingAttemptId}`)
 					}
 					return
 				}
@@ -150,7 +150,7 @@ export function ExamAttemptAction({
 	if (activeAttempt) {
 		return (
 			<Link
-				href={`/exam-attempts/${activeAttempt.attemptId}`}
+				href={`/attempts/${activeAttempt.attemptId}`}
 				className={cn(
 					buttonVariants({ size: "lg" }),
 					"w-full bg-indigo-600 text-white hover:bg-indigo-700"
@@ -201,7 +201,7 @@ export function ExamAttemptAction({
 				{latestAttempt && latestStatus === "submitted" && (
 					<>
 						<Link
-							href={`/exam-attempts/${latestAttempt.attemptId}/review`}
+							href={`/attempts/${latestAttempt.attemptId}/result`}
 							className={cn(
 								buttonVariants({ size: "lg" }),
 								"w-full bg-indigo-600 text-white hover:bg-indigo-700"

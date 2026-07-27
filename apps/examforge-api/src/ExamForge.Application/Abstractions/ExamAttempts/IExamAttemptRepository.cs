@@ -10,9 +10,14 @@ public interface IExamAttemptRepository
     Task<ExamVersion?> GetPublishedVersionAsync(Guid examId, CancellationToken cancellationToken = default);
     Task<ExamAttempt?> GetActiveAsync(Guid studentId, Guid examId, CancellationToken cancellationToken = default);
     Task<ExamAttempt?> GetOwnedAsync(Guid attemptId, Guid studentId, CancellationToken cancellationToken = default);
+    Task<ExamAttempt?> GetAsync(Guid attemptId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ExamAttempt>> GetExpiredAsync(
         Guid studentId,
         DateTimeOffset nowUtc,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ExamAttempt>> GetExpiredBatchAsync(
+        DateTimeOffset nowUtc,
+        int take,
         CancellationToken cancellationToken = default);
     Task<AttemptCreatePersistenceResult> AddAsync(
         ExamAttempt attempt,

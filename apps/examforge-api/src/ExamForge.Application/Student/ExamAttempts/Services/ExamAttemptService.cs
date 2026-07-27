@@ -19,17 +19,20 @@ public sealed class ExamAttemptService
     private readonly IExamAttemptRepository _repository;
     private readonly ICurrentUserContext _currentUser;
     private readonly ExamAttemptScoringService _scoring;
+    private readonly ExamAttemptExpirationFinalizer _expirationFinalizer;
     private readonly TimeProvider _timeProvider;
 
     public ExamAttemptService(
         IExamAttemptRepository repository,
         ICurrentUserContext currentUser,
         ExamAttemptScoringService scoring,
+        ExamAttemptExpirationFinalizer expirationFinalizer,
         TimeProvider timeProvider)
     {
         _repository = repository;
         _currentUser = currentUser;
         _scoring = scoring;
+        _expirationFinalizer = expirationFinalizer;
         _timeProvider = timeProvider;
     }
 
@@ -434,42 +437,11 @@ public sealed class ExamAttemptService
     private async Task<Result<ExamAttempt, ExamAttemptError>> FinalizeIfExpiredAsync(
         ExamAttempt attempt,
         DateTimeOffset nowUtc,
-        CancellationToken cancellationToken)
-    {
-        for (var retry = 0; retry < 3; retry++)
-        {
-            if (!attempt.IsExpired(nowUtc))
-            {
-                return Result<ExamAttempt, ExamAttemptError>.Success(attempt);
-            }
-
-            var score = _scoring.Calculate(attempt);
-            if (!score.IsSuccess)
-            {
-                return Result<ExamAttempt, ExamAttemptError>.Failure(
-                    ExamAttemptError.InvalidScoringConfiguration);
-            }
-
-            _scoring.Apply(attempt, score.Value!, attempt.ExpiresAtUtc!.Value);
-            var save = await _repository.SaveAsync(attempt, cancellationToken);
-            if (save.Saved)
-            {
-                return Result<ExamAttempt, ExamAttemptError>.Success(attempt);
-            }
-
-            var current = await ReloadOwnedAsync(attempt.Id, cancellationToken);
-            if (current is null)
-            {
-                return Result<ExamAttempt, ExamAttemptError>.Failure(
-                    ExamAttemptError.ConcurrencyConflict);
-            }
-
-            attempt = current;
-        }
-
-        return Result<ExamAttempt, ExamAttemptError>.Failure(
-            ExamAttemptError.ConcurrencyConflict);
-    }
+        CancellationToken cancellationToken) =>
+        await _expirationFinalizer.FinalizeIfExpiredAsync(
+            attempt,
+            nowUtc,
+            cancellationToken);
 
     private static ExamAttemptError TerminalStateError(ExamAttemptStatus status) =>
         status switch

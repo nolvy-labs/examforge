@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { LoaderCircle, Search, X } from "lucide-react"
 
@@ -23,12 +23,13 @@ import {
 	useStudentExams,
 } from "../hooks/exam-browse.hook"
 import {
+	useDebouncedExamBrowseSearch,
+	useExamBrowseNavigation,
+} from "../hooks/exam-browse-navigation.hook"
+import {
 	getNormalizedBrowseQuery,
 	parseExamBrowseParams,
-	serializeExamBrowseState,
-	updateExamBrowseState,
 } from "../model/exam-browse.params"
-import type { ExamBrowseState } from "../model/exam-browse.types"
 
 export function ExamBrowsePage() {
 	const pathname = usePathname()
@@ -39,7 +40,6 @@ export function ExamBrowsePage() {
 		() => parseExamBrowseParams(new URLSearchParams(rawQuery)),
 		[rawQuery]
 	)
-	const [searchInput, setSearchInput] = useState(state.search)
 	const resultsHeadingRef = useRef<HTMLHeadingElement>(null)
 	const correctionAttempts = useRef(new Set<string>())
 
@@ -47,25 +47,21 @@ export function ExamBrowsePage() {
 	const filtersQuery = useStudentExamFilters()
 	const categoriesQuery = useStudentExamCategories()
 
-	function navigate(nextState: ExamBrowseState, replace = false) {
-		const query = serializeExamBrowseState(
-			nextState,
-			new URLSearchParams(rawQuery)
-		).toString()
-		const href = query ? `${pathname}?${query}` : pathname
+	const onNavigate = useCallback((href: string, replace: boolean) => {
 		if (replace) router.replace(href, { scroll: false })
 		else router.push(href, { scroll: false })
-	}
-
-	function update(
-		patch: Partial<ExamBrowseState>,
-		options?: { resetPage?: boolean; replace?: boolean }
-	) {
-		navigate(
-			updateExamBrowseState(state, patch, options?.resetPage ?? true),
-			options?.replace
-		)
-	}
+	}, [router])
+	const { navigate, update } = useExamBrowseNavigation({
+		pathname,
+		rawQuery,
+		state,
+		onNavigate,
+	})
+	const {
+		searchInput,
+		setSearchInput,
+		applySearchImmediately,
+	} = useDebouncedExamBrowseSearch(state.search, update)
 
 	useEffect(() => {
 		const normalized = getNormalizedBrowseQuery(new URLSearchParams(rawQuery))
@@ -75,18 +71,6 @@ export function ExamBrowsePage() {
 			})
 		}
 	}, [pathname, rawQuery, router])
-
-	useEffect(() => {
-		setSearchInput(state.search)
-	}, [state.search])
-
-	useEffect(() => {
-		if (searchInput.trim() === state.search) return
-		const timeout = window.setTimeout(() => {
-			update({ search: searchInput.trim() }, { replace: true })
-		}, 400)
-		return () => window.clearTimeout(timeout)
-	}, [searchInput, state.search]) // URL state intentionally drives each scheduled update.
 
 	useEffect(() => {
 		const data = examsQuery.data
@@ -99,7 +83,7 @@ export function ExamBrowsePage() {
 				update({ page: finalPage }, { resetPage: false, replace: true })
 			}
 		}
-	}, [examsQuery.data, examsQuery.isPlaceholderData, rawQuery, state.page])
+	}, [examsQuery.data, examsQuery.isPlaceholderData, rawQuery, state.page, update])
 
 	useEffect(() => {
 		const error = examsQuery.error
@@ -128,7 +112,7 @@ export function ExamBrowsePage() {
 			correctionAttempts.current.add(signature)
 			update({ category: "" }, { replace: true })
 		}
-	}, [examsQuery.error, rawQuery, state.category, state.tagIds])
+	}, [examsQuery.error, rawQuery, state.category, state.tagIds, update])
 
 	const categoryBySlug = useMemo(
 		() =>
@@ -156,11 +140,6 @@ export function ExamBrowsePage() {
 	)
 	const resultData = examsQuery.data
 	const isInitialLoading = examsQuery.isPending && !resultData
-
-	function applySearchImmediately() {
-		const value = searchInput.trim()
-		if (value !== state.search) update({ search: value })
-	}
 
 	function clearAll() {
 		setSearchInput("")

@@ -33,6 +33,8 @@ public static class DependencyInjection
 
         services.AddScoped<ExamAttemptService>();
         services.AddScoped<ExamAttemptScoringService>();
+        services.AddScoped<ExamAttemptExpirationFinalizer>();
+        services.AddScoped<ExamAttemptExpirationBatchProcessor>();
 
         return services;
     }
