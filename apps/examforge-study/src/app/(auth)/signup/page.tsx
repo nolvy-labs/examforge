@@ -6,6 +6,15 @@ export const metadata: Metadata = {
 	title: "Create account",
 }
 
-export default function Page() {
-	return <SignupPage />
+interface SignupRouteProps {
+	searchParams: Promise<{
+		callbackUrl?: string | string[]
+	}>
+}
+
+export default async function Page({ searchParams }: SignupRouteProps) {
+	const { callbackUrl } = await searchParams
+	const value = Array.isArray(callbackUrl) ? callbackUrl[0] : callbackUrl
+
+	return <SignupPage callbackUrl={value} />
 }

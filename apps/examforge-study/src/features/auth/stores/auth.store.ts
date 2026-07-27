@@ -8,7 +8,6 @@ interface AuthState {
 	isInitialized: boolean
 	setUser: (user: AuthUser) => void
 	clearUser: () => void
-	finishInitialization: () => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -25,6 +24,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 		set({
 			user: null,
 			isAuthenticated: false,
+			isInitialized: true,
 		}),
-	finishInitialization: () => set({ isInitialized: true }),
 }))

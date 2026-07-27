@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { authApi } from "@/features/auth/api/auth.api"
 import { useAuthStore } from "@/features/auth/stores/auth.store"
@@ -16,10 +16,6 @@ const CURRENT_USER_QUERY_KEY = ["auth", "current-user"] as const
 export function useAuthInitialization() {
 	const setUser = useAuthStore((state) => state.setUser)
 	const clearUser = useAuthStore((state) => state.clearUser)
-	const finishInitialization = useAuthStore(
-		(state) => state.finishInitialization
-	)
-
 	useEffect(
 		() => registerAuthFailureHandler(() => clearUser()),
 		[clearUser]
@@ -38,16 +34,10 @@ export function useAuthInitialization() {
 		} else if (currentUserQuery.isError) {
 			clearUser()
 		}
-
-		if (currentUserQuery.isSuccess || currentUserQuery.isError) {
-			finishInitialization()
-		}
 	}, [
 		clearUser,
 		currentUserQuery.data,
 		currentUserQuery.isError,
-		currentUserQuery.isSuccess,
-		finishInitialization,
 		setUser,
 	])
 }
@@ -67,5 +57,18 @@ export function useSignupMutation() {
 	return useMutation({
 		mutationFn: (request: SignupRequest) => authApi.signup(request),
 		onSuccess: setUser,
+	})
+}
+
+export function useLogoutMutation() {
+	const clearUser = useAuthStore((state) => state.clearUser)
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: authApi.logout,
+		onSettled: () => {
+			clearUser()
+			queryClient.removeQueries({ queryKey: CURRENT_USER_QUERY_KEY })
+		},
 	})
 }
