@@ -17,7 +17,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
 								className="flex items-center gap-2 rounded-md font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
 								<span className="grid size-9 place-items-center rounded-lg bg-foreground text-background">
-									<BookOpenCheck className="size-5" aria-hidden="true" />
+									<BookOpenCheck className="size-5" />
 								</span>
 								ExamForge
 							</Link>

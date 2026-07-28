@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ApiError } from "@/lib/api/api.error"
 
 import { getAttempt, patchAttempt } from "../api/attempt.api"
+import { attemptQueryKeys } from "../api/attempt.query-key"
 import {
 	useAttemptActions,
 	useAttemptDirtyCount,
@@ -15,7 +16,6 @@ import {
 	buildPatchOperations,
 	chunkOperations,
 } from "../utils/attempt-patch"
-import { attemptKeys } from "./attempt.hook"
 
 const DEBOUNCE_MS = 750
 
@@ -78,7 +78,10 @@ export function useAttemptAutosave(
 				etag = response.etag
 				revision = response.data.revision
 				actions.setConcurrency(etag, revision)
-				queryClient.setQueryData(attemptKeys.detail(attemptId), response)
+				queryClient.setQueryData(
+					attemptQueryKeys.detail(attemptId),
+					response
+				)
 			}
 			actions.acknowledge(snapshot, etag, revision)
 			conflictRetryRef.current = false
@@ -97,7 +100,10 @@ export function useAttemptAutosave(
 				conflictRetryRef.current = true
 				try {
 					const latest = await getAttempt(attemptId)
-					queryClient.setQueryData(attemptKeys.detail(attemptId), latest)
+					queryClient.setQueryData(
+						attemptQueryKeys.detail(attemptId),
+						latest
+					)
 					if (getAttemptStatus(latest.data.status) !== "in-progress") {
 						actions.setLocked(true)
 						onTerminal()

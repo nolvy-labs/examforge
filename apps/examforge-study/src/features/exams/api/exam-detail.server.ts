@@ -4,7 +4,7 @@ import { cache } from "react"
 
 import { parseApiResponse } from "@/lib/api/api.schema"
 
-import { studentExamDetailSchema } from "../model/exam.schema"
+import { studentExamDetailSchema } from "../types/exam.schema"
 
 const PUBLIC_EXAM_REVALIDATE_SECONDS = 300
 

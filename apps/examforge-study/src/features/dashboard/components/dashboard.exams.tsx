@@ -8,7 +8,7 @@ import ExamCard from "@/features/exams/components/exam-card"
 
 export function DashboardExams() {
 	return (
-		<section aria-labelledby="exams-heading">
+		<section>
 			<div>
 				<h2 id="exams-heading" className="text-xl font-semibold tracking-tight text-slate-950">
 					Recommended exams

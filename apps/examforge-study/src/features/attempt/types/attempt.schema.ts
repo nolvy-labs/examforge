@@ -1,17 +1,45 @@
 import { z } from "zod"
 
-import {
-	attemptStatusSchema,
-	examSectionKindSchema,
-	examTypeSchema,
-} from "@/features/exams/model/exam.schema"
-
 import type { AttemptQuestion } from "./attempt.type"
 
 const uuidSchema = z.uuid()
 const dateTimeSchema = z.iso.datetime({ offset: true })
 const nonnegativeIntegerSchema = z.number().int().nonnegative()
 const nonnegativeNumberSchema = z.number().finite().nonnegative()
+
+export const attemptStatusSchema = z
+	.union([z.literal(0), z.literal(1), z.literal(2)])
+	.transform(
+		(value) =>
+			(["in-progress", "submitted", "abandoned"] as const)[value]
+	)
+
+const examTypeSchema = z
+	.union([z.literal(0), z.literal(1)])
+	.transform((value) => (value === 0 ? ("simple" as const) : ("ielts" as const)))
+
+const examSectionKindSchema = z
+	.union([
+		z.literal(0),
+		z.literal(1),
+		z.literal(2),
+		z.literal(3),
+		z.literal(4),
+		z.literal(5),
+	])
+	.transform(
+		(value) =>
+			(
+				[
+					"default",
+					"reading",
+					"listening",
+					"writing",
+					"speaking",
+					"custom",
+				] as const
+			)[value]
+	)
 
 const questionTypeSchema = z
 	.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)])
@@ -112,4 +140,69 @@ export const attemptDetailSchema = z.object({
 		metadata: z.json().nullable(),
 		questions: z.array(attemptQuestionSchema),
 	})),
+})
+
+const paginationSchema = z
+	.object({
+		page: z.number().int().positive(),
+		pageSize: z.number().int().positive(),
+		totalItems: nonnegativeIntegerSchema,
+		totalPages: nonnegativeIntegerSchema,
+		hasPreviousPage: z.boolean(),
+		hasNextPage: z.boolean(),
+	})
+	.superRefine((meta, context) => {
+		const expectedPages =
+			meta.totalItems === 0 ? 0 : Math.ceil(meta.totalItems / meta.pageSize)
+		if (meta.totalPages !== expectedPages) {
+			context.addIssue({
+				code: "custom",
+				message: "totalPages is inconsistent with totalItems and pageSize",
+				path: ["totalPages"],
+			})
+		}
+		if (meta.hasPreviousPage !== (meta.page > 1)) {
+			context.addIssue({
+				code: "custom",
+				message: "hasPreviousPage is inconsistent with page",
+				path: ["hasPreviousPage"],
+			})
+		}
+		if (meta.hasNextPage !== (meta.page < meta.totalPages)) {
+			context.addIssue({
+				code: "custom",
+				message: "hasNextPage is inconsistent with page and totalPages",
+				path: ["hasNextPage"],
+			})
+		}
+	})
+
+const nullableOptionalScoreSchema = nonnegativeNumberSchema.nullable().optional()
+
+export const studentExamAttemptPageSchema = z.object({
+	items: z.array(
+		z.object({
+			attemptId: uuidSchema,
+			examId: uuidSchema,
+			examVersionId: uuidSchema,
+			examTitle: z.string(),
+			examSlug: z.string(),
+			status: attemptStatusSchema,
+			startedAtUtc: dateTimeSchema,
+			expiresAtUtc: dateTimeSchema.nullable(),
+			submittedAtUtc: dateTimeSchema.nullable(),
+			abandonedAtUtc: dateTimeSchema.nullable(),
+			score: nullableOptionalScoreSchema,
+			maximumScore: nullableOptionalScoreSchema,
+			percentage: nullableOptionalScoreSchema,
+			revision: nonnegativeIntegerSchema,
+			updatedAtUtc: dateTimeSchema,
+		})
+	),
+	meta: paginationSchema,
+})
+
+export const createdExamAttemptSchema = z.object({
+	attemptId: uuidSchema,
+	revision: nonnegativeIntegerSchema,
 })

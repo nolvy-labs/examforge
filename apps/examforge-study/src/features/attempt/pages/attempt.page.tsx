@@ -18,13 +18,16 @@ import { Button, buttonVariants } from "@/components/shadcn/button"
 import { ApiError } from "@/lib/api/api.error"
 
 import {
+	useAttempt,
+	useAttemptTransition,
+} from "../api/attempt.query"
+import {
 	AttemptNavigator,
 	AttemptQuestionBlock,
 	SaveError,
 	SaveStatus,
 } from "../components/attempt-question"
 import { useAttemptAutosave } from "../hooks/attempt-autosave.hook"
-import { useAttempt, useAttemptTransition } from "../hooks/attempt.hook"
 import {
 	formatRemaining,
 	useAttemptTimer,
@@ -211,9 +214,8 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 										? "bg-amber-50 text-amber-800"
 										: "bg-slate-100 text-slate-800"
 							}`}
-							aria-live={remaining <= 60 ? "assertive" : "polite"}
 						>
-							<Clock3 className="size-4" aria-hidden="true" />
+							<Clock3 className="size-4" />
 							{formatRemaining(remaining)}
 						</div>
 					)}
@@ -263,12 +265,11 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 								</p>
 							)}
 						</div>
-						<div className="flex rounded-lg border bg-white p-1" aria-label="Question display mode">
+						<div className="flex rounded-lg border bg-white p-1">
 							{(["one", "section"] as const).map((mode) => (
 								<button
 									key={mode}
 									type="button"
-									aria-pressed={displayMode === mode}
 									onClick={() => actions.setDisplayMode(mode)}
 									className={`rounded-md px-3 py-1.5 text-xs font-medium ${
 										displayMode === mode
@@ -381,7 +382,7 @@ function EndAttemptDialog({
 							</Dialog.Description>
 						</div>
 						<Dialog.Close className={buttonVariants({ variant: "ghost", size: "icon" })}>
-							<X aria-hidden="true" />
+							<X />
 						</Dialog.Close>
 					</div>
 					<dl className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm">
@@ -425,7 +426,7 @@ function AttemptFailure({ error, onRetry }: { error: unknown; onRetry: () => voi
 	return (
 		<main className="grid min-h-svh place-items-center bg-slate-50 p-4">
 			<div className="max-w-md rounded-2xl border bg-white p-8 text-center shadow-sm">
-				<h1 className="text-xl font-semibold">{missing ? "Attempt unavailable" : "Couldn’t load this attempt"}</h1>
+				<h1 className="text-xl font-semibold">{missing ? "Attempt unavailable" : "Couldn't load this attempt"}</h1>
 				<p className="mt-2 text-sm text-slate-600">
 					{missing ? "It may not exist or you may not have access." : "Check your connection and try again."}
 				</p>

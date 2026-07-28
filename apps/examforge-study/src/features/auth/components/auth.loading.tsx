@@ -3,7 +3,7 @@ import { Brand } from "@/components/layout/brand"
 export function AuthLoading({ variant = "auth" }: { variant?: "auth" | "home" | "dashboard" }) {
 	if (variant === "dashboard") {
 		return (
-			<div className="min-h-svh bg-slate-50" aria-busy="true" aria-live="polite">
+			<div className="min-h-svh bg-slate-50">
 				<header className="border-b bg-white">
 					<div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
 						<Brand />
@@ -23,7 +23,7 @@ export function AuthLoading({ variant = "auth" }: { variant?: "auth" | "home" | 
 	}
 
 	return (
-		<div className="min-h-svh bg-slate-50" aria-busy="true" aria-live="polite">
+		<div className="min-h-svh bg-slate-50">
 			<header className="border-b bg-white">
 				<div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
 					<Brand />

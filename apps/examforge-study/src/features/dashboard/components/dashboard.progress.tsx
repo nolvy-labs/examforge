@@ -8,7 +8,7 @@ const progressItems = [
 
 export function DashboardProgress() {
 	return (
-		<section aria-labelledby="progress-heading">
+		<section>
 			<h2 id="progress-heading" className="text-xl font-semibold tracking-tight text-slate-950">
 				Progress overview
 			</h2>
@@ -18,7 +18,7 @@ export function DashboardProgress() {
 						<div className="flex items-center justify-between gap-4">
 							<p className="text-sm font-medium text-slate-600">{label}</p>
 							<span className="grid size-9 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
-								<Icon className="size-4" aria-hidden="true" />
+								<Icon className="size-4" />
 							</span>
 						</div>
 						<p className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">{value}</p>

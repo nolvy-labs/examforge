@@ -1,4 +1,12 @@
 export type AttemptStatus = "in-progress" | "submitted" | "abandoned"
+export type AttemptExamType = "simple" | "ielts"
+export type AttemptSectionKind =
+	| "default"
+	| "reading"
+	| "listening"
+	| "writing"
+	| "speaking"
+	| "custom"
 export type QuestionType =
 	| "fill-blank"
 	| "multiple-choice-single"
@@ -52,7 +60,7 @@ export interface AttemptQuestion {
 
 export interface AttemptSection {
 	id: string
-	kind: import("@/features/exams/model/exam.schema").ExamSectionKind
+	kind: AttemptSectionKind
 	title: string
 	instructions: string
 	stimulusText: string | null
@@ -80,7 +88,7 @@ export interface AttemptDetail {
 		title: string
 		slug: string
 		description: string
-		type: import("@/features/exams/model/exam.schema").ExamType
+		type: AttemptExamType
 	}
 	examVersion: {
 		versionNumber: number
@@ -107,6 +115,38 @@ export interface AttemptPatchOperation {
 	path: string
 	value: string | null | string[]
 }
+
+export interface StudentExamAttempt {
+	attemptId: string
+	examId: string
+	examVersionId: string
+	examTitle: string
+	examSlug: string
+	status: AttemptStatus
+	startedAtUtc: string
+	expiresAtUtc: string | null
+	submittedAtUtc: string | null
+	abandonedAtUtc: string | null
+	score?: number | null
+	maximumScore?: number | null
+	percentage?: number | null
+	revision: number
+	updatedAtUtc: string
+}
+
+export interface StudentExamAttemptPage {
+	items: StudentExamAttempt[]
+	meta: {
+		page: number
+		pageSize: number
+		totalItems: number
+		totalPages: number
+		hasPreviousPage: boolean
+		hasNextPage: boolean
+	}
+}
+
+export type ExamAttemptState = "in-progress" | "completed"
 
 export function getAttemptStatus(value: AttemptStatus) {
 	return value

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function HeaderAuthNavigation() {
     return (
-        <nav className="ml-auto flex items-center gap-2 sm:gap-3" aria-label="Account">
+        <nav className="ml-auto flex items-center gap-2 sm:gap-3">
             <Link
                 href={AUTH_ROUTES.signin}
                 className={cn(

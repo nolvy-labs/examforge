@@ -11,7 +11,7 @@ export function DashboardWelcome() {
 	const name = getWelcomeName(user.displayName, user.email ?? "")
 
 	return (
-		<section aria-labelledby="welcome-heading">
+		<section>
 			<h1 id="welcome-heading" className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
 				Welcome back, {name}
 			</h1>

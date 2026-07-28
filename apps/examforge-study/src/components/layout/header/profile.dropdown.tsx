@@ -78,8 +78,6 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 				type="button"
 				variant="ghost"
 				className="h-11 max-w-44 gap-2 px-1.5 sm:max-w-xs sm:px-2"
-				aria-expanded={isOpen}
-				aria-controls={panelId}
 				onClick={() => setIsOpen((value) => !value)}
 			>
 				<span className="grid size-8 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
@@ -96,14 +94,12 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 						"size-4 shrink-0 text-muted-foreground transition-transform",
 						isOpen && "rotate-180"
 					)}
-					aria-hidden="true"
 				/>
 			</Button>
 
 			{isOpen && (
 				<div
 					id={panelId}
-					aria-labelledby={triggerId}
 					className="absolute right-4 top-14 z-30 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-2 shadow-xl sm:right-6 lg:right-8"
 				>
 					<div className="border-b border-slate-100 px-3 py-2">
@@ -117,7 +113,7 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 						disabled={logoutMutation.isPending}
 						onClick={handleLogout}
 					>
-						<LogOut aria-hidden="true" />
+						<LogOut />
 						{logoutMutation.isPending ? "Signing out…" : "Sign out"}
 					</Button>
 				</div>

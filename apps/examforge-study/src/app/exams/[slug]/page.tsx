@@ -5,7 +5,7 @@ import {
 	getPublicExamDetail,
 	PublicExamNotFoundError,
 } from "@/features/exams/api/exam-detail.server"
-import { ExamDetailPage } from "@/features/exams/pages/exam-detail.page"
+import { ExamDetailPage } from "@/features/exams/exam-detail/pages/exam-detail.page"
 
 interface ExamPageProps {
 	params: Promise<{ slug: string }>

@@ -19,14 +19,13 @@ export default function HeaderNavigation() {
 	const pathname = usePathname()
 
 	return (
-		<nav className="ml-2 hidden items-center gap-1 sm:flex" aria-label="Main navigation">
+		<nav className="ml-2 hidden items-center gap-1 sm:flex">
 			{routes.map((route) => {
 				const isActive = isNavigationRouteActive(pathname, route.href)
 				return (
 					<Link
 						key={route.href}
 						href={route.href}
-						aria-current={isActive ? "page" : undefined}
 						className={cn(
 							buttonVariants({ variant: "ghost" }),
 							isActive && "bg-muted"

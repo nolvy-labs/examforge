@@ -1,4 +1,4 @@
-import { StudentExam } from "@/features/exams/model/exam.schema"
+import type { StudentExam } from "@/features/exams/types/exam.types"
 
 export const PLACEHOLDER_EXAMS: readonly StudentExam[] = [
 	{

@@ -123,7 +123,6 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 												: selected.filter((id) => id !== option.id)
 										)
 									}
-									aria-label={option.text}
 								/>
 							) : (
 								<input
@@ -166,7 +165,7 @@ export function AttemptNavigator({
 	const { drafts, dirty } = useAttemptAnswers()
 	const { saveState } = useAttemptSaveStatus()
 	return (
-		<nav aria-label="Exam questions" className="space-y-5">
+		<nav className="space-y-5">
 			{sections.map((section, sectionIndex) => (
 				<div key={section.id}>
 					<button
@@ -203,10 +202,6 @@ export function AttemptNavigator({
 								<button
 									key={question.id}
 									type="button"
-									aria-current={selectedBlockId === question.id ? "step" : undefined}
-									aria-label={`Question ${questionIndex + 1}, ${
-										failed ? "save failed" : saving ? "saving" : answered ? "answered" : "unanswered"
-									}`}
 									onClick={() => onSelect(section.id, question.id)}
 									className={cn(
 										"grid aspect-square place-items-center rounded-lg border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600",
@@ -241,10 +236,7 @@ export function SaveStatus() {
 	const Icon = config.icon
 	return (
 		<div title={message} className="flex items-center gap-1.5 text-xs text-slate-600" role="status">
-			<Icon
-				className={cn("size-4", state === "saving" && "animate-spin")}
-				aria-hidden="true"
-			/>
+			<Icon className={cn("size-4", state === "saving" && "animate-spin")} />
 			<span>{config.label}</span>
 		</div>
 	)

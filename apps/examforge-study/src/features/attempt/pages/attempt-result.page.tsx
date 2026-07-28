@@ -14,11 +14,13 @@ import {
 
 import { MainHeader } from "@/components/layout/header/header"
 import { Button, buttonVariants } from "@/components/shadcn/button"
-import { useCreateExamAttempt } from "@/features/exams/hooks/exam-detail.hook"
 import { ApiError } from "@/lib/api/api.error"
 import { cn } from "@/lib/utils"
 
-import { useAttempt } from "../hooks/attempt.hook"
+import {
+	useAttempt,
+	useCreateExamAttempt,
+} from "../api/attempt.query"
 import type { AttemptQuestion } from "../types/attempt.type"
 import {
 	getAttemptStatus,
@@ -51,7 +53,7 @@ export function AttemptResultPage({ attemptId }: { attemptId: string }) {
 					<p className="mt-2 text-sm text-slate-600">
 						{query.error instanceof ApiError && query.error.status === 404
 							? "This attempt does not exist or is inaccessible."
-							: "We couldn’t load the result. Try again."}
+							: "We couldn't load the result. Try again."}
 					</p>
 					<Button className="mt-5" onClick={() => void query.refetch()}>Retry</Button>
 				</main>
@@ -151,7 +153,7 @@ export function AttemptResultPage({ attemptId }: { attemptId: string }) {
 					</div>
 				</section>
 
-				<section aria-labelledby="review-heading" className="mt-8">
+				<section className="mt-8">
 					<h2 id="review-heading" className="text-xl font-semibold">Question review</h2>
 					<p className="mt-1 text-sm text-slate-600">
 						{submitted

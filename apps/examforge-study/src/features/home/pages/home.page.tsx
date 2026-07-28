@@ -50,10 +50,7 @@ const steps = [
 
 function DashboardPreview() {
 	return (
-		<div
-			aria-hidden="true"
-			className="relative mx-auto w-full max-w-xl rounded-3xl border border-indigo-100 bg-white p-4 shadow-2xl shadow-indigo-950/10 sm:p-6"
-		>
+		<div className="relative mx-auto w-full max-w-xl rounded-3xl border border-indigo-100 bg-white p-4 shadow-2xl shadow-indigo-950/10 sm:p-6" >
 			<div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
 				<div>
 					<div className="h-2.5 w-20 rounded-full bg-slate-200" />
@@ -117,7 +114,7 @@ export function HomePage() {
 					<div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:py-28">
 						<div className="max-w-2xl">
 							<p className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-medium text-indigo-700">
-								<Target className="size-4" aria-hidden="true" />
+								<Target className="size-4" />
 								Focused practice for meaningful progress
 							</p>
 							<h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
@@ -135,7 +132,7 @@ export function HomePage() {
 									)}
 								>
 									Start practising
-									<ArrowRight aria-hidden="true" />
+									<ArrowRight />
 								</Link>
 								<Link
 									href={AUTH_ROUTES.signin}
@@ -152,7 +149,7 @@ export function HomePage() {
 					</div>
 				</section>
 
-				<section aria-labelledby="benefits-title" className="border-y border-slate-200 bg-white py-16 sm:py-20">
+				<section className="border-y border-slate-200 bg-white py-16 sm:py-20">
 					<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 						<div className="max-w-2xl">
 							<p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Built for better practice</p>
@@ -164,7 +161,7 @@ export function HomePage() {
 							{benefits.map(({ title, description, icon: Icon }) => (
 								<article key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
 									<div className="grid size-11 place-items-center rounded-xl bg-indigo-100 text-indigo-700">
-										<Icon className="size-5" aria-hidden="true" />
+										<Icon className="size-5" />
 									</div>
 									<h3 className="mt-5 text-lg font-semibold">{title}</h3>
 									<p className="mt-2 leading-6 text-slate-600">{description}</p>
@@ -174,7 +171,7 @@ export function HomePage() {
 					</div>
 				</section>
 
-				<section aria-labelledby="steps-title" className="py-16 sm:py-24">
+				<section className="py-16 sm:py-24">
 					<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 						<div className="text-center">
 							<p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">How it works</p>
@@ -196,7 +193,7 @@ export function HomePage() {
 
 				<section className="px-4 pb-16 sm:px-6 sm:pb-24 lg:px-8">
 					<div className="mx-auto max-w-7xl rounded-3xl bg-slate-950 px-6 py-12 text-center text-white sm:px-12 sm:py-16">
-						<CheckCircle2 className="mx-auto size-8 text-indigo-300" aria-hidden="true" />
+						<CheckCircle2 className="mx-auto size-8 text-indigo-300" />
 						<h2 className="mt-5 text-3xl font-semibold tracking-tight">Make your next practice session count.</h2>
 						<p className="mx-auto mt-3 max-w-xl text-slate-300">Create your account and start building a more focused study routine.</p>
 						<Link
@@ -214,7 +211,7 @@ export function HomePage() {
 			<footer className="border-t border-slate-200 bg-white">
 				<div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:px-6 lg:px-8">
 					<p>© {new Date().getFullYear()} ExamForge</p>
-					<nav aria-label="Footer" className="flex items-center gap-5">
+					<nav className="flex items-center gap-5">
 						<Link className="rounded-sm hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600" href={AUTH_ROUTES.signin}>Sign in</Link>
 						<Link className="rounded-sm hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600" href={AUTH_ROUTES.signup}>Create account</Link>
 					</nav>
