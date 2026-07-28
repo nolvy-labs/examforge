@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAuthStore } from "@/features/auth/stores/auth.store"
+import { useAuthSession } from "@/features/auth/stores/auth.store"
 
 import { ExamAttemptAction } from "./exam-attempt.action"
 import { AttemptHistory } from "./exam-attempt-history"
@@ -14,9 +14,8 @@ import type { StudentExamDetail } from "../model/exam-detail.types"
 export function ExamAttemptHistoryClient({ examId }: { examId: string }) {
 	const [pagination, setPagination] = useState({ examId, page: 1 })
 	const historyPage = pagination.examId === examId ? pagination.page : 1
-	const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-	const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-	const enabled = isAuthInitialized && isAuthenticated
+	const session = useAuthSession()
+	const enabled = session.status === "authenticated"
 	const historyQuery = useExamAttemptHistory(examId, historyPage, enabled)
 
 	useEffect(() => {

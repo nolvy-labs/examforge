@@ -4,7 +4,7 @@ import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import { AUTH_ROUTES } from "@/features/auth/auth.constants"
-import { useAuthStore } from "@/features/auth/stores/auth.store"
+import { useAuthSession } from "@/features/auth/stores/auth.store"
 import { ApiError } from "@/lib/api/api.error"
 
 import {
@@ -25,8 +25,9 @@ export function useExamAttemptActionController(
 	detail: StudentExamDetail
 ): AttemptActionController {
 	const router = useRouter()
-	const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-	const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+	const session = useAuthSession()
+	const isAuthInitialized = session.status !== "loading"
+	const isAuthenticated = session.status === "authenticated"
 	const enabled = isAuthInitialized && isAuthenticated
 	const activeQuery = useActiveExamAttempt(detail.exam.id, enabled)
 	const latestQuery = useExamAttemptHistory(detail.exam.id, 1, enabled)

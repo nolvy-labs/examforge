@@ -1,14 +1,14 @@
 "use client"
 
-import { useAuthStore } from "@/features/auth/stores/auth.store"
+import { useRequiredAuthUser } from "@/features/auth/stores/auth.store"
 
 function getWelcomeName(displayName: string | null | undefined, email: string) {
 	return displayName?.trim() || email.split("@")[0] || "Student"
 }
 
 export function DashboardWelcome() {
-	const user = useAuthStore((state) => state.user)
-	const name = getWelcomeName(user?.displayName, user?.email ?? "")
+	const user = useRequiredAuthUser();
+	const name = getWelcomeName(user.displayName, user.email ?? "")
 
 	return (
 		<section aria-labelledby="welcome-heading">

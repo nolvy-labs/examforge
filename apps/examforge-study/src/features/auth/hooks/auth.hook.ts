@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { authApi } from "@/features/auth/api/auth.api"
-import { useAuthStore } from "@/features/auth/stores/auth.store"
+import { useAuthActions } from "@/features/auth/stores/auth.store"
 import type {
 	SigninRequest,
 	SignupRequest,
@@ -14,8 +14,8 @@ import { registerAuthFailureHandler } from "@/lib/api/api.client"
 const CURRENT_USER_QUERY_KEY = ["auth", "current-user"] as const
 
 export function useAuthInitialization() {
-	const setUser = useAuthStore((state) => state.setUser)
-	const clearUser = useAuthStore((state) => state.clearUser)
+	const { setUser, clearUser } = useAuthActions()
+
 	useEffect(
 		() => registerAuthFailureHandler(() => clearUser()),
 		[clearUser]
@@ -43,7 +43,7 @@ export function useAuthInitialization() {
 }
 
 export function useSigninMutation() {
-	const setUser = useAuthStore((state) => state.setUser)
+	const { setUser } = useAuthActions()
 
 	return useMutation({
 		mutationFn: (request: SigninRequest) => authApi.signin(request),
@@ -52,7 +52,7 @@ export function useSigninMutation() {
 }
 
 export function useSignupMutation() {
-	const setUser = useAuthStore((state) => state.setUser)
+	const { setUser } = useAuthActions()
 
 	return useMutation({
 		mutationFn: (request: SignupRequest) => authApi.signup(request),
@@ -61,7 +61,7 @@ export function useSignupMutation() {
 }
 
 export function useLogoutMutation() {
-	const clearUser = useAuthStore((state) => state.clearUser)
+	const { clearUser } = useAuthActions()
 	const queryClient = useQueryClient()
 
 	return useMutation({
