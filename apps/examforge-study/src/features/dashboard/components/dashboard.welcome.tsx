@@ -12,7 +12,6 @@ export function DashboardWelcome() {
 
 	return (
 		<section aria-labelledby="welcome-heading">
-			<p className="text-sm font-medium text-indigo-600">Student dashboard</p>
 			<h1 id="welcome-heading" className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
 				Welcome back, {name}
 			</h1>

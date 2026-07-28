@@ -226,15 +226,9 @@ export type StudentExam = StudentExamPage["items"][number]
 export type StudentExamFilters = z.infer<typeof studentExamFiltersSchema>
 export type StudentExamFilterGroup = StudentExamFilters["groups"][number]
 export type StudentExamFilterItem = StudentExamFilterGroup["items"][number]
-export type StudentExamCategory = z.infer<
-	typeof studentExamCategoriesSchema
->[number]
+export type StudentExamCategory = z.infer<typeof studentExamCategoriesSchema>[number]
 export type StudentExamDetail = z.infer<typeof studentExamDetailSchema>
 export type StudentExamSection = StudentExamDetail["sections"][number]
-export type StudentExamAttemptPage = z.infer<
-	typeof studentExamAttemptPageSchema
->
+export type StudentExamAttemptPage = z.infer<typeof studentExamAttemptPageSchema>
 export type StudentExamAttempt = StudentExamAttemptPage["items"][number]
-export type CreatedExamAttempt = z.infer<typeof createdExamAttemptSchema> & {
-	etag?: string
-}
+export type CreatedExamAttempt = z.infer<typeof createdExamAttemptSchema> & { etag?: string }
