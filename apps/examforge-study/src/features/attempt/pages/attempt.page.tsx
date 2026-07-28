@@ -29,7 +29,13 @@ import {
 	formatRemaining,
 	useAttemptTimer,
 } from "../hooks/attempt-timer.hook"
-import { useAttemptStore } from "../stores/attempt.store"
+import {
+	useAttemptActions,
+	useAttemptAnswers,
+	useAttemptIdentity,
+	useAttemptLocked,
+	useAttemptNavigation,
+} from "../stores/attempt.store"
 import {
 	flattenAnswerableQuestions,
 	getAttemptStatus,
@@ -42,12 +48,12 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 	const abandon = useAttemptTransition(attemptId, "abandon")
 	const [dialog, setDialog] = useState<"submit" | "abandon" | null>(null)
 	const [actionError, setActionError] = useState("")
-	const workspaceAttemptId = useAttemptStore((state) => state.attemptId)
-	const selectedSectionId = useAttemptStore((state) => state.selectedSectionId)
-	const selectedBlockId = useAttemptStore((state) => state.selectedBlockId)
-	const displayMode = useAttemptStore((state) => state.displayMode)
-	const drafts = useAttemptStore((state) => state.drafts)
-	const locked = useAttemptStore((state) => state.locked)
+	const workspaceAttemptId = useAttemptIdentity()
+	const { selectedSectionId, selectedBlockId, displayMode } =
+		useAttemptNavigation()
+	const { drafts } = useAttemptAnswers()
+	const locked = useAttemptLocked()
+	const actions = useAttemptActions()
 
 	const goToResult = useCallback(
 		() => router.replace(`/attempts/${attemptId}/result`),
@@ -68,15 +74,15 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 	}, [goToResult, query])
 
 	const handleTimeout = useCallback(async () => {
-		useAttemptStore.getState().setLocked(true)
+		actions.setLocked(true)
 		await flush()
 		try {
-			await submit.mutateAsync(useAttemptStore.getState().etag)
+			await submit.mutateAsync(actions.getConcurrency().etag)
 			goToResult()
 		} catch {
 			await convergeAfterTerminalRace()
 		}
-	}, [convergeAfterTerminalRace, flush, goToResult, submit])
+	}, [actions, convergeAfterTerminalRace, flush, goToResult, submit])
 
 	const remaining = useAttemptTimer(
 		query.data?.data.remainingTimeSeconds,
@@ -90,17 +96,17 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 			goToResult()
 			return
 		}
-		useAttemptStore.getState().initialize(response.data, response.etag)
+		actions.initialize(response.data, response.etag)
 		document.title = `${response.data.exam.title} | Attempt`
-	}, [goToResult, query.data, query.isFetching])
+	}, [actions, goToResult, query.data, query.isFetching])
 
 	useEffect(
 		() => () => {
-			if (useAttemptStore.getState().attemptId === attemptId) {
-				useAttemptStore.getState().reset()
+			if (actions.getAttemptId() === attemptId) {
+				actions.reset()
 			}
 		},
-		[attemptId]
+		[actions, attemptId]
 	)
 
 	const detail = query.data?.data
@@ -141,7 +147,7 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 
 	function navigate(sectionId: string, blockId: string) {
 		void flush()
-		useAttemptStore.getState().setLocation(sectionId, blockId)
+		actions.setLocation(sectionId, blockId)
 		requestAnimationFrame(() =>
 			document.getElementById(`question-${blockId}`)?.focus({ preventScroll: false })
 		)
@@ -162,7 +168,7 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 		}
 		try {
 			const mutation = dialog === "submit" ? submit : abandon
-			const response = await mutation.mutateAsync(useAttemptStore.getState().etag)
+			const response = await mutation.mutateAsync(actions.getConcurrency().etag)
 			if (getAttemptStatus(response.data.status) !== "in-progress") goToResult()
 		} catch (error) {
 			const code = error instanceof ApiError ? error.problemCode ?? "" : ""
@@ -189,7 +195,7 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 	return (
 		<div className="min-h-svh bg-slate-50">
 			<header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-				<div className="mx-auto flex min-h-16 max-w-[96rem] items-center gap-3 px-4 sm:px-6">
+				<div className="mx-auto flex min-h-16 max-w-384 items-center gap-3 px-4 sm:px-6">
 					<div className="min-w-0 flex-1">
 						<h1 className="truncate text-sm font-semibold text-slate-950 sm:text-base">
 							{detail.exam.title}
@@ -224,7 +230,7 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 				</div>
 			</header>
 
-			<div className="mx-auto grid max-w-[96rem] gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
+			<div className="mx-auto grid max-w-384 gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
 				<aside className="hidden lg:block">
 					<div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-4">
 						<AttemptNavigator sections={detail.sections} onSelect={navigate} />
@@ -263,7 +269,7 @@ export function AttemptPage({ attemptId }: { attemptId: string }) {
 									key={mode}
 									type="button"
 									aria-pressed={displayMode === mode}
-									onClick={() => useAttemptStore.getState().setDisplayMode(mode)}
+									onClick={() => actions.setDisplayMode(mode)}
 									className={`rounded-md px-3 py-1.5 text-xs font-medium ${
 										displayMode === mode
 											? "bg-slate-900 text-white"

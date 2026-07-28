@@ -6,7 +6,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { ApiError } from "@/lib/api/api.error"
 
 import { getAttempt, patchAttempt } from "../api/attempt.api"
-import { useAttemptStore } from "../stores/attempt.store"
+import {
+	useAttemptActions,
+	useAttemptDirtyCount,
+} from "../stores/attempt.store"
 import { getAttemptStatus } from "../types/attempt.type"
 import {
 	buildPatchOperations,
@@ -24,7 +27,8 @@ export function useAttemptAutosave(
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const queueRef = useRef(Promise.resolve(true))
 	const conflictRetryRef = useRef(false)
-	const dirtyCount = useAttemptStore((state) => Object.keys(state.dirty).length)
+	const dirtyCount = useAttemptDirtyCount()
+	const actions = useAttemptActions()
 	const mutation = useMutation({
 		mutationFn: ({
 			etag,
@@ -36,23 +40,27 @@ export function useAttemptAutosave(
 	})
 
 	const runSave = useCallback(async function save(): Promise<boolean> {
-		const store = useAttemptStore.getState()
-		if (store.attemptId !== attemptId || Object.keys(store.dirty).length === 0) {
-			store.setSaveState("saved")
+		if (
+			actions.getAttemptId() !== attemptId ||
+			!actions.hasDirtyChanges()
+		) {
+			actions.setSaveState("saved")
 			return true
 		}
 		if (!navigator.onLine) {
-			store.setSaveState("offline", "You are offline. Changes are not saved yet.")
+			actions.setSaveState(
+				"offline",
+				"You are offline. Changes are not saved yet."
+			)
 			return false
 		}
 
-		const snapshot = store.snapshot()
+		const snapshot = actions.getSnapshot()
 		const chunks = chunkOperations(buildPatchOperations(snapshot))
 		if (chunks.length === 0) return true
-		store.setSaveState("saving")
+		actions.setSaveState("saving")
 		try {
-			let etag = useAttemptStore.getState().etag
-			let revision = useAttemptStore.getState().revision
+			let { etag, revision } = actions.getConcurrency()
 			for (const operations of chunks) {
 				let response
 				for (let attempt = 0; ; attempt++) {
@@ -69,12 +77,12 @@ export function useAttemptAutosave(
 				}
 				etag = response.etag
 				revision = response.data.revision
-				useAttemptStore.getState().setConcurrency(etag, revision)
+				actions.setConcurrency(etag, revision)
 				queryClient.setQueryData(attemptKeys.detail(attemptId), response)
 			}
-			useAttemptStore.getState().acknowledge(snapshot, etag, revision)
+			actions.acknowledge(snapshot, etag, revision)
 			conflictRetryRef.current = false
-			if (Object.keys(useAttemptStore.getState().dirty).length > 0) {
+			if (actions.hasDirtyChanges()) {
 				timerRef.current = setTimeout(() => {
 					queueRef.current = queueRef.current.then(save, save)
 				}, DEBOUNCE_MS)
@@ -91,18 +99,18 @@ export function useAttemptAutosave(
 					const latest = await getAttempt(attemptId)
 					queryClient.setQueryData(attemptKeys.detail(attemptId), latest)
 					if (getAttemptStatus(latest.data.status) !== "in-progress") {
-						useAttemptStore.getState().setLocked(true)
+						actions.setLocked(true)
 						onTerminal()
 						return false
 					}
-					useAttemptStore.getState().rebase(latest.data, latest.etag)
+					actions.rebase(latest.data, latest.etag)
 					return await save()
 				} catch {
 					// The recoverable state below keeps drafts dirty.
 				}
 			}
 			const offline = error instanceof ApiError && error.code === "network"
-			useAttemptStore.getState().setSaveState(
+			actions.setSaveState(
 				offline ? "offline" : "failed",
 				offline
 					? "You are offline. Changes are not saved yet."
@@ -112,7 +120,7 @@ export function useAttemptAutosave(
 			)
 			return false
 		}
-	}, [attemptId, mutation, onTerminal, queryClient])
+	}, [actions, attemptId, mutation, onTerminal, queryClient])
 
 	const enqueueSave = useCallback(() => {
 		queueRef.current = queueRef.current.then(runSave, runSave)
@@ -136,21 +144,21 @@ export function useAttemptAutosave(
 
 	useEffect(() => {
 		const online = () => {
-			if (Object.keys(useAttemptStore.getState().dirty).length) void flush()
+			if (actions.hasDirtyChanges()) void flush()
 		}
 		window.addEventListener("online", online)
 		return () => window.removeEventListener("online", online)
-	}, [flush])
+	}, [actions, flush])
 
 	useEffect(() => {
 		const beforeUnload = (event: BeforeUnloadEvent) => {
-			if (Object.keys(useAttemptStore.getState().dirty).length) {
+			if (actions.hasDirtyChanges()) {
 				event.preventDefault()
 			}
 		}
 		window.addEventListener("beforeunload", beforeUnload)
 		return () => window.removeEventListener("beforeunload", beforeUnload)
-	}, [])
+	}, [actions])
 
 	return { flush, isSaving: mutation.isPending }
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { create } from "zustand"
+import { useShallow } from "zustand/react/shallow"
 
 import type {
 	AttemptDetail,
@@ -16,7 +17,28 @@ import { answersEqual } from "../utils/attempt-patch"
 export type SaveState = "saved" | "waiting" | "saving" | "failed" | "offline"
 export type DisplayMode = "one" | "section"
 
-interface AttemptWorkspace {
+interface AttemptActions {
+	initialize: (detail: AttemptDetail, etag: string) => void
+	rebase: (detail: AttemptDetail, etag: string) => void
+	setText: (questionId: string, value: string | null) => void
+	setOptions: (questionId: string, value: string[]) => void
+	setLocation: (sectionId: string, blockId: string) => void
+	setDisplayMode: (mode: DisplayMode) => void
+	setSaveState: (state: SaveState, message?: string) => void
+	setConcurrency: (etag: string, revision: number) => void
+	setLocked: (locked: boolean) => void
+	getAttemptId: () => string | null
+	getSnapshot: () => SaveSnapshot
+	getConcurrency: () => {
+		etag: string
+		revision: number
+	}
+	hasDirtyChanges: () => boolean
+	acknowledge: (snapshot: SaveSnapshot, etag: string, revision: number) => void
+	reset: () => void
+}
+
+interface AttemptState {
 	attemptId: string | null
 	drafts: Record<string, DraftAnswer>
 	saved: Record<string, DraftAnswer>
@@ -29,18 +51,7 @@ interface AttemptWorkspace {
 	saveState: SaveState
 	saveMessage: string
 	locked: boolean
-	initialize: (detail: AttemptDetail, etag: string) => void
-	rebase: (detail: AttemptDetail, etag: string) => void
-	setText: (questionId: string, value: string | null) => void
-	setOptions: (questionId: string, value: string[]) => void
-	setLocation: (sectionId: string, blockId: string) => void
-	setDisplayMode: (mode: DisplayMode) => void
-	setSaveState: (state: SaveState, message?: string) => void
-	setConcurrency: (etag: string, revision: number) => void
-	setLocked: (locked: boolean) => void
-	snapshot: () => SaveSnapshot
-	acknowledge: (snapshot: SaveSnapshot, etag: string, revision: number) => void
-	reset: () => void
+	actions: AttemptActions
 }
 
 function serverAnswers(detail: AttemptDetail) {
@@ -58,7 +69,7 @@ const initialMode = (): DisplayMode =>
 		? "section"
 		: "one"
 
-export const useAttemptStore = create<AttemptWorkspace>((set, get) => ({
+const useAttemptStore = create<AttemptState>((set, get) => ({
 	attemptId: null,
 	drafts: {},
 	saved: {},
@@ -71,39 +82,40 @@ export const useAttemptStore = create<AttemptWorkspace>((set, get) => ({
 	saveState: "saved",
 	saveMessage: "",
 	locked: false,
-	initialize: (detail, etag) =>
-		set((state) => {
-			if (state.attemptId === detail.attemptId) return state
-			const answers = serverAnswers(detail)
-			return {
-				attemptId: detail.attemptId,
-				drafts: answers,
-				saved: answers,
-				dirty: {},
-				etag,
-				revision: detail.revision,
-				selectedSectionId: detail.sections[0]?.id ?? null,
-				selectedBlockId: detail.sections[0]?.questions[0]?.id ?? null,
-				displayMode: initialMode(),
-				saveState: "saved",
-				saveMessage: "",
-				locked: false,
-			}
-		}),
-	rebase: (detail, etag) =>
-		set((state) => {
-			const incoming = serverAnswers(detail)
-			const drafts = { ...incoming, ...state.drafts }
-			for (const id of Object.keys(incoming)) {
-				if (!state.dirty[id]) drafts[id] = incoming[id]
-			}
-			return { drafts, saved: incoming, etag, revision: detail.revision }
-		}),
-	setText: (id, value) =>
-		set((state) =>
-			state.locked
-				? state
-				: {
+	actions: {
+		initialize: (detail, etag) =>
+			set((state) => {
+				if (state.attemptId === detail.attemptId) return state
+				const answers = serverAnswers(detail)
+				return {
+					attemptId: detail.attemptId,
+					drafts: answers,
+					saved: answers,
+					dirty: {},
+					etag,
+					revision: detail.revision,
+					selectedSectionId: detail.sections[0]?.id ?? null,
+					selectedBlockId: detail.sections[0]?.questions[0]?.id ?? null,
+					displayMode: initialMode(),
+					saveState: "saved",
+					saveMessage: "",
+					locked: false,
+				}
+			}),
+		rebase: (detail, etag) =>
+			set((state) => {
+				const incoming = serverAnswers(detail)
+				const drafts = { ...incoming, ...state.drafts }
+				for (const id of Object.keys(incoming)) {
+					if (!state.dirty[id]) drafts[id] = incoming[id]
+				}
+				return { drafts, saved: incoming, etag, revision: detail.revision }
+			}),
+		setText: (id, value) =>
+			set((state) =>
+				state.locked
+					? state
+					: {
 						drafts: {
 							...state.drafts,
 							[id]: {
@@ -120,12 +132,12 @@ export const useAttemptStore = create<AttemptWorkspace>((set, get) => ({
 						},
 						saveState: "waiting",
 					}
-		),
-	setOptions: (id, value) =>
-		set((state) =>
-			state.locked
-				? state
-				: {
+			),
+		setOptions: (id, value) =>
+			set((state) =>
+				state.locked
+					? state
+					: {
 						drafts: {
 							...state.drafts,
 							[id]: {
@@ -142,62 +154,112 @@ export const useAttemptStore = create<AttemptWorkspace>((set, get) => ({
 						},
 						saveState: "waiting",
 					}
-		),
-	setLocation: (selectedSectionId, selectedBlockId) =>
-		set({ selectedSectionId, selectedBlockId }),
-	setDisplayMode: (displayMode) => {
-		if (typeof window !== "undefined") {
-			window.localStorage.setItem("examforge-attempt-display", displayMode)
-		}
-		set({ displayMode })
-	},
-	setSaveState: (saveState, saveMessage = "") => set({ saveState, saveMessage }),
-	setConcurrency: (etag, revision) => set({ etag, revision }),
-	setLocked: (locked) => set({ locked }),
-	snapshot: () => {
-		const state = get()
-		return {
-			answers: Object.fromEntries(
-				Object.keys(state.dirty).map((id) => [
-					id,
-					{
-						textAnswer: state.drafts[id]?.textAnswer ?? null,
-						selectedOptionIds: [...(state.drafts[id]?.selectedOptionIds ?? [])],
-					},
-				])
 			),
-			fields: structuredClone(state.dirty),
-		}
-	},
-	acknowledge: (snapshot, etag, revision) =>
-		set((state) => {
-			const saved = { ...state.saved }
-			const dirty = { ...state.dirty }
-			for (const [id, captured] of Object.entries(snapshot.answers)) {
-				saved[id] = captured
-				if (answersEqual(state.drafts[id], captured)) delete dirty[id]
+		setLocation: (selectedSectionId, selectedBlockId) =>
+			set({ selectedSectionId, selectedBlockId }),
+		setDisplayMode: (displayMode) => {
+			if (typeof window !== "undefined") {
+				window.localStorage.setItem("examforge-attempt-display", displayMode)
 			}
+			set({ displayMode })
+		},
+		setSaveState: (saveState, saveMessage = "") =>
+			set({ saveState, saveMessage }),
+		setConcurrency: (etag, revision) => set({ etag, revision }),
+		setLocked: (locked) => set({ locked }),
+		getAttemptId: () => get().attemptId,
+		getSnapshot: () => {
+			const state = get()
 			return {
-				saved,
-				dirty,
-				etag,
-				revision,
-				saveState: Object.keys(dirty).length ? "waiting" : "saved",
-				saveMessage: "",
+				answers: Object.fromEntries(
+					Object.keys(state.dirty).map((id) => [
+						id,
+						{
+							textAnswer: state.drafts[id]?.textAnswer ?? null,
+							selectedOptionIds: [
+								...(state.drafts[id]?.selectedOptionIds ?? []),
+							],
+						},
+					])
+				),
+				fields: structuredClone(state.dirty),
 			}
-		}),
-	reset: () =>
-		set({
-			attemptId: null,
-			drafts: {},
-			saved: {},
-			dirty: {},
-			etag: "",
-			revision: 0,
-			selectedSectionId: null,
-			selectedBlockId: null,
-			saveState: "saved",
-			saveMessage: "",
-			locked: false,
-		}),
+		},
+		getConcurrency: () => {
+			const { etag, revision } = get()
+			return { etag, revision }
+		},
+		hasDirtyChanges: () => Object.keys(get().dirty).length > 0,
+		acknowledge: (snapshot, etag, revision) =>
+			set((state) => {
+				const saved = { ...state.saved }
+				const dirty = { ...state.dirty }
+				for (const [id, captured] of Object.entries(snapshot.answers)) {
+					saved[id] = captured
+					if (answersEqual(state.drafts[id], captured)) delete dirty[id]
+				}
+				return {
+					saved,
+					dirty,
+					etag,
+					revision,
+					saveState: Object.keys(dirty).length ? "waiting" : "saved",
+					saveMessage: "",
+				}
+			}),
+		reset: () =>
+			set({
+				attemptId: null,
+				drafts: {},
+				saved: {},
+				dirty: {},
+				etag: "",
+				revision: 0,
+				selectedSectionId: null,
+				selectedBlockId: null,
+				saveState: "saved",
+				saveMessage: "",
+				locked: false,
+			}),
+	},
 }))
+
+export const useAttemptIdentity = () =>
+	useAttemptStore((state) => state.attemptId)
+
+export const useAttemptAnswers = () =>
+	useAttemptStore(
+		useShallow((state) => ({
+			drafts: state.drafts,
+			dirty: state.dirty,
+		}))
+	)
+
+export const useAttemptAnswer = (questionId: string) =>
+	useAttemptStore((state) => state.drafts[questionId])
+
+export const useAttemptNavigation = () =>
+	useAttemptStore(
+		useShallow((state) => ({
+			selectedSectionId: state.selectedSectionId,
+			selectedBlockId: state.selectedBlockId,
+			displayMode: state.displayMode,
+		}))
+	)
+
+export const useAttemptSaveStatus = () =>
+	useAttemptStore(
+		useShallow((state) => ({
+			saveState: state.saveState,
+			saveMessage: state.saveMessage,
+		}))
+	)
+
+export const useAttemptLocked = () =>
+	useAttemptStore((state) => state.locked)
+
+export const useAttemptDirtyCount = () =>
+	useAttemptStore((state) => Object.keys(state.dirty).length)
+
+export const useAttemptActions = () =>
+	useAttemptStore((state) => state.actions)

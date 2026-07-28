@@ -7,7 +7,14 @@ import { Checkbox } from "@/components/shadcn/checkbox"
 import { Input } from "@/components/shadcn/input"
 import { cn } from "@/lib/utils"
 
-import { useAttemptStore } from "../stores/attempt.store"
+import {
+	useAttemptActions,
+	useAttemptAnswer,
+	useAttemptAnswers,
+	useAttemptLocked,
+	useAttemptNavigation,
+	useAttemptSaveStatus,
+} from "../stores/attempt.store"
 import type { AttemptQuestion, AttemptSection } from "../types/attempt.type"
 import { getQuestionType } from "../types/attempt.type"
 
@@ -29,7 +36,7 @@ export function AttemptQuestionBlock({
 					{number}
 				</span>
 				<div className="min-w-0 flex-1">
-					<p className="whitespace-pre-line break-words text-base font-medium leading-7 text-slate-950">
+					<p className="whitespace-pre-line wrap-break-word text-base font-medium leading-7 text-slate-950">
 						{question.prompt}
 					</p>
 					{type !== "group" && (
@@ -61,10 +68,9 @@ export function AttemptQuestionBlock({
 
 function QuestionEditor({ question }: { question: AttemptQuestion }) {
 	const type = getQuestionType(question.type)
-	const answer = useAttemptStore((state) => state.drafts[question.id])
-	const locked = useAttemptStore((state) => state.locked)
-	const setText = useAttemptStore((state) => state.setText)
-	const setOptions = useAttemptStore((state) => state.setOptions)
+	const answer = useAttemptAnswer(question.id)
+	const locked = useAttemptLocked()
+	const { setText, setOptions } = useAttemptActions()
 	const selected = answer?.selectedOptionIds ?? []
 
 	if (type === "fill-blank") {
@@ -156,11 +162,9 @@ export function AttemptNavigator({
 	sections: AttemptSection[]
 	onSelect: (sectionId: string, blockId: string) => void
 }) {
-	const selectedSectionId = useAttemptStore((state) => state.selectedSectionId)
-	const selectedBlockId = useAttemptStore((state) => state.selectedBlockId)
-	const drafts = useAttemptStore((state) => state.drafts)
-	const dirty = useAttemptStore((state) => state.dirty)
-	const saveState = useAttemptStore((state) => state.saveState)
+	const { selectedSectionId, selectedBlockId } = useAttemptNavigation()
+	const { drafts, dirty } = useAttemptAnswers()
+	const { saveState } = useAttemptSaveStatus()
 	return (
 		<nav aria-label="Exam questions" className="space-y-5">
 			{sections.map((section, sectionIndex) => (
@@ -226,8 +230,7 @@ export function AttemptNavigator({
 }
 
 export function SaveStatus() {
-	const state = useAttemptStore((workspace) => workspace.saveState)
-	const message = useAttemptStore((workspace) => workspace.saveMessage)
+	const { saveState: state, saveMessage: message } = useAttemptSaveStatus()
 	const config = {
 		saved: { label: "All changes saved", icon: CheckCircle2 },
 		waiting: { label: "Waiting to save", icon: Circle },
@@ -248,7 +251,7 @@ export function SaveStatus() {
 }
 
 export function SaveError() {
-	const message = useAttemptStore((state) => state.saveMessage)
+	const { saveMessage: message } = useAttemptSaveStatus()
 	if (!message) return null
 	return (
 		<Alert variant="destructive">
