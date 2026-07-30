@@ -22,6 +22,12 @@ export const metadata: Metadata = {
 		template: "%s | ExamForge Study",
 	},
 	description: "A focused place to prepare, practice, and track your progress.",
+	icons: {
+		icon: {
+			url: '/icon.svg',
+			type: 'image/svg+xml',
+		},
+	},
 }
 
 export default function RootLayout({
