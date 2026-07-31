@@ -71,6 +71,7 @@ export const adminExamTagSchema = z.strictObject({
 	createdAtUtc: dateTimeSchema,
 	updatedAtUtc: dateTimeSchema.nullable(),
 })
+export const adminExamTagsResponseSchema = z.array(adminExamTagSchema)
 
 export const paginationMetaSchema = z
 	.strictObject({
