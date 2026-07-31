@@ -22,7 +22,7 @@ public sealed record ExamTagResponse(
     string Slug,
     string Description,
     ExamTagType Type,
-    bool IsArchiced,
+    bool IsArchived,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset? UpdatedAtUtc
 );

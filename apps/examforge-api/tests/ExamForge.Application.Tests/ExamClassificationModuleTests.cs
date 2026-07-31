@@ -1,5 +1,7 @@
 using System.Reflection;
+using System.Text.Json;
 
+using ExamForge.Application.Admin.ExamClassifications.Dtos;
 using ExamForge.Application.Admin.ExamClassifications.Services;
 using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.ExamClassifications.Models;
@@ -10,6 +12,28 @@ namespace ExamForge.Application.Tests;
 
 public sealed class ExamClassificationModuleTests
 {
+    [Fact]
+    public void AdminExamTagResponse_SerializesCorrectArchivedProperty()
+    {
+        var response = new ExamTagResponse(
+            Guid.NewGuid(),
+            "Algorithms",
+            "algorithms",
+            "Algorithm exams",
+            ExamTagType.Topic,
+            true,
+            DateTimeOffset.UtcNow,
+            null);
+
+        var json = JsonSerializer.Serialize(
+            response,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        using var document = JsonDocument.Parse(json);
+
+        Assert.True(document.RootElement.GetProperty("isArchived").GetBoolean());
+        Assert.False(document.RootElement.TryGetProperty("isArchiced", out _));
+    }
+
     [Fact]
     public async Task DiscoveryService_GroupsAndOrdersFiltersDeterministically()
     {
