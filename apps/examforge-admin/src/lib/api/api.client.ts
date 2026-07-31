@@ -23,7 +23,10 @@ interface RetryableRequestConfig extends InternalAxiosRequestConfig {
 export interface ApiClients {
 	apiClient: AxiosInstance
 	refreshClient: AxiosInstance
+	registerAuthFailureHandler: (handler: AuthFailureHandler) => () => void
 }
+
+type AuthFailureHandler = () => void
 
 function normalizePath(url?: string) {
 	if (!url) return ""
@@ -56,6 +59,7 @@ export function createApiClients(configuredApiUrl?: string): ApiClients {
 	const apiClient = axios.create(clientOptions)
 	const refreshClient = axios.create(clientOptions)
 	let refreshPromise: Promise<void> | null = null
+	let authFailureHandler: AuthFailureHandler | undefined
 
 	function ensureConfigured<T extends InternalAxiosRequestConfig>(config: T) {
 		if (!configuredApiUrl) {
@@ -80,6 +84,7 @@ export function createApiClients(configuredApiUrl?: string): ApiClients {
 				.post(REFRESH_ROUTE)
 				.then(() => undefined)
 				.catch((error: unknown) => {
+					authFailureHandler?.()
 					throw toApiError(error)
 				})
 				.finally(() => {
@@ -119,9 +124,18 @@ export function createApiClients(configuredApiUrl?: string): ApiClients {
 		}
 	)
 
-	return { apiClient, refreshClient }
+	function registerAuthFailureHandler(handler: AuthFailureHandler) {
+		authFailureHandler = handler
+
+		return () => {
+			if (authFailureHandler === handler) authFailureHandler = undefined
+		}
+	}
+
+	return { apiClient, refreshClient, registerAuthFailureHandler }
 }
 
 const clients = createApiClients(process.env.NEXT_PUBLIC_API_URL)
 
 export const apiClient = clients.apiClient
+export const registerAuthFailureHandler = clients.registerAuthFailureHandler
