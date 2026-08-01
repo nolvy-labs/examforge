@@ -11,6 +11,8 @@ import type {
 	createQuestionRequestSchema,
 	examBuilderProblemDetailsSchema,
 	examSectionDetailResponseSchema,
+	examSectionSummaryListResponseSchema,
+	examSectionSummaryResponseSchema,
 	examSectionKindSchema,
 	examVersionDetailResponseSchema,
 	examVersionListResponseSchema,
@@ -21,6 +23,8 @@ import type {
 	getExamVersionsRequestSchema,
 	patchOperationSchema,
 	questionDetailResponseSchema,
+	questionSummaryListResponseSchema,
+	questionSummaryResponseSchema,
 	questionOptionResponseSchema,
 	questionTypeSchema,
 	reorderExamSectionsRequestSchema,
@@ -37,7 +41,15 @@ export type ExamVersionSummaryDto = z.infer<
 export type ExamVersionDetailDto = z.infer<typeof examVersionDetailResponseSchema>
 export type FullExamVersionDto = z.infer<typeof fullExamVersionResponseSchema>
 export type ExamSectionDetailDto = z.infer<typeof examSectionDetailResponseSchema>
+export type ExamSectionSummaryDto = z.infer<typeof examSectionSummaryResponseSchema>
+export type ExamSectionSummaryListResponse = z.infer<
+	typeof examSectionSummaryListResponseSchema
+>
 export type QuestionDetailDto = z.infer<typeof questionDetailResponseSchema>
+export type QuestionSummaryDto = z.infer<typeof questionSummaryResponseSchema>
+export type QuestionSummaryListResponse = z.infer<
+	typeof questionSummaryListResponseSchema
+>
 export type QuestionOptionDto = z.infer<typeof questionOptionResponseSchema>
 export type FillAnswerKeyDto = z.infer<typeof fillAnswerKeyResponseSchema>
 export type GetExamVersionsRequest = z.infer<typeof getExamVersionsRequestSchema>

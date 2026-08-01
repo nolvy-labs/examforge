@@ -121,6 +121,47 @@ export const examSectionDetailResponseSchema = z.strictObject({
 	questions: z.array(questionDetailResponseSchema).nullable(),
 })
 
+export const examSectionSummaryResponseSchema = examSectionDetailResponseSchema.pick({
+	id: true,
+	examVersionId: true,
+	kind: true,
+	title: true,
+	displayOrder: true,
+	questionCount: true,
+	totalPoints: true,
+	createdAtUtc: true,
+	updatedAtUtc: true,
+})
+
+export const questionSummaryResponseSchema = questionDetailResponseSchema.pick({
+	id: true,
+	examSectionId: true,
+	parentQuestionId: true,
+	type: true,
+	prompt: true,
+	points: true,
+	displayOrder: true,
+	childQuestionCount: true,
+	optionCount: true,
+	answerKeyCount: true,
+	isComplete: true,
+	createdAtUtc: true,
+	updatedAtUtc: true,
+})
+
+export const examSectionSummaryListResponseSchema = z.array(
+	examSectionSummaryResponseSchema
+)
+export const questionSummaryListResponseSchema = z.array(
+	questionSummaryResponseSchema
+)
+export const questionOptionListResponseSchema = z.array(
+	questionOptionResponseSchema
+)
+export const fillAnswerKeyListResponseSchema = z.array(
+	fillAnswerKeyResponseSchema
+)
+
 const fullExamSectionDetailResponseSchema = examSectionDetailResponseSchema.extend({
 	questions: z.array(questionDetailResponseSchema),
 })

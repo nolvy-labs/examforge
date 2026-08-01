@@ -330,7 +330,7 @@ function addCorrectRelationships(
 			!after ||
 			!("correctOptionIds" in before) ||
 			!("correctOptionIds" in after) ||
-			equalIds(before.correctOptionIds, after.correctOptionIds)
+			equalIdSets(before.correctOptionIds, after.correctOptionIds)
 		) {
 			continue
 		}
@@ -620,6 +620,13 @@ function isAnswerOrderAppendOnly(
 
 function equalIds(left: BuilderEntityId[], right: BuilderEntityId[]) {
 	return left.length === right.length && left.every((id, index) => id === right[index])
+}
+
+function equalIdSets(left: BuilderEntityId[], right: BuilderEntityId[]) {
+	return (
+		left.length === right.length &&
+		left.every((id) => right.includes(id))
+	)
 }
 
 function missingEntityIssue(

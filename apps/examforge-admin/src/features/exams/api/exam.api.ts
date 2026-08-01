@@ -7,6 +7,7 @@ import { parseApiResponse } from "@/lib/api/api.schema"
 import {
 	adminExamListRequestSchema,
 	adminExamListResponseSchema,
+	adminExamSchema,
 	createExamRequestSchema,
 	createExamResponseSchema,
 } from "../types/exam.schema"
@@ -75,6 +76,16 @@ export async function createAdminExam(request: CreateExamRequest) {
 		response.data,
 		"created admin exam"
 	)
+}
+
+export async function getAdminExam(id: string, signal?: AbortSignal) {
+	const examId = uuidSchema.parse(id)
+	const response = await apiClient.get<unknown>(
+		`/api/v1/admin/exams/${encodeURIComponent(examId)}`,
+		{ signal }
+	)
+
+	return parseApiResponse(adminExamSchema, response.data, "admin exam detail")
 }
 
 function assertNoContent(status: number, context: string) {

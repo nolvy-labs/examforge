@@ -94,6 +94,14 @@ function getMessageForStatus(status: number, problem: ApiProblemDetails) {
 		return problem.detail ?? "The request conflicts with the current state."
 	}
 
+	if (status === 412) {
+		return problem.detail ?? "The server content has changed since it was loaded."
+	}
+
+	if (status === 428) {
+		return problem.detail ?? "The request is missing a required concurrency token."
+	}
+
 	if (status >= 500) {
 		return "The service is temporarily unavailable. Please try again later."
 	}
@@ -134,7 +142,7 @@ export function toApiError(error: unknown): ApiError {
 		problem.errors && !Array.isArray(problem.errors) ? problem.errors : {}
 	let code: ApiErrorCode = "unknown"
 
-	if (status === 400 || Object.keys(fieldErrors).length > 0) {
+	if (status === 400 || status === 428 || Object.keys(fieldErrors).length > 0) {
 		code = "validation"
 	} else if (status === 401) {
 		code = "unauthorized"
@@ -142,7 +150,7 @@ export function toApiError(error: unknown): ApiError {
 		code = "forbidden"
 	} else if (status === 404) {
 		code = "not-found"
-	} else if (status === 409) {
+	} else if (status === 409 || status === 412) {
 		code = "conflict"
 	} else if (status >= 500) {
 		code = "server"

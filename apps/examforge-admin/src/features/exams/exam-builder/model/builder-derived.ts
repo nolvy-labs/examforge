@@ -3,6 +3,7 @@ import type {
 	BuilderEntityId,
 	BuilderQuestion,
 } from "./builder.types"
+import { builderDocumentToMutationValues } from "./builder-mapper"
 
 export function cloneBuilderDocument(document: BuilderDocument): BuilderDocument {
 	return structuredClone(document)
@@ -111,6 +112,52 @@ export function calculateTotalPoints(document: BuilderDocument) {
 			(total, sectionId) => total + calculateSectionPoints(document, sectionId),
 			0
 		)
+	)
+}
+
+export function builderDocumentSemanticFingerprint(document: BuilderDocument) {
+	const values = builderDocumentToMutationValues(document)
+	const sortRecord = <T>(record: Record<string, T>) =>
+		Object.fromEntries(
+			Object.entries(record).sort(([left], [right]) => left.localeCompare(right))
+		)
+	const questionOrder = Object.fromEntries(
+		Object.values(document.questionsById)
+			.sort((left, right) => left.id.localeCompare(right.id))
+			.map((question) => [
+				question.id,
+				question.type === "group"
+					? question.childQuestionIds
+					: question.type === "fill-blank"
+						? question.answerKeyIds
+						: question.optionIds,
+			])
+	)
+	return JSON.stringify({
+		values: {
+			version: values.version,
+			sections: sortRecord(values.sections),
+			questions: sortRecord(values.questions),
+			options: sortRecord(values.options),
+			answerKeys: sortRecord(values.answerKeys),
+		},
+		sectionIds: document.sectionIds,
+		sectionQuestions: Object.fromEntries(
+			Object.values(document.sectionsById)
+				.sort((left, right) => left.id.localeCompare(right.id))
+				.map((section) => [section.id, section.questionIds])
+		),
+		questionOrder,
+	})
+}
+
+export function builderDocumentsSemanticallyEqual(
+	left: BuilderDocument,
+	right: BuilderDocument
+) {
+	return (
+		builderDocumentSemanticFingerprint(left) ===
+		builderDocumentSemanticFingerprint(right)
 	)
 }
 

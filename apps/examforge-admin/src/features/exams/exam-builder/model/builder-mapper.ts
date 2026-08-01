@@ -3,6 +3,7 @@ import type {
 	CreateFillAnswerKeyRequest,
 	CreateQuestionOptionRequest,
 	CreateQuestionRequest,
+	ExamSectionDetailDto,
 	FullExamVersionDto,
 	QuestionDetailDto,
 	QuestionTypeDto,
@@ -658,4 +659,122 @@ function replaceRecordKeys<T>(
 		replaced[replacement ?? key] = mapValue(value)
 	}
 	return replaced
+}
+
+export interface CreatedIdMappingResult {
+	mappings: Map<BuilderEntityId, PersistedEntityId>
+	issues: string[]
+}
+
+export function mapCreatedSectionIds(
+	document: BuilderDocument,
+	temporarySectionId: BuilderEntityId,
+	response: ExamSectionDetailDto
+): CreatedIdMappingResult {
+	const mappings = new Map<BuilderEntityId, PersistedEntityId>()
+	const issues: string[] = []
+	const section = document.sectionsById[temporarySectionId]
+	if (!section || isPersistedEntityId(temporarySectionId)) {
+		return { mappings, issues: ["The created Section no longer exists locally."] }
+	}
+	mappings.set(temporarySectionId, toPersistedEntityId(response.id))
+	mapCreatedQuestionLists(
+		document,
+		section.questionIds,
+		response.questions ?? [],
+		mappings,
+		issues
+	)
+	return { mappings, issues }
+}
+
+export function mapCreatedQuestionIds(
+	document: BuilderDocument,
+	temporaryQuestionId: BuilderEntityId,
+	response: QuestionDetailDto
+): CreatedIdMappingResult {
+	const mappings = new Map<BuilderEntityId, PersistedEntityId>()
+	const issues: string[] = []
+	mapCreatedQuestion(document, temporaryQuestionId, response, mappings, issues)
+	return { mappings, issues }
+}
+
+function mapCreatedQuestionLists(
+	document: BuilderDocument,
+	localIds: BuilderEntityId[],
+	responses: QuestionDetailDto[],
+	mappings: Map<BuilderEntityId, PersistedEntityId>,
+	issues: string[]
+) {
+	if (localIds.length !== responses.length) {
+		issues.push("The server returned a different number of created Questions.")
+		return
+	}
+	localIds.forEach((id, index) => {
+		const response = responses[index]
+		if (response) mapCreatedQuestion(document, id, response, mappings, issues)
+	})
+}
+
+function mapCreatedQuestion(
+	document: BuilderDocument,
+	localId: BuilderEntityId,
+	response: QuestionDetailDto,
+	mappings: Map<BuilderEntityId, PersistedEntityId>,
+	issues: string[]
+) {
+	const question = document.questionsById[localId]
+	if (!question || isPersistedEntityId(localId)) {
+		issues.push("A created Question no longer exists locally.")
+		return
+	}
+	if (questionTypeToDto[question.type] !== response.type) {
+		issues.push("The server returned a different created Question type.")
+		return
+	}
+	mappings.set(localId, toPersistedEntityId(response.id))
+	if (question.type === "group") {
+		mapCreatedQuestionLists(
+			document,
+			question.childQuestionIds,
+			response.childQuestions ?? [],
+			mappings,
+			issues
+		)
+		return
+	}
+	if (question.type === "fill-blank") {
+		mapCreatedLeafIds(
+			question.answerKeyIds,
+			response.answerKeys.map((answer) => answer.id),
+			mappings,
+			issues,
+			"answer keys"
+		)
+		return
+	}
+	mapCreatedLeafIds(
+		question.optionIds,
+		response.options.map((option) => option.id),
+		mappings,
+		issues,
+		"options"
+	)
+}
+
+function mapCreatedLeafIds(
+	localIds: BuilderEntityId[],
+	serverIds: string[],
+	mappings: Map<BuilderEntityId, PersistedEntityId>,
+	issues: string[],
+	label: string
+) {
+	if (localIds.length !== serverIds.length) {
+		issues.push(`The server returned a different number of created ${label}.`)
+		return
+	}
+	localIds.forEach((id, index) => {
+		const serverId = serverIds[index]
+		if (serverId) mappings.set(id, toPersistedEntityId(serverId))
+	})
 }
