@@ -8,6 +8,7 @@ import {
     ExamIcon,
     GearIcon,
     HouseIcon,
+    TagIcon,
     UsersIcon,
 } from "@phosphor-icons/react"
 
@@ -48,6 +49,11 @@ const navigation = [
                 title: "Exams",
                 href: "/exams",
                 icon: ExamIcon,
+            },
+            {
+                title: "Classifications",
+                href: "/classifications",
+                icon: TagIcon,
             },
             {
                 title: "Attempt results",

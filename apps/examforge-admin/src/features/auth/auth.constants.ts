@@ -15,6 +15,7 @@ const PROTECTED_ROUTE_ROOTS = [
 	ADMIN_ROUTES.defaultProtected,
 	"/users",
 	"/exams",
+	"/classifications",
 	"/attempt-results",
 ] as const
 
