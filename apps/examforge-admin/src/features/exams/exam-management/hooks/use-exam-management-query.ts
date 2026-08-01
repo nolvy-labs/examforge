@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
+import { useAdminExamTags } from "@/features/exam-classifications/hooks/exam-classification.hook"
+
 import {
-	useAdminExamTags,
 	useAdminExams,
 	useArchiveAdminExamMutation,
 	useCreateAdminExamMutation,

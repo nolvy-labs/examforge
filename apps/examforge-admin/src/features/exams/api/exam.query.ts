@@ -8,6 +8,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query"
 
+import { invalidateAdminExamTagLists } from "@/features/exam-classifications/hooks/exam-classification.hook"
 import { ApiError } from "@/lib/api/api.error"
 
 import {
@@ -19,20 +20,13 @@ import {
 	archiveAdminExam,
 	createAdminExam,
 	getAdminExams,
-	getAdminExamTags,
 	restoreAdminExam,
 } from "./exam.api"
 import { examMutationKeys, examQueryKeys } from "./exam.query-key"
 
 const EXAM_LIST_STALE_TIME = 30 * 1_000
-const TAG_METADATA_STALE_TIME = 15 * 60 * 1_000
-
 export function invalidateAdminExamLists(queryClient: QueryClient) {
 	return queryClient.invalidateQueries({ queryKey: examQueryKeys.lists() })
-}
-
-export function invalidateAdminExamTags(queryClient: QueryClient) {
-	return queryClient.invalidateQueries({ queryKey: examQueryKeys.tags() })
 }
 
 export function useAdminExams(state: ExamManagementQueryState) {
@@ -42,14 +36,6 @@ export function useAdminExams(state: ExamManagementQueryState) {
 			getAdminExams(toAdminExamListRequest(state), signal),
 		placeholderData: keepPreviousData,
 		staleTime: EXAM_LIST_STALE_TIME,
-	})
-}
-
-export function useAdminExamTags() {
-	return useQuery({
-		queryKey: examQueryKeys.tags(),
-		queryFn: ({ signal }) => getAdminExamTags(signal),
-		staleTime: TAG_METADATA_STALE_TIME,
 	})
 }
 
@@ -65,7 +51,7 @@ export function useCreateAdminExamMutation() {
 				error instanceof ApiError &&
 				error.missingOrArchivedTagIds.length > 0
 			) {
-				void invalidateAdminExamTags(queryClient)
+				void invalidateAdminExamTagLists(queryClient)
 			}
 		},
 	})

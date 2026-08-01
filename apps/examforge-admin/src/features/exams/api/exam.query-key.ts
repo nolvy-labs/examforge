@@ -24,8 +24,6 @@ export const examQueryKeys = {
 		[...examQueryKeys.lists(), normalizeListKey(state)] as const,
 	details: () => [...examQueryKeys.all, "details"] as const,
 	detail: (id: string) => [...examQueryKeys.details(), id] as const,
-	tags: () =>
-		[...examQueryKeys.all, "tags", { includeArchived: true }] as const,
 }
 
 export const examMutationKeys = {

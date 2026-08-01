@@ -1,6 +1,5 @@
 import { z } from "zod"
 
-import { adminExamTagsResponseSchema } from "@/features/exam-classifications/types/exam-classification.schema"
 import { apiClient } from "@/lib/api/api.client"
 import { ApiError } from "@/lib/api/api.error"
 import { parseApiResponse } from "@/lib/api/api.schema"
@@ -100,18 +99,4 @@ export async function restoreAdminExam(id: string) {
 		`/api/v1/admin/exams/${examId}/restore`
 	)
 	assertNoContent(response.status, "restore admin exam")
-}
-
-export async function getAdminExamTags(signal?: AbortSignal) {
-	const query = new URLSearchParams({ includeArchived: "true" })
-	const response = await apiClient.get<unknown>(
-		`/api/v1/admin/exam-tags?${query.toString()}`,
-		{ signal }
-	)
-
-	return parseApiResponse(
-		adminExamTagsResponseSchema,
-		response.data,
-		"admin exam tags"
-	)
 }
