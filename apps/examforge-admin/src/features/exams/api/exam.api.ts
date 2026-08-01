@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { adminExamTagsResponseSchema } from "@/features/exam-classifications/types/exam-classification.schema"
 import { apiClient } from "@/lib/api/api.client"
 import { ApiError } from "@/lib/api/api.error"
 import { parseApiResponse } from "@/lib/api/api.schema"
@@ -7,7 +8,6 @@ import { parseApiResponse } from "@/lib/api/api.schema"
 import {
 	adminExamListRequestSchema,
 	adminExamListResponseSchema,
-	adminExamTagsResponseSchema,
 	createExamRequestSchema,
 	createExamResponseSchema,
 } from "../types/exam.schema"

@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { adminExamTagSummarySchema } from "@/features/exam-classifications/types/exam-classification.schema"
+
 export const EXAM_PAGE_SIZE = 20 as const
 export const EXAM_TITLE_MAX_LENGTH = 200
 export const EXAM_DESCRIPTION_MAX_LENGTH = 2_000
@@ -15,17 +17,6 @@ const nonnegativeNumberSchema = z.number().finite().nonnegative()
 export const examTypeSchema = z.union([z.literal(0), z.literal(1)])
 export const examArchiveFilterSchema = z.enum(["active", "archived", "all"])
 export const examSortOrderSchema = z.enum(["newest", "oldest"])
-
-const examTagTypeSchema = z.union([
-	z.literal(0),
-	z.literal(1),
-	z.literal(2),
-	z.literal(3),
-	z.literal(4),
-	z.literal(5),
-	z.literal(6),
-	z.literal(7),
-])
 
 const examVersionStatusSchema = z.union([
 	z.literal(0),
@@ -48,30 +39,6 @@ const questionTypeSchema = z.union([
 	z.literal(2),
 	z.literal(3),
 ])
-
-const examTagFields = {
-	id: uuidSchema,
-	name: z.string().min(1).max(128),
-	slug: z.string().min(1).max(160),
-	description: z.string().max(1_000),
-	type: examTagTypeSchema,
-	isArchived: z.boolean(),
-}
-
-export const adminExamTagSummarySchema = z.strictObject({
-	id: examTagFields.id,
-	name: examTagFields.name,
-	slug: examTagFields.slug,
-	type: examTagFields.type,
-	isArchived: examTagFields.isArchived,
-})
-
-export const adminExamTagSchema = z.strictObject({
-	...examTagFields,
-	createdAtUtc: dateTimeSchema,
-	updatedAtUtc: dateTimeSchema.nullable(),
-})
-export const adminExamTagsResponseSchema = z.array(adminExamTagSchema)
 
 export const paginationMetaSchema = z
 	.strictObject({

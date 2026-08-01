@@ -15,8 +15,7 @@ import {
 	PopoverTitle,
 	PopoverTrigger,
 } from "@/components/shadcn/popover"
-
-import type { AdminExamTag } from "../../types/exam.types"
+import type { AdminExamTag } from "@/features/exam-classifications/types/exam-classification.types"
 
 interface Props {
 	tags: AdminExamTag[]

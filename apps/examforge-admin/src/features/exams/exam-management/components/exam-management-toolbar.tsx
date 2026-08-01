@@ -17,10 +17,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/shadcn/select"
+import type { AdminExamTag } from "@/features/exam-classifications/types/exam-classification.types"
 
 import type { ExamManagementQueryState } from "../model/exam-management-query"
 import type {
-	AdminExamTag,
 	ExamArchiveFilter,
 	ExamSortOrder,
 	ExamType,

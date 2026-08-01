@@ -4,9 +4,6 @@ import type {
 	adminExamListRequestSchema,
 	adminExamListResponseSchema,
 	adminExamSchema,
-	adminExamTagSchema,
-	adminExamTagSummarySchema,
-	adminExamTagsResponseSchema,
 	createExamRequestSchema,
 	createExamResponseSchema,
 	examArchiveFilterSchema,
@@ -20,9 +17,6 @@ export type ExamType = z.infer<typeof examTypeSchema>
 export type ExamArchiveFilter = z.infer<typeof examArchiveFilterSchema>
 export type ExamSortOrder = z.infer<typeof examSortOrderSchema>
 
-export type AdminExamTagSummary = z.infer<typeof adminExamTagSummarySchema>
-export type AdminExamTag = z.infer<typeof adminExamTagSchema>
-export type AdminExamTagsResponse = z.infer<typeof adminExamTagsResponseSchema>
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>
 export type AdminExamSummary = z.infer<typeof adminExamSchema>
 export type AdminExamListResponse = z.infer<typeof adminExamListResponseSchema>

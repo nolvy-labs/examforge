@@ -33,6 +33,7 @@ import {
 	SelectValue,
 } from "@/components/shadcn/select"
 import { Textarea } from "@/components/shadcn/textarea"
+import type { AdminExamTag } from "@/features/exam-classifications/types/exam-classification.types"
 import { ApiError } from "@/lib/api/api.error"
 
 import {
@@ -43,7 +44,6 @@ import {
 	quickCreateExamFormSchema,
 } from "../../types/exam.schema"
 import type {
-	AdminExamTag,
 	CreateExamRequest,
 	QuickCreateExamFormInput,
 	QuickCreateExamFormValues,
