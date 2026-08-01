@@ -6,7 +6,6 @@ import { useExamBuilderSaveAll } from "../save/exam-builder-save"
 import {
 	useBuilderActions,
 	useBuilderSaveStatus,
-	useBuilderValidation,
 } from "../store/exam-builder.store"
 
 export interface AutosaveClock {
@@ -29,7 +28,6 @@ export function useExamBuilderAutosave(clock: AutosaveClock = defaultClock) {
 	const saveAll = useExamBuilderSaveAll(clock.now)
 	const actions = useBuilderActions()
 	const save = useBuilderSaveStatus()
-	const validation = useBuilderValidation()
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	useEffect(() => {
@@ -42,7 +40,6 @@ export function useExamBuilderAutosave(clock: AutosaveClock = defaultClock) {
 			!save.isSaving &&
 			!save.conflict &&
 			!save.reconciliation &&
-			validation.save.length === 0 &&
 			deadline !== null &&
 			save.lastAutosaveAttemptedDeadline !== deadline
 		if (!eligible || deadline === null) return
@@ -55,5 +52,5 @@ export function useExamBuilderAutosave(clock: AutosaveClock = defaultClock) {
 			if (timerRef.current) clock.clearTimer(timerRef.current)
 			timerRef.current = null
 		}
-	}, [actions, clock, save, saveAll, validation.save.length])
+	}, [actions, clock, save, saveAll])
 }

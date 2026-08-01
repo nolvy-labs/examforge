@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 
 import { Skeleton } from "@/components/shadcn/skeleton"
 
@@ -9,12 +9,15 @@ import { ExamManagementResults } from "../components/exam-management-results"
 import { ExamManagementToolbar } from "../components/exam-management-toolbar"
 import { ExamTableSkeleton } from "../components/exam-table-skeleton"
 import { QuickCreateExamDialog } from "../components/quick-create-exam-dialog"
+import { ExamDetailVersionModal, type ExamModalTab } from "../components/exam-detail-version-modal"
 import { useExamManagementQuery } from "../hooks/use-exam-management-query"
+import type { AdminExamSummary } from "../../types/exam.types"
 
 export function ExamManagementPage() {
 	const management = useExamManagementQuery()
 	const [createOpen, setCreateOpen] = useState(false)
-	const createTrigger = useRef<HTMLButtonElement | null>(null)
+	const [modal, setModal] = useState<{ exam: AdminExamSummary; tab: ExamModalTab } | null>(null)
+	const [createTrigger, setCreateTrigger] = useState<HTMLButtonElement | null>(null)
 	const state = management.query.state
 	const examsQuery = management.query.exams
 	const tagsQuery = management.query.tags
@@ -26,7 +29,7 @@ export function ExamManagementPage() {
 	)
 
 	function openCreate(trigger: HTMLButtonElement) {
-		createTrigger.current = trigger
+		setCreateTrigger(trigger)
 		setCreateOpen(true)
 	}
 
@@ -61,6 +64,8 @@ export function ExamManagementPage() {
 					onArchive={management.archive.run}
 					onRestore={management.restore.run}
 					onPageChange={management.filters.actions.goToPage}
+					onOpenDetails={(exam) => setModal({ exam, tab: "details" })}
+					onOpenVersions={(exam) => setModal({ exam, tab: "versions" })}
 				/>
 			</div>
 
@@ -68,11 +73,12 @@ export function ExamManagementPage() {
 				open={createOpen}
 				activeTags={management.filters.tags.active}
 				tagsUnavailable={tagsQuery.isError}
-				restoreFocusTo={createTrigger.current}
+				restoreFocusTo={createTrigger}
 				onOpenChange={setCreateOpen}
 				onCreate={management.create.run}
 				onRefreshTags={() => tagsQuery.refetch()}
 			/>
+			<ExamDetailVersionModal key={modal ? `${modal.exam.id}:${modal.tab}` : "closed"} open={modal !== null} exam={modal?.exam ?? null} initialTab={modal?.tab ?? "details"} onOpenChange={(open) => { if (!open) setModal(null) }} />
 		</main>
 	)
 }

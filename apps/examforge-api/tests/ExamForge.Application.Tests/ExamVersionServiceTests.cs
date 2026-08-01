@@ -308,7 +308,6 @@ public sealed class ExamVersionServiceTests
     }
 
     [Theory]
-    [InlineData(0)]
     [InlineData(-1)]
     [InlineData(1441)]
     public async Task Duration_validation_rejects_out_of_range_values(int duration)
@@ -323,6 +322,28 @@ public sealed class ExamVersionServiceTests
             [Replace("/durationMinutes", duration)]);
 
         Assert.Equal(ExamVersionError.InvalidPatch, result.Error);
+    }
+
+    [Fact]
+    public async Task Draft_metadata_allows_blank_title_and_zero_duration()
+    {
+        var context = new TestContext();
+        var exam = context.AddExam();
+        var version = context.AddVersion(exam);
+
+        var title = await context.Service.UpdateAsync(
+            exam.Id,
+            version.Id,
+            [Replace("/title", "")]);
+        var duration = await context.Service.UpdateAsync(
+            exam.Id,
+            version.Id,
+            [Replace("/durationMinutes", 0)]);
+
+        Assert.True(title.IsSuccess);
+        Assert.Equal(string.Empty, title.Value!.Title);
+        Assert.True(duration.IsSuccess);
+        Assert.Equal(0, duration.Value!.DurationMinutes);
     }
 
     [Fact]

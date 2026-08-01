@@ -26,12 +26,14 @@ public sealed class AdminExamSectionRepository : IAdminExamSectionRepository
         Guid versionId,
         CancellationToken cancellationToken = default)
     {
-        return await Project(_dbContext.ExamSections.AsNoTracking())
-            .Where(section =>
-                section.ExamId == examId && section.ExamVersionId == versionId)
+        var query = _dbContext.ExamSections
+            .AsNoTracking()
+            .Where(section => section.ExamVersion.ExamId == examId &&
+                section.ExamVersionId == versionId)
             .OrderBy(section => section.DisplayOrder)
-            .ThenBy(section => section.Id)
-            .ToListAsync(cancellationToken);
+            .ThenBy(section => section.Id);
+
+        return await Project(query).ToListAsync(cancellationToken);
     }
 
     public Task<ExamSectionData?> GetDetailAsync(
@@ -40,12 +42,13 @@ public sealed class AdminExamSectionRepository : IAdminExamSectionRepository
         Guid sectionId,
         CancellationToken cancellationToken = default)
     {
-        return Project(_dbContext.ExamSections.AsNoTracking())
-            .FirstOrDefaultAsync(
-                section => section.ExamId == examId &&
-                    section.ExamVersionId == versionId &&
-                    section.Id == sectionId,
-                cancellationToken);
+        var query = _dbContext.ExamSections
+            .AsNoTracking()
+            .Where(section => section.ExamVersion.ExamId == examId &&
+                section.ExamVersionId == versionId &&
+                section.Id == sectionId);
+
+        return Project(query).FirstOrDefaultAsync(cancellationToken);
     }
 
     public Task<ExamSection?> GetTrackedAsync(

@@ -14,7 +14,7 @@ public sealed class Question
         Guid examSectionId,
         Guid? parentQuestionId,
         QuestionType type,
-        string prompt,
+        string? prompt,
         string? explanation,
         decimal points,
         int displayOrder,
@@ -25,7 +25,7 @@ public sealed class Question
         ExamSectionId = examSectionId;
         ParentQuestionId = parentQuestionId;
         Type = type;
-        Prompt = TextNormalizer.NormalizeName(prompt);
+        Prompt = NormalizeDraftPrompt(prompt);
         Explanation = explanation?.Trim();
         Points = points;
         DisplayOrder = displayOrder;
@@ -53,13 +53,13 @@ public sealed class Question
 
     public bool UpdateDetails(
         QuestionType type,
-        string prompt,
+        string? prompt,
         string? explanation,
         decimal points)
     {
         ValidateDetails(ParentQuestionId, type, prompt, explanation, points);
         ValidateContentCompatibility(type);
-        var normalizedPrompt = TextNormalizer.NormalizeName(prompt);
+        var normalizedPrompt = NormalizeDraftPrompt(prompt);
         var normalizedExplanation = explanation?.Trim();
 
         if (Type == type &&
@@ -125,13 +125,13 @@ public sealed class Question
     private static void ValidateDetails(
         Guid? parentQuestionId,
         QuestionType type,
-        string prompt,
+        string? prompt,
         string? explanation,
         decimal points)
     {
-        if (!Enum.IsDefined(type) || string.IsNullOrWhiteSpace(prompt))
+        if (!Enum.IsDefined(type))
         {
-            throw new ArgumentException("Question type and prompt are required.");
+            throw new ArgumentException("Question type is required.");
         }
 
         if (parentQuestionId.HasValue && type == QuestionType.Group)
@@ -139,17 +139,16 @@ public sealed class Question
             throw new ArgumentException("A child question cannot be a Group.");
         }
 
-        if (TextNormalizer.NormalizeName(prompt).Length > QuestionConstraints.PromptMaxLength ||
+        if (NormalizeDraftPrompt(prompt).Length > QuestionConstraints.PromptMaxLength ||
             (explanation is not null &&
-             (string.IsNullOrWhiteSpace(explanation) ||
-              explanation.Trim().Length > QuestionConstraints.ExplanationMaxLength)))
+             explanation.Trim().Length > QuestionConstraints.ExplanationMaxLength))
         {
             throw new ArgumentOutOfRangeException(nameof(prompt));
         }
 
         var validPoints = type == QuestionType.Group
             ? points == 0m
-            : points is >= QuestionConstraints.MinPoints and <= QuestionConstraints.MaxPoints &&
+            : points is >= 0m and <= QuestionConstraints.MaxPoints &&
                 decimal.Round(points, QuestionConstraints.PointsScale) == points;
 
         if (!validPoints)
@@ -157,4 +156,7 @@ public sealed class Question
             throw new ArgumentOutOfRangeException(nameof(points));
         }
     }
+
+    private static string NormalizeDraftPrompt(string? prompt) =>
+        string.IsNullOrWhiteSpace(prompt) ? string.Empty : TextNormalizer.NormalizeName(prompt);
 }

@@ -268,7 +268,10 @@ export function useExamBuilderSaveAll(now: () => number = Date.now) {
 			const run = async (): Promise<SaveAllResult> => {
 				const context = actions.getSaveContext()
 				if (!context || context.working.version.status !== "draft") return { status: "blocked" }
-				if (actions.validate("save").length > 0) return { status: "validation-error" }
+				// Draft validation remains visible in the editor, but only publication is
+				// frontend-blocked by document completeness rules. The backend remains
+				// authoritative for fields it cannot persist at all.
+				actions.validate("save")
 				const diff = diffBuilderDocuments(context.confirmed, context.working)
 				const saveId = crypto.randomUUID()
 				if (!actions.beginSave(saveId, context.editGeneration)) return { status: "blocked" }

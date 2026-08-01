@@ -457,13 +457,14 @@ public sealed class AdminExamService
     private static NestedContentValidationError? ValidateVersionDetails(
         string? title, string? description, string? instructions, int? duration)
     {
-        if (string.IsNullOrWhiteSpace(title) || TextNormalizer.NormalizeName(title).Length > ExamVersionConstraints.TitleMaxLength)
+        if (!string.IsNullOrWhiteSpace(title) &&
+            TextNormalizer.NormalizeName(title).Length > ExamVersionConstraints.TitleMaxLength)
             return new("initialVersion.detail.title", "invalid_title", "Exam version title is invalid.");
         if (description?.Trim().Length > ExamVersionConstraints.DescriptionMaxLength)
             return new("initialVersion.detail.description", "invalid_description", "Exam version description is invalid.");
         if (instructions?.Trim().Length > ExamVersionConstraints.InstructionsMaxLength)
             return new("initialVersion.detail.instructions", "invalid_instructions", "Exam version instructions are invalid.");
-        if (duration is <= 0 or > ExamVersionConstraints.MaxDurationMinutes)
+        if (duration is < 0 or > ExamVersionConstraints.MaxDurationMinutes)
             return new("initialVersion.detail.durationMinutes", "invalid_duration", "Exam version duration is invalid.");
         return null;
     }

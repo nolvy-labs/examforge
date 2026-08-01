@@ -91,11 +91,7 @@ public sealed class ExamSectionServiceTests
     }
 
     [Theory]
-    [InlineData("", ExamSectionKind.Default, null, null, null, ExamSectionError.InvalidTitle)]
     [InlineData("Title", (ExamSectionKind)999, null, null, null, ExamSectionError.InvalidKind)]
-    [InlineData("Title", ExamSectionKind.Default, null, " ", null, ExamSectionError.InvalidStimulusText)]
-    [InlineData("Title", ExamSectionKind.Default, null, null, "relative/path", ExamSectionError.InvalidMediaUrl)]
-    [InlineData("Title", ExamSectionKind.Default, null, null, "ftp://example.com/a", ExamSectionError.InvalidMediaUrl)]
     public async Task Create_rejects_invalid_values(
         string title,
         ExamSectionKind kind,
@@ -114,6 +110,26 @@ public sealed class ExamSectionServiceTests
 
         Assert.Equal(expected, result.Error);
         Assert.Empty(context.Sections.Sections);
+    }
+
+    [Theory]
+    [InlineData("", "", "")]
+    [InlineData(" ", " ", "relative/path")]
+    [InlineData("Title", null, "ftp://example.com/a")]
+    public async Task Draft_create_allows_blank_fields_and_unvalidated_media_url(
+        string title,
+        string? stimulus,
+        string? mediaUrl)
+    {
+        var context = new TestContext();
+        var (exam, version) = context.AddExamAndVersion();
+
+        var result = await context.Service.CreateAsync(
+            exam.Id,
+            version.Id,
+            Create(title, stimulus: stimulus, mediaUrl: mediaUrl));
+
+        Assert.True(result.IsSuccess);
     }
 
     [Fact]
@@ -271,18 +287,21 @@ public sealed class ExamSectionServiceTests
     }
 
     [Fact]
-    public async Task Patch_rejects_whitespace_optional_replacements()
+    public async Task Patch_allows_whitespace_optional_replacements()
     {
         var context = new TestContext();
         var (exam, version) = context.AddExamAndVersion();
         var section = context.AddSection(version);
 
-        Assert.Equal(ExamSectionError.InvalidPatch,
-            (await context.Service.UpdateAsync(
-                exam.Id, version.Id, section.Id, [Replace("/stimulusText", " ")])).Error);
-        Assert.Equal(ExamSectionError.InvalidPatch,
-            (await context.Service.UpdateAsync(
-                exam.Id, version.Id, section.Id, [Replace("/mediaUrl", " ")])).Error);
+        var stimulus = await context.Service.UpdateAsync(
+            exam.Id, version.Id, section.Id, [Replace("/stimulusText", " ")]);
+        var media = await context.Service.UpdateAsync(
+            exam.Id, version.Id, section.Id, [Replace("/mediaUrl", " ")]);
+
+        Assert.True(stimulus.IsSuccess);
+        Assert.Equal(string.Empty, stimulus.Value!.StimulusText);
+        Assert.True(media.IsSuccess);
+        Assert.Equal(string.Empty, media.Value!.MediaUrl);
     }
 
     [Fact]

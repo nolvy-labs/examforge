@@ -506,15 +506,14 @@ public sealed class AdminQuestionService
             return QuestionError.InvalidType;
         }
 
-        if (string.IsNullOrWhiteSpace(prompt) ||
+        if (!string.IsNullOrWhiteSpace(prompt) &&
             TextNormalizer.NormalizeName(prompt).Length > QuestionConstraints.PromptMaxLength)
         {
             return QuestionError.InvalidPrompt;
         }
 
         if (explanation is not null &&
-            (string.IsNullOrWhiteSpace(explanation) ||
-             explanation.Trim().Length > QuestionConstraints.ExplanationMaxLength))
+            explanation.Trim().Length > QuestionConstraints.ExplanationMaxLength)
         {
             return QuestionError.InvalidExplanation;
         }
@@ -524,7 +523,7 @@ public sealed class AdminQuestionService
             return points == 0m ? QuestionError.None : QuestionError.InvalidPoints;
         }
 
-        return points is >= QuestionConstraints.MinPoints and <= QuestionConstraints.MaxPoints &&
+        return points is >= 0m and <= QuestionConstraints.MaxPoints &&
             decimal.Round(points, QuestionConstraints.PointsScale) == points
             ? QuestionError.None
             : QuestionError.InvalidPoints;

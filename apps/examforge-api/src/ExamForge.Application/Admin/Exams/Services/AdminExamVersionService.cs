@@ -479,12 +479,9 @@ public sealed class AdminExamVersionService
         string? instructions,
         int? durationMinutes)
     {
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return ExamVersionError.InvalidTitle;
-        }
-
-        var normalizedTitle = TextNormalizer.NormalizeName(title);
+        var normalizedTitle = string.IsNullOrWhiteSpace(title)
+            ? string.Empty
+            : TextNormalizer.NormalizeName(title);
 
         if (normalizedTitle.Length > ExamVersionConstraints.TitleMaxLength)
         {
@@ -501,7 +498,7 @@ public sealed class AdminExamVersionService
             return ExamVersionError.InvalidInstructions;
         }
 
-        if (durationMinutes is <= 0 or > ExamVersionConstraints.MaxDurationMinutes)
+        if (durationMinutes is < 0 or > ExamVersionConstraints.MaxDurationMinutes)
         {
             return ExamVersionError.InvalidDuration;
         }

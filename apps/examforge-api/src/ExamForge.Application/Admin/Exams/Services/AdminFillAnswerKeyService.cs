@@ -388,8 +388,7 @@ public sealed class AdminFillAnswerKeyService
     }
 
     private static bool IsValidAnswer(string? answer) =>
-        !string.IsNullOrWhiteSpace(answer) &&
-        FillAnswerNormalizer.Normalize(answer, caseSensitive: true).Length <=
+        FillAnswerNormalizer.Normalize(answer ?? string.Empty, caseSensitive: true).Length <=
             FillAnswerKeyConstraints.AcceptedAnswerMaxLength;
 
     private static bool HasDuplicate(
@@ -397,8 +396,9 @@ public sealed class AdminFillAnswerKeyService
         string acceptedAnswer,
         bool isCaseSensitive,
         Guid? excludedId) =>
-        keys.Any(key =>
+        !string.IsNullOrWhiteSpace(acceptedAnswer) && keys.Any(key =>
             key.Id != excludedId &&
+            !string.IsNullOrWhiteSpace(key.AcceptedAnswer) &&
             FillAnswerNormalizer.Conflicts(
                 acceptedAnswer,
                 isCaseSensitive,

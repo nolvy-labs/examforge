@@ -487,20 +487,19 @@ public sealed class AdminQuestionOptionService
         string? label,
         string? explanation)
     {
-        if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > QuestionOptionConstraints.TextMaxLength)
+        if ((text?.Trim().Length ?? 0) > QuestionOptionConstraints.TextMaxLength)
         {
             return QuestionOptionError.InvalidText;
         }
 
         if (label is not null &&
-            (string.IsNullOrWhiteSpace(label) || label.Trim().Length > QuestionOptionConstraints.LabelMaxLength))
+            label.Trim().Length > QuestionOptionConstraints.LabelMaxLength)
         {
             return QuestionOptionError.InvalidLabel;
         }
 
         if (explanation is not null &&
-            (string.IsNullOrWhiteSpace(explanation) ||
-             explanation.Trim().Length > QuestionOptionConstraints.ExplanationMaxLength))
+            explanation.Trim().Length > QuestionOptionConstraints.ExplanationMaxLength)
         {
             return QuestionOptionError.InvalidExplanation;
         }

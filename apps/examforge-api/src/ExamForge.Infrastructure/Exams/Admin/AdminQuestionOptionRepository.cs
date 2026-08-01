@@ -28,9 +28,7 @@ public sealed class AdminQuestionOptionRepository : IAdminQuestionOptionReposito
         Guid questionId,
         CancellationToken cancellationToken = default)
     {
-        return await Project(Scoped(examId, versionId, sectionId, questionId))
-            .OrderBy(option => option.DisplayOrder)
-            .ThenBy(option => option.Id)
+        return await ListQuery(examId, versionId, sectionId, questionId)
             .ToListAsync(cancellationToken);
     }
 
@@ -42,8 +40,8 @@ public sealed class AdminQuestionOptionRepository : IAdminQuestionOptionReposito
         Guid optionId,
         CancellationToken cancellationToken = default)
     {
-        return Project(Scoped(examId, versionId, sectionId, questionId))
-            .SingleOrDefaultAsync(option => option.Id == optionId, cancellationToken);
+        return DetailQuery(examId, versionId, sectionId, questionId, optionId)
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<QuestionOption>> GetTrackedListAsync(
@@ -77,6 +75,32 @@ public sealed class AdminQuestionOptionRepository : IAdminQuestionOptionReposito
             option.Question.ExamSectionId == sectionId &&
             option.Question.ExamSection.ExamVersionId == versionId &&
             option.Question.ExamSection.ExamVersion.ExamId == examId);
+
+    private IQueryable<QuestionOptionData> ListQuery(
+        Guid examId,
+        Guid versionId,
+        Guid sectionId,
+        Guid questionId)
+    {
+        var query = Scoped(examId, versionId, sectionId, questionId)
+            .OrderBy(option => option.DisplayOrder)
+            .ThenBy(option => option.Id);
+
+        return Project(query);
+    }
+
+    private IQueryable<QuestionOptionData> DetailQuery(
+        Guid examId,
+        Guid versionId,
+        Guid sectionId,
+        Guid questionId,
+        Guid optionId)
+    {
+        var query = Scoped(examId, versionId, sectionId, questionId)
+            .Where(option => option.Id == optionId);
+
+        return Project(query);
+    }
 
     private static IQueryable<QuestionOptionData> Project(IQueryable<QuestionOption> query) =>
         query.Select(option => new QuestionOptionData(

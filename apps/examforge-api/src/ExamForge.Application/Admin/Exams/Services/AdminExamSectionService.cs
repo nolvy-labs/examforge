@@ -411,12 +411,9 @@ public sealed class AdminExamSectionService
             return ExamSectionError.InvalidKind;
         }
 
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return ExamSectionError.InvalidTitle;
-        }
-
-        var normalizedTitle = TextNormalizer.NormalizeName(title);
+        var normalizedTitle = string.IsNullOrWhiteSpace(title)
+            ? string.Empty
+            : TextNormalizer.NormalizeName(title);
 
         if (normalizedTitle.Length > ExamSectionConstraints.TitleMaxLength)
         {
@@ -429,8 +426,7 @@ public sealed class AdminExamSectionService
         }
 
         if (stimulusText is not null &&
-            (string.IsNullOrWhiteSpace(stimulusText) ||
-             stimulusText.Trim().Length > ExamSectionConstraints.StimulusTextMaxLength))
+            stimulusText.Trim().Length > ExamSectionConstraints.StimulusTextMaxLength)
         {
             return ExamSectionError.InvalidStimulusText;
         }
@@ -439,11 +435,7 @@ public sealed class AdminExamSectionService
         {
             var normalizedMediaUrl = mediaUrl.Trim();
 
-            if (normalizedMediaUrl.Length == 0 ||
-                normalizedMediaUrl.Length > ExamSectionConstraints.MediaUrlMaxLength ||
-                !Uri.TryCreate(normalizedMediaUrl, UriKind.Absolute, out var uri) ||
-                (!uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
-                 !uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)))
+            if (normalizedMediaUrl.Length > ExamSectionConstraints.MediaUrlMaxLength)
             {
                 return ExamSectionError.InvalidMediaUrl;
             }

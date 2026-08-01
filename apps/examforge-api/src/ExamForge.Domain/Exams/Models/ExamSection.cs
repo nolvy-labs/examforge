@@ -11,7 +11,7 @@ public sealed class ExamSection
     public ExamSection(
         Guid examVersionId,
         ExamSectionKind kind,
-        string title,
+        string? title,
         string? instructions,
         string? stimulusText,
         string? mediaUrl,
@@ -21,7 +21,7 @@ public sealed class ExamSection
         Id = Guid.NewGuid();
         ExamVersionId = examVersionId;
         Kind = kind;
-        Title = TextNormalizer.NormalizeName(title);
+        Title = NormalizeDraftTitle(title);
         Instructions = instructions?.Trim() ?? string.Empty;
         StimulusText = stimulusText?.Trim();
         MediaUrl = mediaUrl?.Trim();
@@ -47,12 +47,12 @@ public sealed class ExamSection
 
     public bool UpdateDetails(
         ExamSectionKind kind,
-        string title,
+        string? title,
         string? instructions,
         string? stimulusText,
         string? mediaUrl)
     {
-        var normalizedTitle = TextNormalizer.NormalizeName(title);
+        var normalizedTitle = NormalizeDraftTitle(title);
         var normalizedInstructions = instructions?.Trim() ?? string.Empty;
         var normalizedStimulusText = stimulusText?.Trim();
         var normalizedMediaUrl = mediaUrl?.Trim();
@@ -86,4 +86,7 @@ public sealed class ExamSection
         UpdatedAtUtc = DateTimeOffset.UtcNow;
         return true;
     }
+
+    private static string NormalizeDraftTitle(string? title) =>
+        string.IsNullOrWhiteSpace(title) ? string.Empty : TextNormalizer.NormalizeName(title);
 }

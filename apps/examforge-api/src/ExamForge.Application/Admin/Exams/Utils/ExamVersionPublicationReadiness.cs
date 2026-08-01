@@ -15,18 +15,21 @@ public sealed record PublicationQuestionState(
     decimal Points,
     int OptionCount,
     int CorrectOptionCount,
-    int AnswerKeyCount);
+    int AnswerKeyCount,
+    bool HasValidContent = true);
 
 public sealed record PublicationSectionState(
-    IReadOnlyCollection<PublicationQuestionState> Questions);
+    IReadOnlyCollection<PublicationQuestionState> Questions,
+    bool HasValidContent = true);
 
 public static class ExamVersionPublicationReadiness
 {
     public static bool IsReady(
         decimal storedTotalScore,
-        IReadOnlyCollection<PublicationSectionState> sections)
+        IReadOnlyCollection<PublicationSectionState> sections,
+        bool hasValidMetadata = true)
     {
-        if (sections.Count == 0)
+        if (!hasValidMetadata || sections.Count == 0)
         {
             return false;
         }
@@ -35,13 +38,18 @@ public static class ExamVersionPublicationReadiness
 
         foreach (var section in sections)
         {
-            if (!section.Questions.Any(question => question.Type != QuestionType.Group))
+            if (!section.HasValidContent ||
+                !section.Questions.Any(question => question.Type != QuestionType.Group))
             {
                 return false;
             }
 
             foreach (var question in section.Questions)
             {
+                if (!question.HasValidContent)
+                {
+                    return false;
+                }
                 var childCount = section.Questions.Count(child => child.ParentQuestionId == question.Id);
 
                 if (question.ParentQuestionId.HasValue)

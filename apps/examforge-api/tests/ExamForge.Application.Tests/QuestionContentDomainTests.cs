@@ -42,7 +42,6 @@ public sealed class QuestionContentDomainTests
     }
 
     [Theory]
-    [InlineData(0)]
     [InlineData(-1)]
     [InlineData(1000000)]
     [InlineData(1.001)]
@@ -51,6 +50,23 @@ public sealed class QuestionContentDomainTests
         Assert.Throws<ArgumentOutOfRangeException>(() => CreateQuestion(
             QuestionType.FillBlank,
             points));
+    }
+
+    [Fact]
+    public void Draft_question_fields_allow_empty_content_and_zero_points()
+    {
+        var question = new Question(
+            Guid.NewGuid(),
+            null,
+            QuestionType.FillBlank,
+            " ",
+            " ",
+            0m,
+            0);
+
+        Assert.Equal(string.Empty, question.Prompt);
+        Assert.Equal(string.Empty, question.Explanation);
+        Assert.Equal(0m, question.Points);
     }
 
     [Fact]
@@ -99,6 +115,19 @@ public sealed class QuestionContentDomainTests
         Assert.Null(option.UpdatedAtUtc);
         Assert.True(option.UpdateDetails("Changed", null, true, null));
         Assert.NotNull(option.UpdatedAtUtc);
+    }
+
+    [Fact]
+    public void Draft_option_and_fill_answer_fields_allow_empty_content()
+    {
+        var option = new QuestionOption(Guid.NewGuid(), " ", " ", false, " ", 0);
+        var answer = new FillAnswerKey(Guid.NewGuid(), " ", false, 0);
+
+        Assert.Equal(string.Empty, option.Text);
+        Assert.Equal(string.Empty, option.Label);
+        Assert.Equal(string.Empty, option.Explanation);
+        Assert.Equal(string.Empty, answer.AcceptedAnswer);
+        Assert.StartsWith("__draft__:", answer.NormalizedAnswer, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -467,7 +467,9 @@ public sealed class AdminExamVersionContentBatchService
             var finalAnswers = entity.FillAnswerKeys.Select(answer => answers[answer.Id]).ToList();
             for (var left = 0; left < finalAnswers.Count; left++)
                 for (var right = left + 1; right < finalAnswers.Count; right++)
-                    if (FillAnswerNormalizer.Conflicts(
+                    if (!string.IsNullOrWhiteSpace(finalAnswers[left].AcceptedAnswer) &&
+                        !string.IsNullOrWhiteSpace(finalAnswers[right].AcceptedAnswer) &&
+                        FillAnswerNormalizer.Conflicts(
                             finalAnswers[left].AcceptedAnswer, finalAnswers[left].IsCaseSensitive,
                             finalAnswers[right].AcceptedAnswer, finalAnswers[right].IsCaseSensitive))
                         errors.Add(new(PathForAnswer(request, entity.FillAnswerKeys.ElementAt(right).Id),
@@ -503,48 +505,45 @@ public sealed class AdminExamVersionContentBatchService
     }
 
     private static bool ValidVersion(ExamVersionPatchModel model) =>
-        !string.IsNullOrWhiteSpace(model.Title) &&
-        TextNormalizer.NormalizeName(model.Title).Length <= ExamVersionConstraints.TitleMaxLength &&
+        (string.IsNullOrWhiteSpace(model.Title) ||
+            TextNormalizer.NormalizeName(model.Title).Length <= ExamVersionConstraints.TitleMaxLength) &&
         model.Description?.Trim().Length <= ExamVersionConstraints.DescriptionMaxLength &&
         model.Instructions?.Trim().Length <= ExamVersionConstraints.InstructionsMaxLength &&
         (model.DurationMinutes is null ||
-            model.DurationMinutes is > 0 and <= ExamVersionConstraints.MaxDurationMinutes);
+            model.DurationMinutes is >= 0 and <= ExamVersionConstraints.MaxDurationMinutes);
 
     private static bool ValidSection(ExamSectionPatchModel model)
     {
-        if (!Enum.IsDefined(model.Kind) || string.IsNullOrWhiteSpace(model.Title) ||
-            TextNormalizer.NormalizeName(model.Title).Length > ExamSectionConstraints.TitleMaxLength ||
+        if (!Enum.IsDefined(model.Kind) ||
+            !string.IsNullOrWhiteSpace(model.Title) &&
+                TextNormalizer.NormalizeName(model.Title).Length > ExamSectionConstraints.TitleMaxLength ||
             model.Instructions?.Trim().Length > ExamSectionConstraints.InstructionsMaxLength ||
-            model.StimulusText is not null && (string.IsNullOrWhiteSpace(model.StimulusText) ||
-                model.StimulusText.Trim().Length > ExamSectionConstraints.StimulusTextMaxLength))
+            model.StimulusText?.Trim().Length > ExamSectionConstraints.StimulusTextMaxLength)
             return false;
         if (model.MediaUrl is null)
             return true;
         var mediaUrl = model.MediaUrl.Trim();
-        return mediaUrl.Length > 0 && mediaUrl.Length <= ExamSectionConstraints.MediaUrlMaxLength &&
-            Uri.TryCreate(mediaUrl, UriKind.Absolute, out var uri) &&
-            uri.Scheme is "http" or "https";
+        return mediaUrl.Length <= ExamSectionConstraints.MediaUrlMaxLength;
     }
 
     private static bool ValidQuestion(QuestionPatchModel model) =>
-        Enum.IsDefined(model.Type) && !string.IsNullOrWhiteSpace(model.Prompt) &&
-        TextNormalizer.NormalizeName(model.Prompt).Length <= QuestionConstraints.PromptMaxLength &&
-        (model.Explanation is null || !string.IsNullOrWhiteSpace(model.Explanation) &&
-            model.Explanation.Trim().Length <= QuestionConstraints.ExplanationMaxLength) &&
+        Enum.IsDefined(model.Type) &&
+        (string.IsNullOrWhiteSpace(model.Prompt) ||
+            TextNormalizer.NormalizeName(model.Prompt).Length <= QuestionConstraints.PromptMaxLength) &&
+        (model.Explanation is null || model.Explanation.Trim().Length <= QuestionConstraints.ExplanationMaxLength) &&
         (model.Type == QuestionType.Group
             ? model.Points == 0m
-            : model.Points is >= QuestionConstraints.MinPoints and <= QuestionConstraints.MaxPoints &&
+            : model.Points is >= 0m and <= QuestionConstraints.MaxPoints &&
                 decimal.Round(model.Points, QuestionConstraints.PointsScale) == model.Points);
 
     private static bool ValidOption(QuestionOptionPatchModel model) =>
-        !string.IsNullOrWhiteSpace(model.Text) && model.Text.Trim().Length <= QuestionOptionConstraints.TextMaxLength &&
-        (model.Label is null || !string.IsNullOrWhiteSpace(model.Label) && model.Label.Trim().Length <= QuestionOptionConstraints.LabelMaxLength) &&
-        (model.Explanation is null || !string.IsNullOrWhiteSpace(model.Explanation) &&
+        (model.Text?.Trim().Length ?? 0) <= QuestionOptionConstraints.TextMaxLength &&
+        (model.Label is null || model.Label.Trim().Length <= QuestionOptionConstraints.LabelMaxLength) &&
+        (model.Explanation is null ||
             model.Explanation.Trim().Length <= QuestionOptionConstraints.ExplanationMaxLength);
 
     private static bool ValidAnswer(FillAnswerKeyPatchModel model) =>
-        !string.IsNullOrWhiteSpace(model.AcceptedAnswer) &&
-        FillAnswerNormalizer.Normalize(model.AcceptedAnswer, true).Length <= FillAnswerKeyConstraints.AcceptedAnswerMaxLength;
+        FillAnswerNormalizer.Normalize(model.AcceptedAnswer ?? string.Empty, true).Length <= FillAnswerKeyConstraints.AcceptedAnswerMaxLength;
 
     private static string PathForQuestion(NormalizedRequest request, Guid id)
     {

@@ -27,6 +27,8 @@ interface Props {
 	onArchive: (id: string) => Promise<void>
 	onRestore: (id: string) => Promise<void>
 	onPageChange: (page: number) => void
+	onOpenDetails: (exam: AdminExamListResponse["items"][number]) => void
+	onOpenVersions: (exam: AdminExamListResponse["items"][number]) => void
 }
 
 export function ExamManagementResults({
@@ -44,6 +46,8 @@ export function ExamManagementResults({
 	onArchive,
 	onRestore,
 	onPageChange,
+	onOpenDetails,
+	onOpenVersions,
 }: Props) {
 	if (isInitialLoading) return <ExamTableSkeleton />
 	if (isError && !data) return <ExamManagementError onRetry={onRetry} />
@@ -85,6 +89,8 @@ export function ExamManagementResults({
 						onArchive={onArchive}
 						onRestore={onRestore}
 						onRefresh={onRetry}
+						onOpenDetails={onOpenDetails}
+						onOpenVersions={onOpenVersions}
 					/>
 					<ExamPagination
 						page={data.meta.page}

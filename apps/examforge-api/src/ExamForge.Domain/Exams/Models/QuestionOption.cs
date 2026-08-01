@@ -6,7 +6,7 @@ public sealed class QuestionOption
 
     public QuestionOption(
         Guid questionId,
-        string text,
+        string? text,
         string? label,
         bool isCorrect,
         string? explanation,
@@ -15,7 +15,7 @@ public sealed class QuestionOption
         Validate(text, label, explanation);
         Id = Guid.NewGuid();
         QuestionId = questionId;
-        Text = text.Trim();
+        Text = text?.Trim() ?? string.Empty;
         Label = label?.Trim();
         IsCorrect = isCorrect;
         Explanation = explanation?.Trim();
@@ -36,13 +36,13 @@ public sealed class QuestionOption
     public Question Question { get; private set; } = null!;
 
     public bool UpdateDetails(
-        string text,
+        string? text,
         string? label,
         bool isCorrect,
         string? explanation)
     {
         Validate(text, label, explanation);
-        var normalizedText = text.Trim();
+        var normalizedText = text?.Trim() ?? string.Empty;
         var normalizedLabel = label?.Trim();
         var normalizedExplanation = explanation?.Trim();
 
@@ -74,24 +74,21 @@ public sealed class QuestionOption
         return true;
     }
 
-    private static void Validate(string text, string? label, string? explanation)
+    private static void Validate(string? text, string? label, string? explanation)
     {
-        if (string.IsNullOrWhiteSpace(text) ||
-            text.Trim().Length > QuestionOptionConstraints.TextMaxLength)
+        if ((text?.Trim().Length ?? 0) > QuestionOptionConstraints.TextMaxLength)
         {
             throw new ArgumentException("Question option text is invalid.", nameof(text));
         }
 
         if (label is not null &&
-            (string.IsNullOrWhiteSpace(label) ||
-             label.Trim().Length > QuestionOptionConstraints.LabelMaxLength))
+            label.Trim().Length > QuestionOptionConstraints.LabelMaxLength)
         {
             throw new ArgumentException("Question option label is invalid.", nameof(label));
         }
 
         if (explanation is not null &&
-            (string.IsNullOrWhiteSpace(explanation) ||
-             explanation.Trim().Length > QuestionOptionConstraints.ExplanationMaxLength))
+            explanation.Trim().Length > QuestionOptionConstraints.ExplanationMaxLength)
         {
             throw new ArgumentException("Question option explanation is invalid.", nameof(explanation));
         }

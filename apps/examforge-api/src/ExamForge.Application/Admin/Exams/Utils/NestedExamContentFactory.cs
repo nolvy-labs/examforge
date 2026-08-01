@@ -211,13 +211,14 @@ public sealed class NestedExamContentFactory
     {
         if (detail is null) { errors.Add(Error(path, "required", "Section detail is required.")); return false; }
         if (!Enum.IsDefined(detail.Kind)) errors.Add(Error($"{path}.kind", "invalid_kind", "Section kind is invalid."));
-        if (string.IsNullOrWhiteSpace(detail.Title) || TextNormalizer.NormalizeName(detail.Title).Length > ExamSectionConstraints.TitleMaxLength)
+        if (!string.IsNullOrWhiteSpace(detail.Title) &&
+            TextNormalizer.NormalizeName(detail.Title).Length > ExamSectionConstraints.TitleMaxLength)
             errors.Add(Error($"{path}.title", "invalid_title", "Section title is invalid."));
         if (detail.Instructions is not null && detail.Instructions.Trim().Length > ExamSectionConstraints.InstructionsMaxLength)
             errors.Add(Error($"{path}.instructions", "invalid_instructions", "Section instructions are invalid."));
-        if (detail.StimulusText is not null && (string.IsNullOrWhiteSpace(detail.StimulusText) || detail.StimulusText.Trim().Length > ExamSectionConstraints.StimulusTextMaxLength))
+        if (detail.StimulusText?.Trim().Length > ExamSectionConstraints.StimulusTextMaxLength)
             errors.Add(Error($"{path}.stimulusText", "invalid_stimulus_text", "Section stimulus text is invalid."));
-        if (detail.MediaUrl is not null && (string.IsNullOrWhiteSpace(detail.MediaUrl) || detail.MediaUrl.Trim().Length > ExamSectionConstraints.MediaUrlMaxLength || !Uri.TryCreate(detail.MediaUrl.Trim(), UriKind.Absolute, out _)))
+        if (detail.MediaUrl?.Trim().Length > ExamSectionConstraints.MediaUrlMaxLength)
             errors.Add(Error($"{path}.mediaUrl", "invalid_media_url", "Section media URL is invalid."));
         return errors.Count == 0;
     }
@@ -225,11 +226,12 @@ public sealed class NestedExamContentFactory
     private static void ValidateQuestionDetail(CreateQuestionDetail detail, decimal points, string path, List<NestedContentValidationError> errors)
     {
         if (!Enum.IsDefined(detail.Type)) errors.Add(Error($"{path}.type", "invalid_type", "Question type is invalid."));
-        if (string.IsNullOrWhiteSpace(detail.Prompt) || TextNormalizer.NormalizeName(detail.Prompt).Length > QuestionConstraints.PromptMaxLength)
+        if (!string.IsNullOrWhiteSpace(detail.Prompt) &&
+            TextNormalizer.NormalizeName(detail.Prompt).Length > QuestionConstraints.PromptMaxLength)
             errors.Add(Error($"{path}.prompt", "invalid_prompt", "Question prompt is invalid."));
-        if (detail.Explanation is not null && (string.IsNullOrWhiteSpace(detail.Explanation) || detail.Explanation.Trim().Length > QuestionConstraints.ExplanationMaxLength))
+        if (detail.Explanation?.Trim().Length > QuestionConstraints.ExplanationMaxLength)
             errors.Add(Error($"{path}.explanation", "invalid_explanation", "Question explanation is invalid."));
-        var validPoints = detail.Type == QuestionType.Group ? points == 0m : points is >= QuestionConstraints.MinPoints and <= QuestionConstraints.MaxPoints && decimal.Round(points, QuestionConstraints.PointsScale) == points;
+        var validPoints = detail.Type == QuestionType.Group ? points == 0m : points is >= 0m and <= QuestionConstraints.MaxPoints && decimal.Round(points, QuestionConstraints.PointsScale) == points;
         if (!validPoints) errors.Add(Error($"{path}.points", "invalid_points", "Question points are invalid."));
     }
 
@@ -238,11 +240,11 @@ public sealed class NestedExamContentFactory
         for (var index = 0; index < options.Count; index++)
         {
             var option = options[index];
-            if (string.IsNullOrWhiteSpace(option.Text) || option.Text.Trim().Length > QuestionOptionConstraints.TextMaxLength)
+            if ((option.Text?.Trim().Length ?? 0) > QuestionOptionConstraints.TextMaxLength)
                 errors.Add(Error($"{path}[{index}].text", "invalid_option_text", "Question option text is invalid."));
-            if (option.Label is not null && (string.IsNullOrWhiteSpace(option.Label) || option.Label.Trim().Length > QuestionOptionConstraints.LabelMaxLength))
+            if (option.Label?.Trim().Length > QuestionOptionConstraints.LabelMaxLength)
                 errors.Add(Error($"{path}[{index}].label", "invalid_option_label", "Question option label is invalid."));
-            if (option.Explanation is not null && (string.IsNullOrWhiteSpace(option.Explanation) || option.Explanation.Trim().Length > QuestionOptionConstraints.ExplanationMaxLength))
+            if (option.Explanation?.Trim().Length > QuestionOptionConstraints.ExplanationMaxLength)
                 errors.Add(Error($"{path}[{index}].explanation", "invalid_option_explanation", "Question option explanation is invalid."));
         }
     }
@@ -252,10 +254,10 @@ public sealed class NestedExamContentFactory
         for (var index = 0; index < answers.Count; index++)
         {
             var answer = answers[index];
-            if (string.IsNullOrWhiteSpace(answer.AcceptedAnswer) || FillAnswerNormalizer.Normalize(answer.AcceptedAnswer ?? string.Empty, true).Length > FillAnswerKeyConstraints.AcceptedAnswerMaxLength)
+            if (FillAnswerNormalizer.Normalize(answer.AcceptedAnswer ?? string.Empty, true).Length > FillAnswerKeyConstraints.AcceptedAnswerMaxLength)
                 errors.Add(Error($"{path}[{index}].acceptedAnswer", "invalid_accepted_answer", "Accepted answer is invalid."));
             for (var other = 0; other < index; other++)
-                if (FillAnswerNormalizer.Conflicts(answer.AcceptedAnswer ?? string.Empty, answer.IsCaseSensitive, answers[other].AcceptedAnswer ?? string.Empty, answers[other].IsCaseSensitive))
+                if (!string.IsNullOrWhiteSpace(answer.AcceptedAnswer) && !string.IsNullOrWhiteSpace(answers[other].AcceptedAnswer) && FillAnswerNormalizer.Conflicts(answer.AcceptedAnswer, answer.IsCaseSensitive, answers[other].AcceptedAnswer, answers[other].IsCaseSensitive))
                 { errors.Add(Error($"{path}[{index}].acceptedAnswer", "duplicate_accepted_answer", "Accepted answer duplicates another normalized answer.")); break; }
         }
     }

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "katex/dist/katex.min.css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -128,3 +129,12 @@
 		@apply font-mono;
 	}
 }
+
+.exam-rich-text .ProseMirror { min-height: inherit; outline: none; }
+.exam-rich-text .ProseMirror > * + * { margin-top: .65rem; }
+.exam-rich-text .ProseMirror ul { list-style: disc; padding-left: 1.5rem; }
+.exam-rich-text .ProseMirror ol { list-style: decimal; padding-left: 1.5rem; }
+.exam-rich-text .ProseMirror h2 { font-size: 1.25rem; font-weight: 600; }
+.exam-rich-text .ProseMirror a { color: var(--primary); text-decoration: underline; }
+.exam-rich-text .ProseMirror pre { overflow-x: auto; background: var(--muted); padding: .75rem; }
+.exam-rich-text .ProseMirror code { font-family: var(--font-mono); }

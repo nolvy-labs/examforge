@@ -73,6 +73,26 @@ public sealed class ExamVersionPublicationReadinessTests
             keyCount: 1)));
     }
 
+    [Fact]
+    public void Invalid_draft_metadata_and_content_are_not_ready()
+    {
+        var question = Question(QuestionType.FillBlank, keyCount: 1) with
+        {
+            HasValidContent = false
+        };
+
+        Assert.False(ExamVersionPublicationReadiness.IsReady(
+            1m,
+            [new PublicationSectionState([question])],
+            hasValidMetadata: false));
+        Assert.False(ExamVersionPublicationReadiness.IsReady(
+            1m,
+            [new PublicationSectionState([question with { HasValidContent = true }], HasValidContent: false)]));
+        Assert.False(ExamVersionPublicationReadiness.IsReady(
+            1m,
+            [new PublicationSectionState([question])]));
+    }
+
     private static bool IsReady(decimal total, params PublicationQuestionState[] questions) =>
         ExamVersionPublicationReadiness.IsReady(
             total,

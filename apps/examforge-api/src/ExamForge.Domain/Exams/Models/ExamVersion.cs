@@ -14,7 +14,7 @@ public sealed class ExamVersion
     public ExamVersion(
         Guid examId,
         int versionNumber,
-        string title,
+        string? title,
         string? description,
         string? instructions,
         int? durationMinutes,
@@ -24,7 +24,7 @@ public sealed class ExamVersion
         ExamId = examId;
         VersionNumber = versionNumber;
         Status = ExamVersionStatus.Draft;
-        Title = TextNormalizer.NormalizeName(title);
+        Title = NormalizeDraftTitle(title);
         Description = description?.Trim() ?? string.Empty;
         Instructions = instructions?.Trim() ?? string.Empty;
         DurationMinutes = durationMinutes;
@@ -56,7 +56,7 @@ public sealed class ExamVersion
     public IReadOnlyCollection<ExamAttempt> Attempts => _attempts;
 
     public bool UpdateDetails(
-        string title,
+        string? title,
         string? description,
         string? instructions,
         int? durationMinutes)
@@ -66,7 +66,7 @@ public sealed class ExamVersion
             throw new InvalidOperationException("Only Draft exam versions can be edited.");
         }
 
-        var normalizedTitle = TextNormalizer.NormalizeName(title);
+        var normalizedTitle = NormalizeDraftTitle(title);
         var normalizedDescription = description?.Trim() ?? string.Empty;
         var normalizedInstructions = instructions?.Trim() ?? string.Empty;
 
@@ -169,4 +169,7 @@ public sealed class ExamVersion
         UpdatedAtUtc = retiredAtUtc;
         return true;
     }
+
+    private static string NormalizeDraftTitle(string? title) =>
+        string.IsNullOrWhiteSpace(title) ? string.Empty : TextNormalizer.NormalizeName(title);
 }

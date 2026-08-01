@@ -1,7 +1,6 @@
 import { BUILDER_LIMITS } from "./builder.constants"
 import {
 	calculateNestedQuestionEntityCount,
-	calculateQuestionCount,
 	calculateTotalPoints,
 } from "./builder-derived"
 import { isTemporaryEntityId } from "./builder-id"

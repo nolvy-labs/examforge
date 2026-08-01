@@ -53,21 +53,23 @@ public sealed class AdminExamVersionRepository : IAdminExamVersionRepository
         Guid versionId,
         CancellationToken cancellationToken = default)
     {
-        return Project(_dbContext.ExamVersions.AsNoTracking())
-            .FirstOrDefaultAsync(
-                version => version.ExamId == examId && version.Id == versionId,
-                cancellationToken);
+        var query = _dbContext.ExamVersions
+            .AsNoTracking()
+            .Where(version => version.ExamId == examId && version.Id == versionId);
+
+        return Project(query).FirstOrDefaultAsync(cancellationToken);
     }
 
     public Task<ExamVersionData?> GetCurrentPublishedAsync(
         Guid examId,
         CancellationToken cancellationToken = default)
     {
-        return Project(_dbContext.ExamVersions.AsNoTracking())
-            .FirstOrDefaultAsync(
-                version => version.ExamId == examId &&
-                    version.Status == ExamVersionStatus.Published,
-                cancellationToken);
+        var query = _dbContext.ExamVersions
+            .AsNoTracking()
+            .Where(version => version.ExamId == examId &&
+                version.Status == ExamVersionStatus.Published);
+
+        return Project(query).FirstOrDefaultAsync(cancellationToken);
     }
 
     public Task<ExamVersion?> GetTrackedAsync(
@@ -97,10 +99,12 @@ public sealed class AdminExamVersionRepository : IAdminExamVersionRepository
         Guid sourceVersionId,
         CancellationToken cancellationToken = default)
     {
-        return Project(_dbContext.ExamVersions.AsNoTracking())
-            .FirstOrDefaultAsync(
-                version => version.ExamId == examId && version.Id == sourceVersionId,
-                cancellationToken);
+        var query = _dbContext.ExamVersions
+            .AsNoTracking()
+            .Where(version => version.ExamId == examId &&
+                version.Id == sourceVersionId);
+
+        return Project(query).FirstOrDefaultAsync(cancellationToken);
     }
 
     public Task<Exam?> GetExamForUpdateAsync(

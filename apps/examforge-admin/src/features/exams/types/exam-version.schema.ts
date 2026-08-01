@@ -174,7 +174,7 @@ const versionResponseFields = {
 	title: z.string(),
 	description: z.string(),
 	instructions: z.string(),
-	durationMinutes: apiPositiveIntegerSchema.nullable(),
+	durationMinutes: apiNonnegativeIntegerSchema.nullable(),
 	totalScore: apiNonnegativeNumberSchema,
 	contentRevision: apiPositiveIntegerSchema,
 	createdByUserId: apiUuidSchema.nullable(),

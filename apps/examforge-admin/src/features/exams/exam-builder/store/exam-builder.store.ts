@@ -333,7 +333,7 @@ const useExamBuilderStore = create<BuilderState>((set, get) => {
 				document.sectionsById[id] = {
 					id,
 					kind: changes?.kind ?? 0,
-					title: changes?.title ?? "Untitled section",
+					title: changes?.title ?? "",
 					instructions: plainTextToRichText(""),
 					stimulusText: null,
 					mediaUrl: null,
@@ -385,7 +385,7 @@ const useExamBuilderStore = create<BuilderState>((set, get) => {
 					parentGroupId,
 					prompt: plainTextToRichText(""),
 					explanation: null,
-					points: type === "group" ? 0 : 1,
+					points: 0,
 					displayOrder: parent?.type === "group" ? parent.childQuestionIds.length : section.questionIds.length,
 					createdAtUtc: null,
 					updatedAtUtc: null,
@@ -427,7 +427,7 @@ const useExamBuilderStore = create<BuilderState>((set, get) => {
 					parentGroupId: question.parentGroupId,
 					prompt: question.prompt,
 					explanation: question.explanation,
-					points: type === "group" ? 0 : question.points || 1,
+					points: type === "group" ? 0 : question.points,
 					displayOrder: question.displayOrder,
 					createdAtUtc: question.createdAtUtc,
 					updatedAtUtc: question.updatedAtUtc,
@@ -694,6 +694,31 @@ const useExamBuilderStore = create<BuilderState>((set, get) => {
 
 export const useBuilderIdentity = () => useExamBuilderStore((state) => state.identity)
 export const useBuilderDocument = () => useExamBuilderStore((state) => state.workingDocument)
+export const useBuilderVersion = () =>
+	useExamBuilderStore((state) => state.workingDocument?.version ?? null)
+export const useBuilderSections = () =>
+	useExamBuilderStore((state) => {
+		const document = state.workingDocument
+		return document
+			? document.sectionIds.map((id) => document.sectionsById[id]).filter(Boolean)
+			: []
+	})
+export const useBuilderSection = (id: BuilderEntityId | null) =>
+	useExamBuilderStore((state) =>
+		id ? state.workingDocument?.sectionsById[id] ?? null : null
+	)
+export const useBuilderQuestion = (id: BuilderEntityId | null) =>
+	useExamBuilderStore((state) =>
+		id ? state.workingDocument?.questionsById[id] ?? null : null
+	)
+export const useBuilderOption = (id: BuilderEntityId | null) =>
+	useExamBuilderStore((state) =>
+		id ? state.workingDocument?.optionsById[id] ?? null : null
+	)
+export const useBuilderAnswerKey = (id: BuilderEntityId | null) =>
+	useExamBuilderStore((state) =>
+		id ? state.workingDocument?.answerKeysById[id] ?? null : null
+	)
 export const useBuilderSelection = () => useExamBuilderStore((state) => state.selection)
 export const useBuilderExpandedIds = () => useExamBuilderStore((state) => state.expandedIds)
 export const useBuilderValidation = () =>

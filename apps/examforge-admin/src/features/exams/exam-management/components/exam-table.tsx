@@ -35,6 +35,8 @@ interface Props {
 	onArchive: (id: string) => Promise<void>
 	onRestore: (id: string) => Promise<void>
 	onRefresh: () => void
+	onOpenDetails: (exam: AdminExamSummary) => void
+	onOpenVersions: (exam: AdminExamSummary) => void
 }
 
 export function ExamTable({
@@ -45,6 +47,8 @@ export function ExamTable({
 	onArchive,
 	onRestore,
 	onRefresh,
+	onOpenDetails,
+	onOpenVersions,
 }: Props) {
 	return (
 		<div className="border bg-card" aria-busy={isPlaceholderData}>
@@ -122,6 +126,8 @@ export function ExamTable({
 										onArchive={onArchive}
 										onRestore={onRestore}
 										onRefresh={onRefresh}
+										onOpenDetails={onOpenDetails}
+										onOpenVersions={onOpenVersions}
 									/>
 								</TableCell>
 							</TableRow>

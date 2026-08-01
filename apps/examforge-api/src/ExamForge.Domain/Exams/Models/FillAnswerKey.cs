@@ -6,7 +6,7 @@ public sealed class FillAnswerKey
 
     public FillAnswerKey(
         Guid questionId,
-        string acceptedAnswer,
+        string? acceptedAnswer,
         bool isCaseSensitive,
         int displayOrder)
     {
@@ -14,8 +14,10 @@ public sealed class FillAnswerKey
         Id = Guid.NewGuid();
         QuestionId = questionId;
         BlankKey = FillAnswerKeyConstraints.DefaultBlankKey;
-        AcceptedAnswer = FillAnswerNormalizer.Normalize(acceptedAnswer, caseSensitive: true);
-        NormalizedAnswer = FillAnswerNormalizer.Normalize(acceptedAnswer, isCaseSensitive);
+        AcceptedAnswer = FillAnswerNormalizer.Normalize(acceptedAnswer ?? string.Empty, caseSensitive: true);
+        NormalizedAnswer = string.IsNullOrWhiteSpace(acceptedAnswer)
+            ? $"__draft__:{Id:N}"
+            : FillAnswerNormalizer.Normalize(acceptedAnswer, isCaseSensitive);
         IsCaseSensitive = isCaseSensitive;
         DisplayOrder = displayOrder;
         CreatedAtUtc = DateTimeOffset.UtcNow;
@@ -57,15 +59,15 @@ public sealed class FillAnswerKey
         return clone;
     }
 
-    public bool Update(string acceptedAnswer, bool isCaseSensitive)
+    public bool Update(string? acceptedAnswer, bool isCaseSensitive)
     {
         Validate(acceptedAnswer);
         var normalizedAcceptedAnswer = FillAnswerNormalizer.Normalize(
-            acceptedAnswer,
+            acceptedAnswer ?? string.Empty,
             caseSensitive: true);
-        var normalizedAnswer = FillAnswerNormalizer.Normalize(
-            acceptedAnswer,
-            isCaseSensitive);
+        var normalizedAnswer = string.IsNullOrWhiteSpace(acceptedAnswer)
+            ? $"__draft__:{Id:N}"
+            : FillAnswerNormalizer.Normalize(acceptedAnswer, isCaseSensitive);
 
         if (AcceptedAnswer == normalizedAcceptedAnswer &&
             NormalizedAnswer == normalizedAnswer &&
@@ -81,10 +83,9 @@ public sealed class FillAnswerKey
         return true;
     }
 
-    private static void Validate(string acceptedAnswer)
+    private static void Validate(string? acceptedAnswer)
     {
-        if (string.IsNullOrWhiteSpace(acceptedAnswer) ||
-            FillAnswerNormalizer.Normalize(acceptedAnswer, caseSensitive: true).Length >
+        if (FillAnswerNormalizer.Normalize(acceptedAnswer ?? string.Empty, caseSensitive: true).Length >
                 FillAnswerKeyConstraints.AcceptedAnswerMaxLength)
         {
             throw new ArgumentException("Accepted answer is invalid.", nameof(acceptedAnswer));

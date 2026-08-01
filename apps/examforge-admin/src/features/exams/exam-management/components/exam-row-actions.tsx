@@ -31,6 +31,8 @@ interface Props {
 	onArchive: (id: string) => Promise<void>
 	onRestore: (id: string) => Promise<void>
 	onRefresh: () => void
+	onOpenDetails: (exam: AdminExamSummary) => void
+	onOpenVersions: (exam: AdminExamSummary) => void
 }
 
 export function ExamRowActions({
@@ -40,6 +42,8 @@ export function ExamRowActions({
 	onArchive,
 	onRestore,
 	onRefresh,
+	onOpenDetails,
+	onOpenVersions,
 }: Props) {
 	const triggerRef = useRef<HTMLButtonElement>(null)
 	const [archiveOpen, setArchiveOpen] = useState(false)
@@ -103,6 +107,8 @@ export function ExamRowActions({
 				<DropdownMenuContent align="end" className="w-44">
 					<DropdownMenuGroup>
 					<DropdownMenuLabel>{exam.title}</DropdownMenuLabel>
+					<DropdownMenuItem onClick={() => onOpenDetails(exam)}>Details</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => onOpenVersions(exam)}>Version Control</DropdownMenuItem>
 					{exam.isArchived ? (
 						<DropdownMenuItem disabled={isRestoring} onClick={() => void restoreExam()}>
 							{isRestoring ? <SpinnerGapIcon className="animate-spin" /> : <ArrowCounterClockwiseIcon />}

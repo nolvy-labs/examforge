@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { SpinnerGapIcon } from "@phosphor-icons/react"
 import { Controller, useForm } from "react-hook-form"
@@ -45,6 +46,7 @@ import {
 } from "../../types/exam.schema"
 import type {
 	CreateExamRequest,
+	CreateExamResponse,
 	QuickCreateExamFormInput,
 	QuickCreateExamFormValues,
 } from "../../types/exam.types"
@@ -64,7 +66,7 @@ interface Props {
 	tagsUnavailable: boolean
 	restoreFocusTo: HTMLButtonElement | null
 	onOpenChange: (open: boolean) => void
-	onCreate: (request: CreateExamRequest) => Promise<unknown>
+	onCreate: (request: CreateExamRequest) => Promise<CreateExamResponse>
 	onRefreshTags: () => Promise<unknown> | void
 }
 
@@ -77,6 +79,7 @@ export function QuickCreateExamDialog({
 	onCreate,
 	onRefreshTags,
 }: Props) {
+	const router = useRouter()
 	const [formError, setFormError] = useState<string | null>(null)
 	const form = useForm<
 		QuickCreateExamFormInput,
@@ -87,11 +90,6 @@ export function QuickCreateExamDialog({
 		defaultValues,
 	})
 	const isSubmitting = form.formState.isSubmitting
-
-	useEffect(() => {
-		if (!open) return
-		setFormError(null)
-	}, [open])
 
 	function restoreFocus() {
 		window.requestAnimationFrame(() => restoreFocusTo?.focus())
@@ -132,11 +130,21 @@ export function QuickCreateExamDialog({
 
 		try {
 			const request = mapQuickCreateExamToRequest(values)
-			await onCreate(request)
+			const created = await onCreate(request)
 			form.reset(defaultValues)
 			onOpenChange(false)
 			toast.success(`“${values.title}” was created.`)
-			restoreFocus()
+			if (!created.initialVersion) {
+				toast.error("The Exam was created, but its initial Draft was not returned. Open Version Control to continue.")
+				restoreFocus()
+				return
+			}
+			try {
+				router.push(`/exams/${created.id}/version/${created.initialVersion.id}/edit`)
+			} catch {
+				toast.error("The Exam was created, but navigation failed. Open Version Control to continue.")
+				restoreFocus()
+			}
 		} catch (error) {
 			if (error instanceof ApiError) {
 				attachFieldErrors(error)
@@ -158,7 +166,7 @@ export function QuickCreateExamDialog({
 				<DialogHeader>
 					<DialogTitle>Create exam</DialogTitle>
 					<DialogDescription>
-						Create exam metadata now. Versions and exam content are managed in a later workflow.
+						Create the Exam and its initial empty Draft, then continue in the Exam Builder.
 					</DialogDescription>
 				</DialogHeader>
 
