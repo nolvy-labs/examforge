@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronDown, LogOut } from "lucide-react"
+import { ChartLine, Clock, LogOut } from "lucide-react"
 
 import { Button } from "@/components/shadcn/button"
 import { useLogoutMutation } from "@/features/auth/hooks/auth.hook"
 import type { AuthUser } from "@/features/auth/types/auth.type"
-import { cn } from "@/lib/utils"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn/popover"
+import { Separator } from "@/components/shadcn/separator"
 
 function getStudentName(displayName: string | null | undefined, email: string) {
 	return displayName?.trim() || email.split("@")[0] || "Student"
@@ -28,96 +28,66 @@ function getInitials(name: string) {
 export default function ProfileDropdown({ user }: { user: AuthUser }) {
 	const router = useRouter()
 	const logoutMutation = useLogoutMutation()
-	const [isOpen, setIsOpen] = useState(false)
-	const disclosureId = useId()
-	const panelRef = useRef<HTMLDivElement>(null)
-	const triggerRef = useRef<HTMLButtonElement>(null)
-	const triggerId = `${disclosureId}-trigger`
-	const panelId = `${disclosureId}-panel`
 	const name = getStudentName(user.displayName, user.email)
-
-	useEffect(() => {
-		function handlePointerDown(event: PointerEvent) {
-			if (
-				event.target instanceof Node &&
-				panelRef.current &&
-				!panelRef.current.contains(event.target)
-			) {
-				setIsOpen(false)
-			}
-		}
-
-		function handleKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape" && isOpen) {
-				setIsOpen(false)
-				triggerRef.current?.focus()
-			}
-		}
-
-		document.addEventListener("pointerdown", handlePointerDown)
-		document.addEventListener("keydown", handleKeyDown)
-		return () => {
-			document.removeEventListener("pointerdown", handlePointerDown)
-			document.removeEventListener("keydown", handleKeyDown)
-		}
-	}, [isOpen])
 
 	function handleLogout() {
 		if (logoutMutation.isPending) return
-		setIsOpen(false)
 		logoutMutation.mutate(undefined, {
 			onSettled: () => router.replace("/"),
 		})
 	}
 
 	return (
-		<div className="ml-auto" ref={panelRef}>
-			<Button
-				id={triggerId}
-				ref={triggerRef}
-				type="button"
-				variant="ghost"
-				className="h-11 max-w-44 gap-2 px-1.5 sm:max-w-xs sm:px-2"
-				onClick={() => setIsOpen((value) => !value)}
-			>
-				<span className="grid size-8 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
-					{getInitials(name)}
-				</span>
-				<span className="min-w-0 text-left">
-					<span className="block truncate text-sm font-medium">{name}</span>
-					<span className="hidden truncate text-xs font-normal text-muted-foreground sm:block">
-						{user.email}
+		<Popover>
+			<PopoverTrigger render={
+				<Button variant="ghost" className="ml-auto max-w-44 gap-2 p-1.5 h-12 sm:max-w-xs sm:p-2">
+					<span className="grid size-8 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+						{getInitials(name)}
 					</span>
-				</span>
-				<ChevronDown
-					className={cn(
-						"size-4 shrink-0 text-muted-foreground transition-transform",
-						isOpen && "rotate-180"
-					)}
-				/>
-			</Button>
-
-			{isOpen && (
-				<div
-					id={panelId}
-					className="absolute right-4 top-14 z-30 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-2 shadow-xl sm:right-6 lg:right-8"
-				>
-					<div className="border-b border-slate-100 px-3 py-2">
+					<span className="min-w-0 text-left">
+						<span className="block truncate text-sm font-medium">{name}</span>
+					</span>
+				</Button>
+			} />
+			<PopoverContent className="gap-1 p-3" align="start">
+				<div className="flex flex-row items-center justify-start gap-2 px-1">
+					<span className="grid size-8 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+						{getInitials(name)}
+					</span>
+					<div>
 						<p className="truncate text-sm font-medium">{name}</p>
 						<p className="truncate text-xs text-muted-foreground">{user.email}</p>
 					</div>
+				</div>
+				<Separator />
+				<Button
+						type="button"
+						variant="ghost"
+						className="w-full justify-start text-xs"
+					>
+						<ChartLine />
+						{"Statistics"}
+					</Button>
 					<Button
 						type="button"
 						variant="ghost"
-						className="mt-1 w-full justify-start text-slate-700"
+						className="w-full justify-start text-xs"
+					>
+						<Clock />
+						{"History"}
+					</Button>
+					<Separator />
+					<Button
+						type="button"
+						variant="ghost"
+						className="w-full justify-start text-xs hover:text-destructive hover:bg-destructive/10"
 						disabled={logoutMutation.isPending}
 						onClick={handleLogout}
 					>
 						<LogOut />
 						{logoutMutation.isPending ? "Signing out…" : "Sign out"}
 					</Button>
-				</div>
-			)}
-		</div>
+			</PopoverContent>
+		</Popover>
 	)
 }

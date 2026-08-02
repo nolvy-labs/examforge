@@ -5,6 +5,7 @@ import { useAuthSession } from "@/features/auth/stores/auth.store"
 import HeaderNavigation from "./header.navigation"
 import HeaderAuthNavigation from "./header-auth.navigation"
 import ProfileDropdown from "./profile.dropdown"
+import { Fragment } from "react"
 
 export function MainHeader() {
 	const session = useAuthSession();
@@ -14,10 +15,10 @@ export function MainHeader() {
 				<Brand className="shrink-0 [&>span:last-child]:hidden min-[390px]:[&>span:last-child]:inline" />
 
 				{session.status === "authenticated" && (
-					<>
+					<Fragment>
 						<HeaderNavigation />
 						<ProfileDropdown user={session.user} />
-					</>
+					</Fragment>
 				)}
 
 				{session.status === "guest" && <HeaderAuthNavigation />}

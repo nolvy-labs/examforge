@@ -1,40 +1,23 @@
-"use client"
-
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 
-import { buttonVariants } from "@/components/shadcn/button"
-import { cn } from "@/lib/utils"
+import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "@/components/shadcn/navigation-menu"
 
 const routes = [
 	{ href: "/dashboard", label: "Dashboard" },
 	{ href: "/exams", label: "Exams" },
 ]
 
-export function isNavigationRouteActive(pathname: string, href: string) {
-	return pathname === href || pathname.startsWith(`${href}/`)
-}
 
 export default function HeaderNavigation() {
-	const pathname = usePathname()
-
 	return (
-		<nav className="ml-2 hidden items-center gap-1 sm:flex">
-			{routes.map((route) => {
-				const isActive = isNavigationRouteActive(pathname, route.href)
-				return (
-					<Link
-						key={route.href}
-						href={route.href}
-						className={cn(
-							buttonVariants({ variant: "ghost" }),
-							isActive && "bg-muted"
-						)}
-					>
-						{route.label}
-					</Link>
-				)
-			})}
-		</nav>
+		<NavigationMenu>
+			<NavigationMenuList>
+				{routes.map((route) => (
+					<NavigationMenuItem key={route.href}>
+						<NavigationMenuLink render={<Link href={route.href}>{route.label}</Link>} />
+					</NavigationMenuItem>
+				))}
+			</NavigationMenuList>
+		</NavigationMenu>
 	)
 }
