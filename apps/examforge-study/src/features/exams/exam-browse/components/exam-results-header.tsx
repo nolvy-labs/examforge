@@ -6,8 +6,10 @@ import {
 	Select,
 	SelectContent,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
+	SelectGroup
 } from "@/components/shadcn/select"
 
 import type {
@@ -28,8 +30,8 @@ export function ExamResultsHeader({
 	results,
 }: Props) {
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-3">
-			<div>
+		<div className="flex flex-col md:flex-row items-start justify-between gap-3">
+			<div className="w-full">
 				<h2
 					id="exam-results-heading"
 					ref={headingRef}
@@ -38,14 +40,16 @@ export function ExamResultsHeader({
 				>
 					Available exams
 				</h2>
-				{results.data && (
+				{results.data ? (
 					<p className="mt-1 text-sm text-muted-foreground">
 						{results.data.meta.totalItems}{" "}
 						{results.data.meta.totalItems === 1 ? "exam" : "exams"}
 					</p>
+				) : (
+					<p className="mt-1 text-sm text-muted-foreground">Loading...</p>
 				)}
 			</div>
-			<div className="flex flex-wrap items-center gap-2">
+			<div className="w-full flex flex-wrap items-center justify-end gap-2">
 				<ExamFilterSheet filters={filters} />
 				<Select
 					value={results.sort}
@@ -53,14 +57,17 @@ export function ExamResultsHeader({
 						results.onSortChange(value === "oldest" ? "oldest" : "newest")
 					}
 				>
-					<SelectTrigger>
+					<SelectTrigger className="lg:min-w-40">
 						<SelectValue>
 							{results.sort === "oldest" ? "Oldest" : "Newest"}
 						</SelectValue>
 					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="newest">Newest</SelectItem>
-						<SelectItem value="oldest">Oldest</SelectItem>
+					<SelectContent align="end">
+						<SelectGroup>
+							<SelectLabel>Sort</SelectLabel>
+							<SelectItem value="newest">Newest</SelectItem>
+							<SelectItem value="oldest">Oldest</SelectItem>
+						</SelectGroup>
 					</SelectContent>
 				</Select>
 			</div>

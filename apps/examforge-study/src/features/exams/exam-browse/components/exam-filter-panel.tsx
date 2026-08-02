@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { ChevronDown } from "lucide-react"
 
 import {
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 
 import type { ExamBrowseFilterData } from "../hooks/use-exam-browse-query"
 import type { ExamTagType } from "../../types/exam.types"
+import { Separator } from "@/components/shadcn/separator"
 
 const TAG_TYPE_LABELS: Record<ExamTagType, string> = {
 	unknown: "Other",
@@ -46,81 +47,123 @@ export function ExamFilterPanel({
 	onTagChange,
 	onClear,
 }: Props) {
-	const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center justify-between gap-3">
+				<h2 className="text-base font-semibold">Filters</h2>
+				<Button
+					type="button"
+					variant="link"
+					size="xs"
+					onClick={onClear}
+					disabled={!category && tagIds.length === 0}
+				>
+					Clear all
+				</Button>
+			</div>
+			<Separator />
+			<CategoryList
+				data={data}
+				category={category}
+				idPrefix={idPrefix}
+				onCategoryChange={onCategoryChange}
+			/>
+			<Separator />
+			<TagList
+				data={data}
+				tagIds={tagIds}
+				idPrefix={idPrefix}
+				onTagChange={onTagChange}
+			/>
+		</div>
+	)
+}
+
+interface CategoryListProps {
+	data: ExamBrowseFilterData
+	category: string
+	idPrefix?: string
+	onCategoryChange: (slug: string) => void
+}
+
+function CategoryList({ data, category, idPrefix = "desktop", onCategoryChange }: CategoryListProps) {
 	const visibleCategories = data.categories?.filter(
 		(item) => item.examCount > 0 || item.slug === category
 	)
-
 	return (
-		<div className="space-y-7">
-			<div className="flex items-center justify-between gap-3">
-				<h2 className="text-base font-semibold">Filters</h2>
-				{(category || tagIds.length > 0) && (
-					<Button type="button" variant="link" size="sm" onClick={onClear}>
-						Clear
-					</Button>
-				)}
-			</div>
-
-			<fieldset className="space-y-3">
-				<legend className="mb-3 text-sm font-semibold">Category</legend>
-				{data.categoryError ? (
-					<Alert>
-						<AlertTitle>Could not load categories.</AlertTitle>
-						<AlertDescription>
-							<Button
-								type="button"
-								variant="link"
-								size="sm"
-								className="px-0"
-								onClick={data.onRetryCategories}
-							>
-								Try again
-							</Button>
-						</AlertDescription>
-					</Alert>
-				) : !data.categories ? (
-					<div className="space-y-3">
-						<Skeleton className="h-4 w-4/5" />
-						<Skeleton className="h-4 w-2/3" />
-						<Skeleton className="h-4 w-11/12" />
-					</div>
-				) : (
-					<div className="space-y-2">
-						<label className="flex cursor-pointer items-center gap-3 py-1 text-sm">
+		<fieldset className="space-y-3">
+			<legend className="mb-3 text-sm font-semibold">Category</legend>
+			{data.categoryError ? (
+				<Alert>
+					<AlertTitle>Could not load categories.</AlertTitle>
+					<AlertDescription>
+						<Button
+							type="button"
+							variant="link"
+							size="sm"
+							className="px-0"
+							onClick={data.onRetryCategories}
+						>
+							Try again
+						</Button>
+					</AlertDescription>
+				</Alert>
+			) : !data.categories ? (
+				<div className="space-y-3">
+					<Skeleton className="h-4 w-4/5" />
+					<Skeleton className="h-4 w-2/3" />
+					<Skeleton className="h-4 w-11/12" />
+				</div>
+			) : (
+				<div className="space-y-2">
+					<label className="flex cursor-pointer items-center gap-3 py-1 text-sm">
+						<input
+							type="radio"
+							name={`${idPrefix}-exam-category`}
+							checked={!category}
+							onChange={() => onCategoryChange("")}
+							className="size-4 accent-primary"
+						/>
+						<span className="min-w-0 flex-1">All categories</span>
+					</label>
+					{visibleCategories?.map((item) => (
+						<label
+							key={item.id}
+							className="flex cursor-pointer items-center gap-3 py-1 text-sm"
+						>
 							<input
 								type="radio"
 								name={`${idPrefix}-exam-category`}
-								checked={!category}
-								onChange={() => onCategoryChange("")}
+								checked={category === item.slug}
+								onChange={() => onCategoryChange(item.slug)}
 								className="size-4 accent-primary"
 							/>
-							<span className="min-w-0 flex-1">All categories</span>
+							<span className="min-w-0 flex-1 wrap-break-word">
+								{item.name}
+							</span>
+							<span className="text-xs text-muted-foreground">
+								{item.examCount}
+							</span>
 						</label>
-						{visibleCategories?.map((item) => (
-							<label
-								key={item.id}
-								className="flex cursor-pointer items-center gap-3 py-1 text-sm"
-							>
-								<input
-									type="radio"
-									name={`${idPrefix}-exam-category`}
-									checked={category === item.slug}
-									onChange={() => onCategoryChange(item.slug)}
-									className="size-4 accent-primary"
-								/>
-								<span className="min-w-0 flex-1 wrap-break-word">
-									{item.name}
-								</span>
-								<span className="text-xs text-muted-foreground">
-									{item.examCount}
-								</span>
-							</label>
-						))}
-					</div>
-				)}
-			</fieldset>
+					))}
+				</div>
+			)}
+		</fieldset>
+	)
+}
 
+interface TagListProps {
+	data: ExamBrowseFilterData
+	tagIds: string[]
+	idPrefix?: string
+	onTagChange: (id: string, checked: boolean) => void
+}
+
+function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListProps) {
+	const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+
+	return (
+		<Fragment>
 			{data.tagError ? (
 				<Alert>
 					<AlertTitle>Could not load tags.</AlertTitle>
@@ -158,13 +201,13 @@ export function ExamFilterPanel({
 					const displayItems = expanded
 						? items
 						: Array.from(
-								new Map(
-									[...selected, ...items.slice(0, 6)].map((item) => [
-										item.id,
-										item,
-									])
-								).values()
-							)
+							new Map(
+								[...selected, ...items.slice(0, 6)].map((item) => [
+									item.id,
+									item,
+								])
+							).values()
+						)
 
 					return (
 						<fieldset key={key} className="space-y-3">
@@ -220,6 +263,6 @@ export function ExamFilterPanel({
 					)
 				})
 			)}
-		</div>
+		</Fragment>
 	)
 }

@@ -11,7 +11,7 @@ export function ExamBrowseFilters({ filters }: Prosp) {
 		<aside className="hidden lg:block">
 			<Card className="sticky top-6" size="sm">
 				<CardContent>
-					<ExamFilterPanel
+					<ExamFilterPanel 
 						data={filters.data}
 						category={filters.category}
 						tagIds={filters.tagIds}
