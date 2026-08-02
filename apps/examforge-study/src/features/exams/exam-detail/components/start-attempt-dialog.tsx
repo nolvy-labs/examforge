@@ -52,10 +52,10 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 				if (!open) controller.closeDialog()
 			}}
 		>
-			<DialogContent showCloseButton={false}>
-				<div className="flex items-start justify-between gap-4">
+			<DialogContent showCloseButton={false} className="p-4">
+				<div className="flex items-start justify-between">
 					<DialogHeader>
-						<DialogTitle>
+						<DialogTitle className="text-xl">
 							{dialog?.mode === "retake" ? "Retake exam?" : "Start exam?"}
 						</DialogTitle>
 						<DialogDescription>

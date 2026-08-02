@@ -29,7 +29,7 @@ const metadataItems: Array<{ icon: LucideIcon, getLabel: (exam: StudentExam) => 
 
 export function ExamMetadata({ exam }: { exam: StudentExam }) {
 	return (
-		<div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-muted-foreground">
+		<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-auto">
 			{metadataItems.map(({ icon: Icon, getLabel }) => {
 				const label = getLabel(exam)
 				return (

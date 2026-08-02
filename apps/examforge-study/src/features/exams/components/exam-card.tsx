@@ -36,7 +36,7 @@ export default function ExamCard({ exam }: ExamCardProps) {
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex h-full w-full flex-col gap-4">
-				<div className="flex flex-wrap gap-2">
+				<div className="flex flex-wrap gap-2 min-h-6">
 					{exam.tags.map((tag) => (
 						<Badge key={tag.id + tag.slug} variant="secondary">
 							{tag.name}

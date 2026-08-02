@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { LoaderCircle } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 
 import { ExamAttemptHistoryItem } from "./exam-attempt-history-item"
 import { ExamAttemptHistoryPagination } from "./exam-attempt-history-pagination"
-import { ExamAttemptHistorySkeleton } from "./exam-attempt-history-skeleton"
+import { Skeleton } from "@/components/shadcn/skeleton"
 
 interface Props {
 	examId: string
@@ -22,7 +22,8 @@ export function ExamAttemptHistory({ examId }: Props) {
 	const [pagination, setPagination] = useState({ examId, page: 1 })
 	const page = pagination.examId === examId ? pagination.page : 1
 	const session = useAuthSession()
-	const enabled = session.status === "authenticated"
+	const enabled = useMemo(() => session.status === "authenticated", [session.status])
+	
 	const query = useExamAttemptHistory(examId, page, enabled)
 
 	useEffect(() => {
@@ -46,9 +47,6 @@ export function ExamAttemptHistory({ examId }: Props) {
 					<h2 id="past-attempts-heading" className="text-xl font-semibold">
 						Past Attempts
 					</h2>
-					<p className="mt-1 text-sm text-muted-foreground">
-						Submitted and abandoned attempts for this exam.
-					</p>
 				</div>
 				{query.isFetching && query.data && (
 					<span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -140,5 +138,16 @@ export function ExamAttemptHistory({ examId }: Props) {
 				</>
 			)}
 		</section>
+	)
+}
+
+
+export function ExamAttemptHistorySkeleton() {
+	return (
+		<div className="space-y-3">
+			<Skeleton className="h-20 w-full" />
+			<Skeleton className="h-20 w-full" />
+			<Skeleton className="h-20 w-full" />
+		</div>
 	)
 }

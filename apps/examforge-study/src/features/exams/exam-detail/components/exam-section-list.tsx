@@ -11,6 +11,7 @@ import {
 	getSectionFacts,
 	getSectionKindLabel,
 } from "../model/exam-detail"
+import ContentRenderer from "@/components/common/content-renderer"
 
 interface Props {
 	sections: StudentExamSection[]
@@ -20,11 +21,8 @@ export function ExamSectionList({ sections }: Props) {
 	return (
 		<section>
 			<h2 id="exam-sections-heading" className="text-xl font-semibold">
-				Exam sections
+				Sections summary
 			</h2>
-			<p className="mt-1 text-sm text-muted-foreground">
-				Review the structure before beginning your attempt.
-			</p>
 			<div className="mt-4 space-y-3">
 				{sections.map((section, index) => (
 					<Card key={section.id} size="sm">
@@ -50,10 +48,11 @@ export function ExamSectionList({ sections }: Props) {
 							</div>
 						</CardHeader>
 						{section.instructions.trim() && (
-							<CardContent className="pl-19">
-								<p className="whitespace-pre-line wrap-break-word text-sm leading-6 text-muted-foreground">
-									{section.instructions}
-								</p>
+							<CardContent>
+								<h4 className="text-base font-semibold">Section Instructions</h4>
+								<div className="whitespace-pre-line wrap-break-word text-sm leading-6 text-muted-foreground">
+									<ContentRenderer content={section.instructions} />
+								</div>
 							</CardContent>
 						)}
 					</Card>

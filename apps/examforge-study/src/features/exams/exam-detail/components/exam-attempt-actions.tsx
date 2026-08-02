@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import type { StudentExamDetail } from "../../types/exam.types"
 import { useExamAttemptActions } from "../hooks/use-exam-attempt-actions"
 import { StartAttemptDialog } from "./start-attempt-dialog"
+import { Fragment } from "react"
 
 export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 	const controller = useExamAttemptActions(detail)
@@ -67,7 +68,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 						href={state.href}
 						className={cn(buttonVariants({ size: "lg" }), "w-full")}
 					>
-						View Result
+						View Latest Attempt
 					</Link>
 					<Button
 						type="button"
@@ -135,9 +136,9 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 	}
 
 	return (
-		<>
+		<Fragment>
 			{content}
 			<StartAttemptDialog detail={detail} controller={controller} />
-		</>
+		</Fragment>
 	)
 }

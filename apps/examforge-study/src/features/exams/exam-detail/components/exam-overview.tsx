@@ -1,19 +1,7 @@
-import {
-	BookOpen,
-	CalendarDays,
-	Clock3,
-	FileQuestion,
-	Layers3,
-	Trophy,
-	type LucideIcon,
-} from "lucide-react"
+import { Clock3, FileQuestion, Layers3, Trophy, type LucideIcon } from "lucide-react"
 
 import type { StudentExamDetail } from "../../types/exam.types"
-import {
-	formatDate,
-	formatNumber,
-	getExamCounts,
-} from "../model/exam-detail"
+import { formatNumber, getExamCounts } from "../model/exam-detail"
 
 interface Props {
 	detail: StudentExamDetail
@@ -41,17 +29,7 @@ export function ExamOverview({ detail }: Props) {
 			icon: Trophy,
 			label: "Total points",
 			value: formatNumber(version.totalScore),
-		},
-		{
-			icon: BookOpen,
-			label: "Version",
-			value: String(version.versionNumber),
-		},
-		{
-			icon: CalendarDays,
-			label: "Published",
-			value: formatDate(version.publishedAtUtc, false),
-		},
+		}
 	]
 
 	return (
