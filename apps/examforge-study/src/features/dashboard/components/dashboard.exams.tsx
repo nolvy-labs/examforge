@@ -8,13 +8,12 @@ import ExamCard from "@/features/exams/components/exam-card"
 
 export function DashboardExams() {
 	return (
-		<section>
+		<section className="flex flex-col gap-4">
 			<div>
-				<h2 id="exams-heading" className="text-xl font-semibold tracking-tight text-slate-950">
-					Recommended exams
-				</h2>
 				<div className="flex justify-between">
-					<p className="mt-1 text-sm text-slate-600">A preview of practice content planned for ExamForge.</p>
+					<h2 id="exams-heading" className="text-xl font-semibold tracking-tight text-slate-950">
+						Recommended exams
+					</h2>
 					<Link
 						href={"/exams"}
 						className={cn(
@@ -27,7 +26,7 @@ export function DashboardExams() {
 					</Link>
 				</div>
 			</div>
-			<div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				{PLACEHOLDER_EXAMS.map((exam) => (
 					<ExamCard key={exam.id} exam={exam} />
 				))}
