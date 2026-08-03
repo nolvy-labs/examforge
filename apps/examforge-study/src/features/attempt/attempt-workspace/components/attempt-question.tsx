@@ -18,52 +18,68 @@ import {
 import type { AttemptQuestion, AttemptSection } from "../../types/attempt.type"
 import { getQuestionType } from "../../types/attempt.type"
 import { Button } from "@/components/shadcn/button"
+import ContentRenderer from "@/components/common/content-renderer"
+import { Card, CardContent } from "@/components/shadcn/card"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldTitle } from "@/components/shadcn/field"
+import { Fragment } from "react/jsx-runtime"
+import { Separator } from "@/components/shadcn/separator"
+import { Badge } from "@/components/shadcn/badge"
+
+interface AttemptQuestionBlockProps {
+	question: AttemptQuestion
+	number: string
+}
 
 export function AttemptQuestionBlock({
 	question,
 	number,
-}: {
-	question: AttemptQuestion
-	number: string
-}) {
+}: AttemptQuestionBlockProps) {
 	const type = getQuestionType(question.type)
+
 	return (
-		<article
-			id={`question-${question.id}`}
-			className="scroll-mt-32 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
-		>
-			<div className="flex items-start gap-3">
-				<span className="grid size-8 shrink-0 place-items-center rounded-lg bg-indigo-50 text-sm font-semibold text-indigo-700">
-					{number}
-				</span>
-				<div className="min-w-0 flex-1">
-					<p className="whitespace-pre-line wrap-break-word text-base font-medium leading-7 text-slate-950">
-						{question.prompt}
-					</p>
-					{type !== "group" && (
-						<p className="mt-1 text-xs text-slate-500">
-							{question.points} {question.points === 1 ? "point" : "points"}
-						</p>
+		<Card id={`question-${question.id}`}>
+			<CardContent>
+				<div className="flex items-start gap-3">
+					<Badge className="aspect-square size-8">
+						{number}
+					</Badge>
+					<div className="min-w-0 flex-1">
+						<div className="whitespace-pre-line wrap-break-word text-base font-medium leading-7 text-slate-950">
+							<ContentRenderer content={question.prompt} />
+						</div>
+						{type !== "group" && (
+							<p className="mt-1 text-xs text-slate-500">
+								{question.points} {question.points === 1 ? "point" : "points"}
+							</p>
+						)}
+					</div>
+				</div>
+				<div className="mt-5">
+					{type === "group" ? (
+						<div className="flex flex-col gap-6">
+							{question.childQuestions.map((child, index) => (
+								<Fragment key={child.id}>
+									<div className="flex flex-col gap-4">
+										<div className="flex flex-row gap-2">
+											<Badge className="aspect-square size-7 text-xs">
+												{number}.{index + 1}
+											</Badge>
+											<p className="whitespace-break-spaces mt-1">
+												<ContentRenderer content={child.prompt} />
+											</p>
+										</div>
+										<QuestionEditor question={child} />
+									</div>
+									{index < question.childQuestions.length - 1 && <Separator />}
+								</Fragment>
+							))}
+						</div>
+					) : (
+						<QuestionEditor question={question} />
 					)}
 				</div>
-			</div>
-			<div className="mt-5">
-				{type === "group" ? (
-					<div className="space-y-6">
-						{question.childQuestions.map((child, index) => (
-							<div key={child.id} className="border-t border-slate-100 pt-5">
-								<p className="mb-3 text-sm font-semibold text-slate-700">
-									{number}.{index + 1}
-								</p>
-								<QuestionEditor question={child} />
-							</div>
-						))}
-					</div>
-				) : (
-					<QuestionEditor question={question} />
-				)}
-			</div>
-		</article>
+			</CardContent>
+		</Card>
 	)
 }
 
@@ -76,10 +92,7 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 
 	if (type === "fill-blank") {
 		return (
-			<div>
-				<label htmlFor={`answer-${question.id}`} className="text-sm font-medium text-slate-700">
-					Your answer
-				</label>
+			<div className="flex flex-col w-full gap-2">
 				<Input
 					id={`answer-${question.id}`}
 					value={answer?.textAnswer ?? ""}
@@ -87,32 +100,29 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 					onChange={(event) =>
 						setText(question.id, event.target.value === "" ? null : event.target.value)
 					}
-					className="mt-2 min-h-11"
+					className="min-h-11"
 				/>
+				<Button
+					variant="link"
+					size="xs"
+					disabled={!answer?.textAnswer || locked}
+					className="ml-auto"
+					onClick={() => setText(question.id, null)}
+				>
+					Clear answer
+				</Button>
 			</div>
 		)
 	}
 
 	const multiple = type === "multiple-choice-multiple"
 	return (
-		<fieldset disabled={locked}>
-			<legend className="sr-only">
-				{multiple ? "Choose one or more answers" : "Choose one answer"}
-			</legend>
-			<div className="space-y-2">
-				{question.options.map((option) => {
-					const checked = selected.includes(option.id)
-					return (
-						<label
-							key={option.id}
-							className={cn(
-								"flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-colors focus-within:ring-2 focus-within:ring-indigo-600",
-								checked
-									? "border-indigo-500 bg-indigo-50 text-indigo-950"
-									: "border-slate-200 hover:bg-slate-50",
-								locked && "cursor-not-allowed opacity-70"
-							)}
-						>
+		<FieldGroup className="gap-2">
+			{question.options.map((option) => {
+				const checked = selected.includes(option.id)
+				return (
+					<FieldLabel key={option.id}>
+						<Field orientation="horizontal">
 							{multiple ? (
 								<Checkbox
 									checked={checked}
@@ -126,45 +136,51 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 									}
 								/>
 							) : (
-								<input
-									type="radio"
-									name={`question-${question.id}`}
+								<Checkbox
 									checked={checked}
-									onChange={() => setOptions(question.id, [option.id])}
-									className="mt-0.5 size-4 accent-indigo-600"
+									className="rounded-full"
+									onCheckedChange={() => setOptions(question.id, [option.id])}
 								/>
 							)}
-							<span>
-								{option.label && <strong className="mr-2">{option.label}</strong>}
-								{option.text}
-							</span>
-						</label>
-					)
-				})}
-			</div>
-			<Button 
+							<FieldContent className="flex-row gap-2 items-start justify-start">
+								<FieldTitle>
+									<ContentRenderer content={option.label || ""} />
+								</FieldTitle>
+								<FieldDescription className="whitespace-break-spaces">
+									<ContentRenderer content={option.text} />
+								</FieldDescription>
+							</FieldContent>
+						</Field>
+					</FieldLabel>
+				)
+			})}
+			<Button
 				variant="link"
 				size="xs"
 				disabled={!selected.length}
-				className={"mt-3"}
+				className={"ml-auto"}
 				onClick={() => setOptions(question.id, [])}
 			>
 				Clear answer
 			</Button>
-		</fieldset>
+		</FieldGroup>
 	)
+}
+
+interface AttemptNavigatorProps {
+	sections: AttemptSection[]
+	onSelect: (sectionId: string, blockId: string) => void
 }
 
 export function AttemptNavigator({
 	sections,
 	onSelect,
-}: {
-	sections: AttemptSection[]
-	onSelect: (sectionId: string, blockId: string) => void
-}) {
+}: AttemptNavigatorProps) {
+
 	const { selectedSectionId, selectedBlockId } = useAttemptNavigation()
 	const { drafts, dirty } = useAttemptAnswers()
 	const { saveState } = useAttemptSaveStatus()
+
 	return (
 		<nav className="space-y-5">
 			{sections.map((section, sectionIndex) => (
@@ -193,9 +209,6 @@ export function AttemptNavigator({
 									answer?.textAnswer?.trim() || answer?.selectedOptionIds.length
 								)
 							})
-							const saving =
-								ids.some((id) => dirty[id]) &&
-								(saveState === "saving" || saveState === "waiting")
 							const failed =
 								ids.some((id) => dirty[id]) &&
 								(saveState === "failed" || saveState === "offline")

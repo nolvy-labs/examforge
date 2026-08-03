@@ -5,6 +5,6 @@ interface Props {
 
 export default function ContentRenderer({ content }: Props) {
     return (
-        <p dangerouslySetInnerHTML={{ __html: content }} />
+        <span dangerouslySetInnerHTML={{ __html: content }} />
     )
 }

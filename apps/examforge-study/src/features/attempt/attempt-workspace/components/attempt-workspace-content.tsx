@@ -2,7 +2,6 @@ import { ChevronLeft, ChevronRight, Menu } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
-import { cn } from "@/lib/utils"
 
 import {
 	AttemptNavigator,
@@ -11,6 +10,7 @@ import {
 } from "./attempt-question"
 import type { DisplayMode } from "../stores/attempt.store"
 import type { AttemptQuestion, AttemptSection } from "../../types/attempt.type"
+import { ButtonGroup } from "@/components/shadcn/button-group"
 
 interface AttemptWorkspaceContentProps {
 	sections: AttemptSection[]
@@ -95,14 +95,14 @@ export function AttemptWorkspaceContent({
 							/>
 						)}
 			</div>
-			<AttemptWorkspaceNavigation
+			{displayMode === "one" && <AttemptWorkspaceNavigation
 				answered={answered}
 				total={total}
 				hasPrevious={hasPrevious}
 				hasNext={hasNext}
 				onPrevious={onPrevious}
 				onNext={onNext}
-			/>
+			/>}
 		</main>
 	)
 }
@@ -114,23 +114,22 @@ interface DisplayModeToggleProps {
 
 function DisplayModeToggle({ value, onChange }: DisplayModeToggleProps) {
 	return (
-		<div className="flex rounded-lg border bg-white p-1">
-			{(["one", "section"] as const).map((mode) => (
-				<button
-					key={mode}
-					type="button"
-					onClick={() => onChange(mode)}
-					className={cn(
-						"rounded-md px-3 py-1.5 text-xs font-medium",
-						value === mode
-							? "bg-slate-900 text-white"
-							: "text-slate-600 hover:bg-slate-100"
-					)}
-				>
-					{mode === "one" ? "One question" : "Current section"}
-				</button>
-			))}
-		</div>
+		<ButtonGroup>
+			<Button
+				size={"sm"}
+				variant={value === "one" ? "default" : "outline"}
+				onClick={() => onChange("one")}
+			>
+				One question
+			</Button>
+			<Button
+				size={"sm"}
+				variant={value === "section" ? "default" : "outline"}
+				onClick={() => onChange("section")}
+			>
+				Whole section
+			</Button>
+		</ButtonGroup>
 	)
 }
 
@@ -152,7 +151,7 @@ function AttemptWorkspaceNavigation({
 	onNext,
 }: AttemptWorkspaceNavigationProps) {
 	return (
-		<div className="sticky bottom-0 mt-5 flex items-center justify-between gap-3 border-t bg-slate-50/95 py-3 backdrop-blur">
+		<div className="z-10 mt-5 flex items-center justify-between gap-3 bg-slate-50/95 py-3 backdrop-blur">
 			<Button
 				type="button"
 				variant="outline"
