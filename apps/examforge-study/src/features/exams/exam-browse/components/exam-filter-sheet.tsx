@@ -7,10 +7,7 @@ import { Button } from "@/components/shadcn/button"
 import {
 	Sheet,
 	SheetContent,
-	SheetDescription,
 	SheetFooter,
-	SheetHeader,
-	SheetTitle,
 	SheetTrigger,
 } from "@/components/shadcn/sheet"
 
@@ -42,13 +39,7 @@ export function ExamFilterSheet({ filters }: Props) {
 				<SlidersHorizontal />
 				Filters{filters.activeCount > 0 ? ` (${filters.activeCount})` : ""}
 			</SheetTrigger>
-			<SheetContent className="flex flex-col">
-				<SheetHeader>
-					<SheetTitle>Filter exams</SheetTitle>
-					<SheetDescription>
-						Choose a category and any tags, then apply.
-					</SheetDescription>
-				</SheetHeader>
+			<SheetContent className="flex flex-col py-4">
 				<div className="min-h-0 flex-1 overflow-y-auto px-4">
 					<ExamFilterPanel
 						data={filters.data}

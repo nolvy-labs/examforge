@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { AttemptResultPage } from "@/features/attempt/pages/attempt-result.page"
+import { AttemptResultPage } from "@/features/attempt/attempt-result/pages/attempt-result.page"
 
 export const metadata: Metadata = { title: "Attempt Result" }
 
