@@ -31,6 +31,11 @@ public sealed class JwtTokenService : IJwtTokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        if (!string.IsNullOrEmpty(user.DisplayName))
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Name, user.DisplayName));
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

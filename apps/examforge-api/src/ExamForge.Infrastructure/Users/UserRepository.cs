@@ -15,11 +15,6 @@ public sealed class UserRepository : IUserRepository
         _dbContext = dbContext;
     }
 
-    public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        return _dbContext.Users.FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
-    }
-
     public Task<User?> GetByNormalizedEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default)
     {
         return _dbContext.Users.FirstOrDefaultAsync(

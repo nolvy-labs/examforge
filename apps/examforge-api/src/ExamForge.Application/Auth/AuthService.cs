@@ -142,22 +142,6 @@ public sealed class AuthService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<UserProfileResponse?> GetMeAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        var user = await _users.GetByIdAsync(
-            userId,
-            cancellationToken);
-
-        if (user is null || !user.IsActive)
-        {
-            return null;
-        }
-
-        return CreateUserProfileResponse(user);
-    }
-
     private AuthResponse IssueAuthTokens(User user)
     {
         var refreshToken = _refreshTokenService.Generate();

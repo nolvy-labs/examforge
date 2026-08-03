@@ -1,8 +1,10 @@
-﻿using System.Security.Claims;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Auth;
+using ExamForge.Domain.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -127,24 +129,26 @@ public sealed class AuthController : ControllerBase
 
     [Authorize]
     [HttpGet("me")]
-    public async Task<ActionResult<UserProfileResponse>> Me(CancellationToken cancellationToken)
+    public ActionResult<UserProfileResponse> Me()
     {
         var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub");
+        var email = User.FindFirstValue(ClaimTypes.Email)
+            ?? User.FindFirstValue(JwtRegisteredClaimNames.Email);
+        var displayName = User.FindFirstValue(ClaimTypes.Name)
+            ?? User.FindFirstValue(JwtRegisteredClaimNames.Name);
+        var roleValue = User.FindFirstValue(ClaimTypes.Role)
+            ?? User.FindFirstValue("role");
 
-        if (!Guid.TryParse(userIdValue, out var userId))
+        if (!Guid.TryParse(userIdValue, out var userId) ||
+            string.IsNullOrWhiteSpace(email) ||
+            !Enum.TryParse<UserRole>(roleValue, out var role) ||
+            !Enum.IsDefined(role))
         {
             return Unauthorized();
         }
 
-        var user = await _authService.GetMeAsync(userId, cancellationToken);
-
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        return Ok(user);
+        return Ok(new UserProfileResponse(userId, email, displayName, role));
     }
 
     private void SetAuthCookies(AuthResponse response)
