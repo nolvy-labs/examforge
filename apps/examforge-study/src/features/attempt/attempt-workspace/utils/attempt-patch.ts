@@ -1,7 +1,7 @@
 import type {
 	AttemptPatchOperation,
 	DraftAnswer,
-} from "../types/attempt.type"
+} from "../../types/attempt.type"
 
 export type DirtyFields = Record<
 	string,

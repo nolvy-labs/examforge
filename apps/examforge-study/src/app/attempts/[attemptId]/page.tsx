@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 
-import { AttemptPage } from "@/features/attempt/pages/attempt.page"
+import { AttemptPage } from "@/features/attempt/attempt-workspace/pages/attempt.page"
 
 export const metadata: Metadata = { title: "Exam Attempt" }
 

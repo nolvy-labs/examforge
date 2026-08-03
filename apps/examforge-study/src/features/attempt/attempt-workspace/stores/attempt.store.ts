@@ -6,11 +6,11 @@ import { useShallow } from "zustand/react/shallow"
 import type {
 	AttemptDetail,
 	DraftAnswer,
-} from "../types/attempt.type"
+} from "../../types/attempt.type"
 import {
 	answerFromQuestion,
 	flattenAnswerableQuestions,
-} from "../types/attempt.type"
+} from "../../types/attempt.type"
 import type { DirtyFields, SaveSnapshot } from "../utils/attempt-patch"
 import { answersEqual } from "../utils/attempt-patch"
 

@@ -15,8 +15,8 @@ import {
 	useAttemptNavigation,
 	useAttemptSaveStatus,
 } from "../stores/attempt.store"
-import type { AttemptQuestion, AttemptSection } from "../types/attempt.type"
-import { getQuestionType } from "../types/attempt.type"
+import type { AttemptQuestion, AttemptSection } from "../../types/attempt.type"
+import { getQuestionType } from "../../types/attempt.type"
 
 export function AttemptQuestionBlock({
 	question,

@@ -5,13 +5,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { ApiError } from "@/lib/api/api.error"
 
-import { getAttempt, patchAttempt } from "../api/attempt.api"
-import { attemptQueryKeys } from "../api/attempt.query-key"
+import { getAttempt, patchAttempt } from "../../api/attempt.api"
+import { attemptQueryKeys } from "../../api/attempt.query-key"
 import {
 	useAttemptActions,
 	useAttemptDirtyCount,
 } from "../stores/attempt.store"
-import { getAttemptStatus } from "../types/attempt.type"
+import { getAttemptStatus } from "../../types/attempt.type"
 import {
 	buildPatchOperations,
 	chunkOperations,
