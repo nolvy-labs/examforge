@@ -1,3 +1,6 @@
+using System.Reflection;
+
+using ExamForge.Application.Student.ExamAttempts.Enums;
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Domain.Exams;
 using ExamForge.Domain.Users;
@@ -11,7 +14,7 @@ namespace ExamForge.Api.Tests;
 public sealed class ExamAttemptRepositoryTests
 {
     [Fact]
-    public async Task Page_filter_combines_exam_student_and_state_before_pagination()
+    public async Task Page_filters_exact_status_exam_and_owner_before_pagination()
     {
         var data = await SeedPageDataAsync();
         await using var context = data.Context;
@@ -19,22 +22,25 @@ public sealed class ExamAttemptRepositoryTests
 
         var active = await repository.GetPageAsync(
             data.StudentId,
-            false,
+            ExamAttemptStatus.InProgress,
             data.ExamId,
+            ExamAttemptSortOrder.CreatedAtDescending,
             0,
             20);
-        var completed = await repository.GetPageAsync(
+        var submitted = await repository.GetPageAsync(
             data.StudentId,
-            true,
+            ExamAttemptStatus.Submitted,
             data.ExamId,
+            ExamAttemptSortOrder.CreatedAtDescending,
             0,
             20);
-        var firstCompletedPage = await repository.GetPageAsync(
+        var abandoned = await repository.GetPageAsync(
             data.StudentId,
-            true,
+            ExamAttemptStatus.Abandoned,
             data.ExamId,
+            ExamAttemptSortOrder.CreatedAtDescending,
             0,
-            1);
+            20);
 
         Assert.Equal(1, active.TotalItems);
         Assert.All(active.Items, item =>
@@ -42,38 +48,35 @@ public sealed class ExamAttemptRepositoryTests
             Assert.Equal(data.ExamId, item.ExamId);
             Assert.Equal(ExamAttemptStatus.InProgress, item.Status);
         });
-        Assert.Equal(2, completed.TotalItems);
-        Assert.Contains(completed.Items, item => item.Status == ExamAttemptStatus.Submitted);
-        Assert.Contains(completed.Items, item => item.Status == ExamAttemptStatus.Abandoned);
-        Assert.Single(firstCompletedPage.Items);
-        Assert.Equal(2, firstCompletedPage.TotalItems);
-        Assert.Equal(data.LatestCompletedAttemptId, firstCompletedPage.Items[0].AttemptId);
+        Assert.Single(submitted.Items);
+        Assert.Equal(ExamAttemptStatus.Submitted, submitted.Items[0].Status);
+        Assert.Single(abandoned.Items);
+        Assert.Equal(ExamAttemptStatus.Abandoned, abandoned.Items[0].Status);
+        Assert.DoesNotContain(submitted.Items, item => item.Status == ExamAttemptStatus.Abandoned);
+        Assert.DoesNotContain(abandoned.Items, item => item.Status == ExamAttemptStatus.Submitted);
     }
 
     [Fact]
-    public async Task Page_without_exam_filter_preserves_all_owned_attempts()
+    public async Task Page_without_status_or_exam_filter_returns_all_owned_statuses()
     {
         var data = await SeedPageDataAsync();
         await using var context = data.Context;
         var repository = new ExamAttemptRepository(context);
 
-        var active = await repository.GetPageAsync(
+        var page = await repository.GetPageAsync(
             data.StudentId,
-            false,
             null,
-            0,
-            20);
-        var completed = await repository.GetPageAsync(
-            data.StudentId,
-            true,
             null,
+            ExamAttemptSortOrder.CreatedAtDescending,
             0,
             20);
 
-        Assert.Equal(2, active.TotalItems);
-        Assert.Equal(3, completed.TotalItems);
-        Assert.DoesNotContain(active.Items, item => item.AttemptId == data.OtherStudentAttemptId);
-        Assert.DoesNotContain(completed.Items, item => item.AttemptId == data.OtherStudentAttemptId);
+        Assert.Equal(5, page.TotalItems);
+        Assert.Contains(page.Items, item => item.Status == ExamAttemptStatus.InProgress);
+        Assert.Contains(page.Items, item => item.Status == ExamAttemptStatus.Submitted);
+        Assert.Contains(page.Items, item => item.Status == ExamAttemptStatus.Abandoned);
+        Assert.DoesNotContain(page.Items, item => item.AttemptId == data.OtherStudentAttemptId);
+        Assert.DoesNotContain(page.Items, item => item.AttemptId == data.OtherStudentActiveId);
     }
 
     [Fact]
@@ -85,13 +88,159 @@ public sealed class ExamAttemptRepositoryTests
 
         var page = await repository.GetPageAsync(
             data.StudentId,
-            true,
+            null,
             Guid.NewGuid(),
+            ExamAttemptSortOrder.CreatedAtDescending,
             0,
             5);
 
         Assert.Empty(page.Items);
         Assert.Equal(0, page.TotalItems);
+    }
+
+    [Fact]
+    public async Task Page_filters_by_exam_without_status()
+    {
+        var data = await SeedPageDataAsync();
+        await using var context = data.Context;
+        var repository = new ExamAttemptRepository(context);
+
+        var page = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            data.ExamId,
+            ExamAttemptSortOrder.CreatedAtDescending,
+            0,
+            20);
+
+        Assert.Equal(3, page.TotalItems);
+        Assert.All(page.Items, item => Assert.Equal(data.ExamId, item.ExamId));
+        Assert.Equal(
+            [ExamAttemptStatus.Abandoned, ExamAttemptStatus.Submitted, ExamAttemptStatus.InProgress],
+            page.Items.Select(item => item.Status));
+    }
+
+    [Fact]
+    public async Task Page_sorts_by_created_at_in_both_directions_before_paging()
+    {
+        var data = await SeedPageDataAsync();
+        await using var context = data.Context;
+        var repository = new ExamAttemptRepository(context);
+
+        var descending = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            null,
+            ExamAttemptSortOrder.CreatedAtDescending,
+            1,
+            2);
+        var ascending = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            null,
+            ExamAttemptSortOrder.CreatedAtAscending,
+            1,
+            2);
+
+        Assert.Equal([6, 4], descending.Items.Select(item => item.CreatedAtUtc.Minute));
+        Assert.Equal([2, 4], ascending.Items.Select(item => item.CreatedAtUtc.Minute));
+        Assert.Equal(5, descending.TotalItems);
+        Assert.Equal(5, ascending.TotalItems);
+    }
+
+    [Fact]
+    public async Task Page_uses_id_tie_breaker_for_equal_creation_times()
+    {
+        var data = await SeedPageDataAsync();
+        await using var context = data.Context;
+        var tied = await context.ExamAttempts
+            .Where(attempt => attempt.StudentId == data.StudentId)
+            .Take(2)
+            .ToListAsync();
+        var timestamp = DateTimeOffset.Parse("2026-07-26T03:00:00Z");
+        foreach (var attempt in tied)
+        {
+            SetProperty(attempt, nameof(ExamAttempt.CreatedAtUtc), timestamp);
+        }
+
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var repository = new ExamAttemptRepository(context);
+
+        var descending = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            null,
+            ExamAttemptSortOrder.CreatedAtDescending,
+            0,
+            2);
+        var ascending = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            null,
+            ExamAttemptSortOrder.CreatedAtAscending,
+            3,
+            2);
+
+        Assert.Equal(
+            tied.Select(attempt => attempt.Id).OrderDescending(),
+            descending.Items.Select(item => item.AttemptId));
+        Assert.Equal(
+            tied.Select(attempt => attempt.Id).Order(),
+            ascending.Items.Select(item => item.AttemptId));
+    }
+
+    [Fact]
+    public async Task Page_ignores_updated_at_when_ordering_and_projects_both_timestamps()
+    {
+        var data = await SeedPageDataAsync();
+        await using var context = data.Context;
+        var older = await context.ExamAttempts.SingleAsync(
+            attempt => attempt.Id == data.FirstSubmittedAttemptId);
+        SetProperty(
+            older,
+            nameof(ExamAttempt.UpdatedAtUtc),
+            DateTimeOffset.Parse("2026-07-27T00:00:00Z"));
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var repository = new ExamAttemptRepository(context);
+
+        var page = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            data.ExamId,
+            ExamAttemptSortOrder.CreatedAtDescending,
+            0,
+            20);
+
+        Assert.Equal(data.LatestCreatedAttemptId, page.Items[0].AttemptId);
+        var item = page.Items.Single(candidate => candidate.AttemptId == older.Id);
+        Assert.Equal(older.CreatedAtUtc, item.CreatedAtUtc);
+        Assert.Equal(DateTimeOffset.Parse("2026-07-27T00:00:00Z"), item.UpdatedAtUtc);
+    }
+
+    [Fact]
+    public async Task Expired_query_is_scoped_to_owner()
+    {
+        var data = await SeedPageDataAsync();
+        await using var context = data.Context;
+        var deadline = DateTimeOffset.Parse("2026-07-27T00:00:00Z");
+        var attempts = await context.ExamAttempts
+            .Where(attempt => attempt.Status == ExamAttemptStatus.InProgress)
+            .ToListAsync();
+        foreach (var attempt in attempts)
+        {
+            SetProperty(attempt, nameof(ExamAttempt.ExpiresAtUtc), deadline.AddMinutes(-1));
+        }
+
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var repository = new ExamAttemptRepository(context);
+
+        var expired = await repository.GetExpiredAsync(data.StudentId, deadline);
+
+        Assert.Equal(2, expired.Count);
+        Assert.All(expired, attempt => Assert.Equal(data.StudentId, attempt.StudentId));
     }
 
     [Fact]
@@ -245,8 +394,10 @@ public sealed class ExamAttemptRepositoryTests
             context,
             student.Id,
             firstExam.Id,
+            firstSubmitted.Id,
             firstAbandoned.Id,
-            otherStudentAttempt.Id);
+            otherStudentAttempt.Id,
+            otherStudentActive.Id);
     }
 
     private static ExamAttempt NewAttempt(
@@ -259,10 +410,20 @@ public sealed class ExamAttemptRepositoryTests
     private static DateTimeOffset AtMinute(int minute) =>
         DateTimeOffset.Parse("2026-07-26T00:00:00Z").AddMinutes(minute);
 
+    private static void SetProperty<T>(
+        object target,
+        string propertyName,
+        T value) =>
+        target.GetType()
+            .GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public)!
+            .SetValue(target, value);
+
     private sealed record PageTestData(
         ExamForgeDbContext Context,
         Guid StudentId,
         Guid ExamId,
-        Guid LatestCompletedAttemptId,
-        Guid OtherStudentAttemptId);
+        Guid FirstSubmittedAttemptId,
+        Guid LatestCreatedAttemptId,
+        Guid OtherStudentAttemptId,
+        Guid OtherStudentActiveId);
 }

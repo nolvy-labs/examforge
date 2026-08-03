@@ -15,8 +15,10 @@ public enum ExamAttemptError
     ConcurrencyConflict,
     InvalidPatch,
     InvalidScoringConfiguration,
-    InvalidState,
-    InvalidPagination
+    InvalidAttemptStatus,
+    InvalidAttemptSort,
+    InvalidPage,
+    InvalidPageSize
 }
 
 public sealed record ActiveAttemptConflict(Guid ExistingAttemptId);

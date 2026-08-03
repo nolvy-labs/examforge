@@ -5,6 +5,7 @@ using ExamForge.Application.Admin.Exams.Dtos;
 using ExamForge.Application.Common;
 using ExamForge.Application.Student.ExamAttempts.Abstractions;
 using ExamForge.Application.Student.ExamAttempts.Dtos;
+using ExamForge.Application.Student.ExamAttempts.Enums;
 using ExamForge.Application.Student.ExamAttempts.Errors;
 using ExamForge.Application.Student.ExamAttempts.Models;
 using ExamForge.Application.Student.ExamAttempts.Patch;
@@ -357,19 +358,34 @@ public sealed class ExamAttemptService
                 ExamAttemptError.CurrentUserUnavailable);
         }
 
-        var normalizedState = request.State.Trim().ToLowerInvariant();
-        if (normalizedState is not ("in-progress" or "completed"))
+        if (!TryParseStatus(request.Status, out var status))
         {
             return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
-                ExamAttemptError.InvalidState);
+                ExamAttemptError.InvalidAttemptStatus);
         }
 
-        if (request.Page < 1 ||
-            request.PageSize is < 1 or > 100 ||
-            request.Page - 1 > int.MaxValue / request.PageSize)
+        if (!TryParseSort(request.Sort, out var sort))
         {
             return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
-                ExamAttemptError.InvalidPagination);
+                ExamAttemptError.InvalidAttemptSort);
+        }
+
+        if (request.Page < 1)
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.InvalidPage);
+        }
+
+        if (request.PageSize is < 1 or > 100)
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.InvalidPageSize);
+        }
+
+        if (request.Page - 1 > int.MaxValue / request.PageSize)
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.InvalidPage);
         }
 
         var studentId = _currentUser.UserId.Value;
@@ -387,8 +403,9 @@ public sealed class ExamAttemptService
 
         var page = await _repository.GetPageAsync(
             studentId,
-            normalizedState == "completed",
+            status,
             request.ExamId,
+            sort,
             checked((request.Page - 1) * request.PageSize),
             request.PageSize,
             cancellationToken);
@@ -405,6 +422,39 @@ public sealed class ExamAttemptService
                 request.Page > 1 && page.TotalItems > 0,
                 request.Page < totalPages));
         return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Success(response);
+    }
+
+    private static bool TryParseStatus(
+        string? value,
+        out ExamAttemptStatus? status)
+    {
+        status = value?.Trim().ToLowerInvariant() switch
+        {
+            null => null,
+            "in-progress" => ExamAttemptStatus.InProgress,
+            "submitted" => ExamAttemptStatus.Submitted,
+            "abandoned" => ExamAttemptStatus.Abandoned,
+            _ => null
+        };
+        return value is null || status.HasValue;
+    }
+
+    private static bool TryParseSort(
+        string? value,
+        out ExamAttemptSortOrder sort)
+    {
+        switch (value?.Trim().ToLowerInvariant())
+        {
+            case "created-at-desc":
+                sort = ExamAttemptSortOrder.CreatedAtDescending;
+                return true;
+            case "created-at-asc":
+                sort = ExamAttemptSortOrder.CreatedAtAscending;
+                return true;
+            default:
+                sort = default;
+                return false;
+        }
     }
 
     private async Task<Result<ExamAttempt, ExamAttemptError>> LoadOwnedAsync(
@@ -599,6 +649,7 @@ public sealed class ExamAttemptService
                 ? CalculatePercentage(attempt.Score, attempt.MaximumScore)
                 : null,
             attempt.Revision,
+            attempt.CreatedAtUtc,
             attempt.UpdatedAtUtc);
 
     private static decimal? CalculatePercentage(decimal? score, decimal? maximumScore)

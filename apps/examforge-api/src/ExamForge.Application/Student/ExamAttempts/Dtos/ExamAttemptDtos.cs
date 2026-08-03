@@ -12,7 +12,8 @@ public sealed class ExamAttemptPatchDocumentModel
 }
 
 public sealed record GetExamAttemptsRequest(
-    string State = "in-progress",
+    string? Status = null,
+    string? Sort = "created-at-desc",
     int Page = 1,
     int PageSize = 20,
     Guid? ExamId = null);
@@ -32,6 +33,7 @@ public sealed record ExamAttemptListItemResponse(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] decimal? MaximumScore,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] decimal? Percentage,
     long Revision,
+    DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc);
 
 public sealed record ExamAttemptDetailResponse(

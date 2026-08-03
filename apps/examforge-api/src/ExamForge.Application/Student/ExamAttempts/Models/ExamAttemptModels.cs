@@ -27,6 +27,7 @@ public sealed record ExamAttemptListModel(
     decimal? Score,
     decimal? MaximumScore,
     long Revision,
+    DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc);
 
 public sealed record ExamAttemptAnswerPatch(

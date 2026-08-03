@@ -1,6 +1,8 @@
 using System.Reflection;
 
 using ExamForge.Api.Controllers.Student.ExamAttempts;
+using ExamForge.Application.Common;
+using ExamForge.Application.Student.ExamAttempts.Dtos;
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Infrastructure.Persistence;
 
@@ -30,6 +32,10 @@ public sealed class ExamAttemptApiContractTests
         Assert.Equal(
             "~/api/v1/exam-attempts",
             Assert.Single(actions["GetPage"].GetCustomAttributes<HttpGetAttribute>()).Template);
+        Assert.Single(actions["GetPage"].GetCustomAttributes<AuthorizeAttribute>());
+        Assert.Equal(
+            typeof(ActionResult<CollectionResponse<ExamAttemptListItemResponse>>),
+            actions["GetPage"].ReturnType.GenericTypeArguments.Single());
         Assert.Equal(
             "~/api/v1/exam-attempts/{attemptId:guid}",
             Assert.Single(actions["Patch"].GetCustomAttributes<HttpPatchAttribute>()).Template);
@@ -39,6 +45,28 @@ public sealed class ExamAttemptApiContractTests
         Assert.Equal(
             "~/api/v1/exam-attempts/{attemptId:guid}/abandon",
             Assert.Single(actions["Abandon"].GetCustomAttributes<HttpPostAttribute>()).Template);
+    }
+
+    [Fact]
+    public void Attempt_list_contract_uses_status_sort_and_both_timestamps()
+    {
+        var requestProperties = typeof(GetExamAttemptsRequest)
+            .GetProperties()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Assert.Contains(nameof(GetExamAttemptsRequest.Status), requestProperties);
+        Assert.Contains(nameof(GetExamAttemptsRequest.Sort), requestProperties);
+        Assert.Contains(nameof(GetExamAttemptsRequest.ExamId), requestProperties);
+        Assert.DoesNotContain("State", requestProperties);
+
+        var responseProperties = typeof(ExamAttemptListItemResponse)
+            .GetProperties()
+            .Select(property => property.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Assert.Contains(nameof(ExamAttemptListItemResponse.CreatedAtUtc), responseProperties);
+        Assert.Contains(nameof(ExamAttemptListItemResponse.UpdatedAtUtc), responseProperties);
+        Assert.Contains(nameof(ExamAttemptListItemResponse.ExamTitle), responseProperties);
+        Assert.Contains(nameof(ExamAttemptListItemResponse.Score), responseProperties);
     }
 
     [Fact]

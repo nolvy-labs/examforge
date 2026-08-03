@@ -1,4 +1,5 @@
 using ExamForge.Application.Student.ExamAttempts.Abstractions;
+using ExamForge.Application.Student.ExamAttempts.Enums;
 using ExamForge.Application.Student.ExamAttempts.Models;
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Domain.Exams;
@@ -151,26 +152,32 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
 
     public async Task<ExamAttemptPageModel> GetPageAsync(
         Guid studentId,
-        bool completed,
+        ExamAttemptStatus? status,
         Guid? examId,
+        ExamAttemptSortOrder sort,
         int skip,
         int take,
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.ExamAttempts.AsNoTracking()
             .Where(attempt => attempt.StudentId == studentId);
-        query = completed
-            ? query.Where(attempt => attempt.Status != ExamAttemptStatus.InProgress)
-            : query.Where(attempt => attempt.Status == ExamAttemptStatus.InProgress);
+        if (status.HasValue)
+        {
+            query = query.Where(attempt => attempt.Status == status.Value);
+        }
+
         if (examId.HasValue)
         {
             query = query.Where(attempt => attempt.ExamId == examId.Value);
         }
 
         var totalItems = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderByDescending(attempt => attempt.UpdatedAtUtc)
-            .ThenByDescending(attempt => attempt.Id)
+        var orderedQuery = sort == ExamAttemptSortOrder.CreatedAtAscending
+            ? query.OrderBy(attempt => attempt.CreatedAtUtc)
+                .ThenBy(attempt => attempt.Id)
+            : query.OrderByDescending(attempt => attempt.CreatedAtUtc)
+                .ThenByDescending(attempt => attempt.Id);
+        var items = await orderedQuery
             .Skip(skip)
             .Take(take)
             .Select(attempt => new ExamAttemptListModel(
@@ -187,6 +194,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
                 attempt.Score,
                 attempt.MaximumScore,
                 attempt.Revision,
+                attempt.CreatedAtUtc,
                 attempt.UpdatedAtUtc))
             .ToListAsync(cancellationToken);
         return new ExamAttemptPageModel(items, totalItems);

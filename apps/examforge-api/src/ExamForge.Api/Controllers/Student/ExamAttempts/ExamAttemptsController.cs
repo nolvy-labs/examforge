@@ -1,3 +1,5 @@
+using System.Globalization;
+
 using ExamForge.Api.Common;
 using ExamForge.Api.Common.Constants;
 using ExamForge.Application.Admin.Exams.Dtos;
@@ -5,7 +7,6 @@ using ExamForge.Application.Common;
 using ExamForge.Application.Student.ExamAttempts.Dtos;
 using ExamForge.Application.Student.ExamAttempts.Errors;
 using ExamForge.Application.Student.ExamAttempts.Services;
-using ExamForge.Domain.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
@@ -56,14 +57,55 @@ public sealed class ExamAttemptsController : StudentBaseController
     }
 
     [HttpGet($"~/{ApiRoutes.V1}/exam-attempts")]
+    [Authorize]
     public async Task<ActionResult<CollectionResponse<ExamAttemptListItemResponse>>> GetPage(
-        [FromQuery] GetExamAttemptsRequest request,
+        [FromQuery] string? status,
+        [FromQuery] string? sort,
+        [FromQuery] string? page,
+        [FromQuery] string? pageSize,
+        [FromQuery] Guid? examId,
         CancellationToken cancellationToken)
     {
+        var defaults = new GetExamAttemptsRequest();
+        var request = new GetExamAttemptsRequest(
+            QueryValueOrDefault("status", status),
+            QueryValueOrDefault("sort", sort ?? defaults.Sort),
+            QueryIntOrDefault("page", page, defaults.Page),
+            QueryIntOrDefault("pageSize", pageSize, defaults.PageSize),
+            examId);
         var result = await _service.GetPageAsync(request, cancellationToken);
         return result.IsSuccess
             ? Ok(result.Value)
             : ToActionResult(result.Error, result.AdditionalData);
+    }
+
+    private string? QueryValueOrDefault(string name, string? defaultValue) =>
+        Request.Query.TryGetValue(name, out var value)
+            ? value.ToString()
+            : defaultValue;
+
+    private int QueryIntOrDefault(
+        string name,
+        string? boundValue,
+        int defaultValue)
+    {
+        if (Request.Query.TryGetValue(name, out var value))
+        {
+            boundValue = value.ToString();
+        }
+
+        if (boundValue is null)
+        {
+            return defaultValue;
+        }
+
+        return int.TryParse(
+            boundValue,
+            NumberStyles.Integer,
+            CultureInfo.InvariantCulture,
+            out var parsed)
+                ? parsed
+                : 0;
     }
 
     [HttpPatch($"~/{ApiRoutes.V1}/exam-attempts/{{attemptId:guid}}")]
@@ -220,14 +262,22 @@ public sealed class ExamAttemptsController : StudentBaseController
                 StatusCodes.Status409Conflict,
                 "Conflict",
                 "The frozen exam version has an invalid scoring configuration."),
-            ExamAttemptError.InvalidState => CreateProblem(
+            ExamAttemptError.InvalidAttemptStatus => CreateProblem(
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
-                "State must be 'in-progress' or 'completed'."),
-            ExamAttemptError.InvalidPagination => CreateProblem(
+                "Status must be 'in-progress', 'submitted', or 'abandoned'."),
+            ExamAttemptError.InvalidAttemptSort => CreateProblem(
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
-                "Page must be at least 1 and pageSize must be between 1 and 100."),
+                "Sort must be 'created-at-desc' or 'created-at-asc'."),
+            ExamAttemptError.InvalidPage => CreateProblem(
+                StatusCodes.Status400BadRequest,
+                "Bad Request",
+                "Page must be at least 1."),
+            ExamAttemptError.InvalidPageSize => CreateProblem(
+                StatusCodes.Status400BadRequest,
+                "Bad Request",
+                "Page size must be between 1 and 100."),
             _ => CreateProblem(
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
@@ -268,8 +318,10 @@ public sealed class ExamAttemptsController : StudentBaseController
             ExamAttemptError.AttemptAlreadyAbandoned => "attempt_already_abandoned",
             ExamAttemptError.InvalidPatch => "invalid_patch",
             ExamAttemptError.InvalidScoringConfiguration => "invalid_scoring_configuration",
-            ExamAttemptError.InvalidState => "invalid_state",
-            ExamAttemptError.InvalidPagination => "invalid_pagination",
+            ExamAttemptError.InvalidAttemptStatus => "invalid_attempt_status",
+            ExamAttemptError.InvalidAttemptSort => "invalid_attempt_sort",
+            ExamAttemptError.InvalidPage => "invalid_page",
+            ExamAttemptError.InvalidPageSize => "invalid_page_size",
             _ => error.ToString().ToLowerInvariant()
         };
 

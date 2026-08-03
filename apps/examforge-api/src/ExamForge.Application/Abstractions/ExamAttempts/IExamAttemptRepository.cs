@@ -1,3 +1,4 @@
+using ExamForge.Application.Student.ExamAttempts.Enums;
 using ExamForge.Application.Student.ExamAttempts.Models;
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Domain.Exams;
@@ -27,8 +28,9 @@ public interface IExamAttemptRepository
         CancellationToken cancellationToken = default);
     Task<ExamAttemptPageModel> GetPageAsync(
         Guid studentId,
-        bool completed,
+        ExamAttemptStatus? status,
         Guid? examId,
+        ExamAttemptSortOrder sort,
         int skip,
         int take,
         CancellationToken cancellationToken = default);
