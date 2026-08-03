@@ -196,6 +196,7 @@ export const studentExamAttemptPageSchema = z.object({
 			maximumScore: nullableOptionalScoreSchema,
 			percentage: nullableOptionalScoreSchema,
 			revision: nonnegativeIntegerSchema,
+			createdAtUtc: dateTimeSchema,
 			updatedAtUtc: dateTimeSchema,
 		})
 	),

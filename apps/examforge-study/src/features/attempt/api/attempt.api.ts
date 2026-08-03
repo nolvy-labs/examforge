@@ -4,7 +4,7 @@ import { parseApiResponse } from "@/lib/api/api.schema"
 import type {
 	AttemptPatchOperation,
 	AttemptResponse,
-	ExamAttemptState,
+	GetAttemptsParams,
 } from "../types/attempt.type"
 import {
 	attemptDetailSchema,
@@ -63,20 +63,18 @@ export const submitAttempt = (attemptId: string, etag: string) => transitionAtte
 export const abandonAttempt = (attemptId: string, etag: string) => transitionAttempt(attemptId, "abandon", etag)
 
 export async function getStudentExamAttempts(
-	examId: string,
-	state: ExamAttemptState,
-	page: number,
-	pageSize: number,
+	request: GetAttemptsParams = {},
 	signal?: AbortSignal
 ) {
-	const params = new URLSearchParams({
-		examId,
-		state,
-		page: String(page),
-		pageSize: String(pageSize),
-	})
+	const params = new URLSearchParams()
+	if (request.status) params.set("status", request.status)
+	if (request.examId) params.set("examId", request.examId)
+	if (request.sort) params.set("sort", request.sort)
+	if (request.page != null) params.set("page", String(request.page))
+	if (request.pageSize != null) params.set("pageSize", String(request.pageSize))
+	const query = params.toString()
 	const response = await apiClient.get<unknown>(
-		`/api/v1/exam-attempts?${params.toString()}`,
+		`/api/v1/exam-attempts${query ? `?${query}` : ""}`,
 		{ signal }
 	)
 	return parseApiResponse(

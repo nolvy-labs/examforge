@@ -25,6 +25,7 @@ export function PasswordInput({
 				size="icon-sm"
 				className="absolute top-0.5 right-0.5 text-muted-foreground hover:text-foreground"
 				onClick={() => setIsVisible((visible) => !visible)}
+				aria-label={`${isVisible ? "Hide" : "Show"} ${visibilityLabel}`}
 			>
 				{isVisible ? (
 					<EyeOff />

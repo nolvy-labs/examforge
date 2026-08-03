@@ -84,6 +84,9 @@ export function useAttemptAutosave(
 				)
 			}
 			actions.acknowledge(snapshot, etag, revision)
+			void queryClient.invalidateQueries({
+				queryKey: attemptQueryKeys.lists(),
+			})
 			conflictRetryRef.current = false
 			if (actions.hasDirtyChanges()) {
 				timerRef.current = setTimeout(() => {

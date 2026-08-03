@@ -70,7 +70,7 @@ function AttemptQuestionResult({
 			return null;
 		}
 		return question.answer?.gradingStatus ?? null
-	}, [question])
+	}, [group, question])
 
 	const statusLabel = useCallback((status: GradingStatus | null) => {
 		switch (status) {

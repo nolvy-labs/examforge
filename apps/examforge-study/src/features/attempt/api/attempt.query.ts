@@ -3,6 +3,7 @@
 import {
 	keepPreviousData,
 	useMutation,
+	useInfiniteQuery,
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query"
@@ -18,6 +19,7 @@ import {
 	ATTEMPT_HISTORY_PAGE_SIZE,
 	attemptQueryKeys,
 } from "./attempt.query-key"
+import type { GetAttemptsParams } from "../types/attempt.type"
 
 export function useAttempt(attemptId: string) {
 	return useQuery({
@@ -41,7 +43,7 @@ export function useAttemptTransition(
 		onSuccess: async (response) => {
 			queryClient.setQueryData(attemptQueryKeys.detail(attemptId), response)
 			await queryClient.invalidateQueries({
-				queryKey: attemptQueryKeys.allForExam(response.data.examId),
+				queryKey: attemptQueryKeys.lists(),
 			})
 		},
 	})
@@ -49,8 +51,8 @@ export function useAttemptTransition(
 
 export function useActiveExamAttempt(examId: string, enabled: boolean) {
 	return useQuery({
-		queryKey: attemptQueryKeys.activeForExam(examId),
-		queryFn: ({ signal }) => getStudentExamAttempts(examId, "in-progress", 1, 1, signal),
+		queryKey: attemptQueryKeys.list({ examId, status: "in-progress", page: 1, pageSize: 1 }),
+		queryFn: ({ signal }) => getStudentExamAttempts({ examId, status: "in-progress", page: 1, pageSize: 1 }, signal),
 		enabled,
 		staleTime: 0,
 	})
@@ -62,18 +64,37 @@ export function useExamAttemptHistory(
 	enabled: boolean
 ) {
 	return useQuery({
-		queryKey: attemptQueryKeys.historyForExam(examId, page),
+		queryKey: attemptQueryKeys.list({ examId, sort: "created-at-desc", page, pageSize: ATTEMPT_HISTORY_PAGE_SIZE }),
 		queryFn: ({ signal }) =>
-			getStudentExamAttempts(
-				examId,
-				"completed",
-				page,
-				ATTEMPT_HISTORY_PAGE_SIZE,
-				signal
-			),
+			getStudentExamAttempts({ examId, sort: "created-at-desc", page, pageSize: ATTEMPT_HISTORY_PAGE_SIZE }, signal),
 		enabled,
 		staleTime: 0,
 		placeholderData: keepPreviousData,
+	})
+}
+
+export function useAttempts(params: GetAttemptsParams, enabled = true) {
+	return useQuery({
+		queryKey: attemptQueryKeys.list(params),
+		queryFn: ({ signal }) => getStudentExamAttempts(params, signal),
+		enabled,
+		staleTime: 0,
+	})
+}
+
+export function useInfiniteAttempts(
+	params: Omit<GetAttemptsParams, "page">,
+	enabled = true
+) {
+	return useInfiniteQuery({
+		queryKey: attemptQueryKeys.infinite(params),
+		queryFn: ({ pageParam, signal }) =>
+			getStudentExamAttempts({ ...params, page: pageParam }, signal),
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined,
+		enabled,
+		staleTime: 0,
 	})
 }
 
@@ -83,7 +104,7 @@ export function useCreateExamAttempt(examId: string) {
 		mutationFn: () => createStudentExamAttempt(examId),
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({
-				queryKey: attemptQueryKeys.allForExam(examId),
+				queryKey: attemptQueryKeys.lists(),
 			})
 		},
 	})

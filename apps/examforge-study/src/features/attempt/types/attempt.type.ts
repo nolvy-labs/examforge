@@ -1,4 +1,13 @@
 export type AttemptStatus = "in-progress" | "submitted" | "abandoned"
+export type AttemptSort = "created-at-desc" | "created-at-asc"
+
+export interface GetAttemptsParams {
+	status?: AttemptStatus
+	examId?: string
+	sort?: AttemptSort
+	page?: number
+	pageSize?: number
+}
 export type AttemptExamType = "simple" | "ielts"
 export type AttemptSectionKind =
 	| "default"
@@ -131,6 +140,7 @@ export interface StudentExamAttempt {
 	maximumScore?: number | null
 	percentage?: number | null
 	revision: number
+	createdAtUtc: string
 	updatedAtUtc: string
 }
 
@@ -145,8 +155,6 @@ export interface StudentExamAttemptPage {
 		hasNextPage: boolean
 	}
 }
-
-export type ExamAttemptState = "in-progress" | "completed"
 
 export function getAttemptStatus(value: AttemptStatus) {
 	return value

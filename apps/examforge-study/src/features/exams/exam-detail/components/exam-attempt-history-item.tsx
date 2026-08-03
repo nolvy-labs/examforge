@@ -4,6 +4,10 @@ import { Badge } from "@/components/shadcn/badge"
 import { buttonVariants } from "@/components/shadcn/button"
 import { Card, CardContent } from "@/components/shadcn/card"
 import type { StudentExamAttempt } from "@/features/attempt/types/attempt.type"
+import {
+	getAttemptAction,
+	getAttemptStatusLabel,
+} from "@/features/attempt/model/attempt-summary"
 import { cn } from "@/lib/utils"
 
 import {
@@ -11,7 +15,6 @@ import {
 	formatDate,
 	formatNumber,
 } from "../model/exam-detail"
-import { useMemo } from "react"
 
 function getAttemptPresentation(attempt: StudentExamAttempt) {
 	if (attempt.status === "submitted") {
@@ -23,6 +26,14 @@ function getAttemptPresentation(attempt: StudentExamAttempt) {
 					? "Unavailable"
 					: `${formatNumber(attempt.percentage)}%`,
 			action: "View Result",
+		}
+	}
+	if (attempt.status === "in-progress") {
+		return {
+			label: "In progress",
+			finishedAt: null,
+			percentage: "Unavailable",
+			action: "Continue",
 		}
 	}
 	return {
@@ -40,14 +51,14 @@ interface Props {
 
 export function ExamAttemptHistoryItem({ attempt, variant }: Props) {
 	const presentation = getAttemptPresentation(attempt)
-	
-	const href = `/attempts/${attempt.attemptId}/result`
+	const action = getAttemptAction(attempt)
+	const href = action.href
 
-	const statusBadge = useMemo(() => (
+	const statusBadge = (
 		<Badge variant={attempt.status === "submitted" ? "default" : "secondary"}>
-			{presentation.label}
+			{getAttemptStatusLabel(attempt.status)}
 		</Badge>
-	), [attempt.status, presentation.label])
+	)
 
 	if (variant === "table") {
 		return (
