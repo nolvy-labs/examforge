@@ -24,6 +24,7 @@ import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldTit
 import { Fragment } from "react/jsx-runtime"
 import { Separator } from "@/components/shadcn/separator"
 import { Badge } from "@/components/shadcn/badge"
+import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
 
 interface AttemptQuestionBlockProps {
 	question: AttemptQuestion
@@ -115,7 +116,39 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 		)
 	}
 
-	const multiple = type === "multiple-choice-multiple"
+	if (type === "multiple-choice-single") {
+		return (
+			<RadioGroup value={selected.length > 0 ? selected[0] : ""} onValueChange={(value) => setOptions(question.id, [value])}>
+				{question.options.map((option) => {
+					return (
+						<FieldLabel key={option.id}>
+							<Field orientation="horizontal">
+								<RadioGroupItem value={option.id} id={option.id} />
+								<FieldContent className="flex-row gap-2 items-start justify-start">
+									<FieldTitle>
+										<ContentRenderer content={option.label || ""} />
+									</FieldTitle>
+									<FieldDescription className="whitespace-break-spaces">
+										<ContentRenderer content={option.text} />
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+						</FieldLabel>
+					)
+				})}
+				<Button
+					variant="link"
+					size="xs"
+					disabled={!selected.length}
+					className={"ml-auto"}
+					onClick={() => setOptions(question.id, [])}
+				>
+					Clear answer
+				</Button>
+			</RadioGroup>
+		)
+	}
+
 	return (
 		<FieldGroup className="gap-2">
 			{question.options.map((option) => {
@@ -123,25 +156,17 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 				return (
 					<FieldLabel key={option.id}>
 						<Field orientation="horizontal">
-							{multiple ? (
-								<Checkbox
-									checked={checked}
-									onCheckedChange={(next) =>
-										setOptions(
-											question.id,
-											next
-												? [...selected, option.id]
-												: selected.filter((id) => id !== option.id)
-										)
-									}
-								/>
-							) : (
-								<Checkbox
-									checked={checked}
-									className="rounded-full"
-									onCheckedChange={() => setOptions(question.id, [option.id])}
-								/>
-							)}
+							<Checkbox
+								checked={checked}
+								onCheckedChange={(next) =>
+									setOptions(
+										question.id,
+										next
+											? [...selected, option.id]
+											: selected.filter((id) => id !== option.id)
+									)
+								}
+							/>
 							<FieldContent className="flex-row gap-2 items-start justify-start">
 								<FieldTitle>
 									<ContentRenderer content={option.label || ""} />

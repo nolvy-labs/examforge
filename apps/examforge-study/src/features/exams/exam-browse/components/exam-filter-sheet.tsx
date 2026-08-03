@@ -40,7 +40,7 @@ export function ExamFilterSheet({ filters }: Props) {
 				Filters{filters.activeCount > 0 ? ` (${filters.activeCount})` : ""}
 			</SheetTrigger>
 			<SheetContent className="flex flex-col py-4">
-				<div className="min-h-0 flex-1 overflow-y-auto px-4">
+				<div className="min-h-0 max-h-dvh flex-1 overflow-y-auto px-4">
 					<ExamFilterPanel
 						data={filters.data}
 						idPrefix="mobile"

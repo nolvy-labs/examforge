@@ -3,11 +3,7 @@
 import { Fragment, useState } from "react"
 import { ChevronDown } from "lucide-react"
 
-import {
-	Alert,
-	AlertDescription,
-	AlertTitle,
-} from "@/components/shadcn/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
 import { Checkbox } from "@/components/shadcn/checkbox"
 import { Skeleton } from "@/components/shadcn/skeleton"
@@ -16,6 +12,9 @@ import { cn } from "@/lib/utils"
 import type { ExamBrowseFilterData } from "../hooks/use-exam-browse-query"
 import type { ExamTagType } from "../../types/exam.types"
 import { Separator } from "@/components/shadcn/separator"
+import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldTitle } from "@/components/shadcn/field"
+import { Label } from "@/components/shadcn/label"
 
 const TAG_TYPE_LABELS: Record<ExamTagType, string> = {
 	unknown: "Other",
@@ -91,8 +90,7 @@ function CategoryList({ data, category, idPrefix = "desktop", onCategoryChange }
 		(item) => item.examCount > 0 || item.slug === category
 	)
 	return (
-		<fieldset className="space-y-3">
-			<legend className="mb-3 text-sm font-semibold">Category</legend>
+		<Fragment>
 			{data.categoryError ? (
 				<Alert>
 					<AlertTitle>Could not load categories.</AlertTitle>
@@ -115,40 +113,36 @@ function CategoryList({ data, category, idPrefix = "desktop", onCategoryChange }
 					<Skeleton className="h-4 w-11/12" />
 				</div>
 			) : (
-				<div className="space-y-2">
-					<label className="flex cursor-pointer items-center gap-3 py-1 text-sm">
-						<input
-							type="radio"
-							name={`${idPrefix}-exam-category`}
-							checked={!category}
-							onChange={() => onCategoryChange("")}
-							className="size-4 accent-primary"
-						/>
-						<span className="min-w-0 flex-1">All categories</span>
-					</label>
-					{visibleCategories?.map((item) => (
-						<label
-							key={item.id}
-							className="flex cursor-pointer items-center gap-3 py-1 text-sm"
-						>
-							<input
-								type="radio"
-								name={`${idPrefix}-exam-category`}
-								checked={category === item.slug}
-								onChange={() => onCategoryChange(item.slug)}
-								className="size-4 accent-primary"
-							/>
-							<span className="min-w-0 flex-1 wrap-break-word">
-								{item.name}
-							</span>
-							<span className="text-xs text-muted-foreground">
-								{item.examCount}
-							</span>
-						</label>
-					))}
-				</div>
+				<RadioGroup value={category} onValueChange={onCategoryChange} className="gap-4">
+					<Label htmlFor={`${idPrefix}-category`}>Category</Label>
+					<Field orientation="horizontal">
+						<RadioGroupItem value={""} id={"all categories"} />
+						<FieldContent className="flex-row gap-2 items-start justify-start">
+							<FieldLabel htmlFor={"all categories"}>
+								All categories
+							</FieldLabel>
+						</FieldContent>
+					</Field>
+					{visibleCategories && visibleCategories.length > 0 && (
+						<Fragment>
+							{visibleCategories.map((item) => (
+								<Field orientation="horizontal" key={item.id}>
+									<RadioGroupItem value={item.slug} id={item.id} />
+									<FieldContent className="flex-row gap-2 items-start justify-start">
+										<FieldLabel htmlFor={item.id}>
+											{item.name}
+										</FieldLabel>
+										<FieldDescription>
+											{item.examCount}
+										</FieldDescription>
+									</FieldContent>
+								</Field>
+							))}
+						</Fragment>
+					)}
+				</RadioGroup>
 			)}
-		</fieldset>
+		</Fragment>
 	)
 }
 
@@ -210,38 +204,31 @@ function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListPro
 						)
 
 					return (
-						<fieldset key={key} className="space-y-3">
-							<legend className="mb-3 text-sm font-semibold">
-								{TAG_TYPE_LABELS[group.type]}
-							</legend>
-							<div className="space-y-2">
-								{displayItems.map((item) => {
-									const id = item.id.toLowerCase()
-									const inputId = `${idPrefix}-tag-${key}-${id}`
-									return (
-										<label
-											key={item.id}
-											htmlFor={inputId}
-											className="flex cursor-pointer items-start gap-3 py-1 text-sm"
-										>
-											<Checkbox
-												id={inputId}
-												checked={tagIds.includes(id)}
-												onCheckedChange={(checked) =>
-													onTagChange(id, checked)
-												}
-												className="mt-0.5"
-											/>
-											<span className="min-w-0 flex-1 wrap-break-word">
+						<FieldGroup key={key} className="gap-4">
+							<Label htmlFor={`${idPrefix}-tag-${key}`}>Tag</Label>
+							{displayItems.map((item) => {
+								const id = item.id.toLowerCase()
+								const inputId = `${idPrefix}-tag-${key}-${id}`
+								return (
+									<Field orientation="horizontal" key={id}>
+										<Checkbox
+											id={inputId}
+											checked={tagIds.includes(id)}
+											onCheckedChange={(checked) =>
+												onTagChange(id, checked)
+											}
+										/>
+										<FieldContent className="flex-row gap-2 items-start justify-start">
+											<FieldLabel htmlFor={inputId}>
 												{item.name}
-											</span>
-											<span className="shrink-0 text-xs text-muted-foreground">
+											</FieldLabel>
+											<FieldDescription className="whitespace-break-spaces">
 												{item.examCount}
-											</span>
-										</label>
-									)
-								})}
-							</div>
+											</FieldDescription>
+										</FieldContent>
+									</Field>
+								)
+							})}
 							{items.length > 6 && (
 								<Button
 									type="button"
@@ -259,7 +246,7 @@ function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListPro
 									<ChevronDown className={cn("transition-transform", expanded && "rotate-180")} />
 								</Button>
 							)}
-						</fieldset>
+						</FieldGroup>
 					)
 				})
 			)}
