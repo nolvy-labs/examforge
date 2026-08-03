@@ -23,7 +23,7 @@ export function getAnswerText(question: AttemptQuestion) {
 		question.options
 			.filter((option) => selected.has(option.id))
 			.map((option) => `${option.label ? `${option.label}. ` : ""}${option.text}`)
-			.join(", ") || "Unanswered"
+			.join("\n") || "Unanswered"
 	)
 }
 

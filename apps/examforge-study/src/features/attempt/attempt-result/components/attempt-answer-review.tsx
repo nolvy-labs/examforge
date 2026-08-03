@@ -3,14 +3,9 @@ import { CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 import type { AttemptQuestion } from "../../types/attempt.type"
-import {
-	getGradingStatus,
-	getQuestionType,
-} from "../../types/attempt.type"
-import {
-	formatAttemptNumber,
-	getAnswerText,
-} from "../model/attempt-result"
+import { getGradingStatus, getQuestionType } from "../../types/attempt.type"
+import { formatAttemptNumber, getAnswerText } from "../model/attempt-result"
+import { Fragment } from "react"
 
 interface AttemptAnswerReviewProps {
 	question: AttemptQuestion
@@ -26,7 +21,33 @@ export function AttemptAnswerReview({
 	const status = getGradingStatus(answer?.gradingStatus)
 
 	return (
-		<div className="mt-4 space-y-4 text-sm">
+		<div className="space-y-4 text-sm">
+			{(type === "multiple-choice-single" || type === "multiple-choice-multiple") && (
+				<div className="rounded-xl bg-slate-50 p-4">
+					<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+						Options
+					</p>
+					<ul className="mt-2 space-y-2">
+						{question.options.map((option) => {
+							const solution = question.solution?.options.find(
+								(item) => item.optionId === option.id
+							)
+							return (
+								<li key={option.id}>
+									{option.label && `${option.label}. `}
+									{option.text}
+									{solution?.explanation && (
+										<p className="mt-0.5 text-xs font-normal text-slate-600">
+											{solution.explanation}
+										</p>
+									)}
+								</li>
+							)
+						})}
+					</ul>
+				</div>
+			)}
+
 			<div className="rounded-xl bg-slate-50 p-4">
 				<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
 					Your answer
@@ -36,7 +57,7 @@ export function AttemptAnswerReview({
 				</p>
 			</div>
 			{showGrading && (
-				<>
+				<Fragment>
 					<div className="flex flex-wrap items-center gap-2">
 						{status && <GradingBadge status={status} />}
 						{answer?.awardedScore != null && answer.maximumScore != null && (
@@ -65,14 +86,11 @@ export function AttemptAnswerReview({
 										const solution = question.solution?.options.find(
 											(item) => item.optionId === option.id
 										)
+										if (solution?.isCorrect !== true) return null
 										return (
 											<li
 												key={option.id}
-												className={
-													solution?.isCorrect
-														? "font-medium text-emerald-800"
-														: "text-slate-600"
-												}
+												className="font-medium text-emerald-800"
 											>
 												{option.label && `${option.label}. `}
 												{option.text}
@@ -96,7 +114,7 @@ export function AttemptAnswerReview({
 							)}
 						</div>
 					)}
-				</>
+				</Fragment>
 			)}
 		</div>
 	)

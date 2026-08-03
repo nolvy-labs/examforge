@@ -17,6 +17,7 @@ import {
 } from "../stores/attempt.store"
 import type { AttemptQuestion, AttemptSection } from "../../types/attempt.type"
 import { getQuestionType } from "../../types/attempt.type"
+import { Button } from "@/components/shadcn/button"
 
 export function AttemptQuestionBlock({
 	question,
@@ -141,15 +142,15 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 					)
 				})}
 			</div>
-			{selected.length > 0 && (
-				<button
-					type="button"
-					onClick={() => setOptions(question.id, [])}
-					className="mt-3 rounded text-xs font-medium text-slate-600 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
-				>
-					Clear answer
-				</button>
-			)}
+			<Button 
+				variant="link"
+				size="xs"
+				disabled={!selected.length}
+				className={"mt-3"}
+				onClick={() => setOptions(question.id, [])}
+			>
+				Clear answer
+			</Button>
 		</fieldset>
 	)
 }
