@@ -9,7 +9,7 @@ const routes = [
 	{ href: "/dashboard", label: "Dashboard" },
 	{ href: "/exams", label: "Exams" },
 	{ href: "/history", label: "History" },
-	{ href: "/statistics", label: "Statistics", disable: true },
+	{ href: "/statistics", label: "Statistics" },
 ]
 
 

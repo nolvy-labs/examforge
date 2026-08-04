@@ -64,6 +64,7 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 						type="button"
 						variant="ghost"
 						className="w-full justify-start text-xs"
+						onClick={() => router.push("/statistics")}
 					>
 						<ChartLine />
 						{"Statistics"}
@@ -72,6 +73,7 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 						type="button"
 						variant="ghost"
 						className="w-full justify-start text-xs"
+						onClick={() => router.push("/history")}
 					>
 						<Clock />
 						{"History"}

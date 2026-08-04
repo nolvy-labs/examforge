@@ -20,6 +20,7 @@ import {
 	attemptQueryKeys,
 } from "./attempt.query-key"
 import type { CreateExamAttemptRequest, GetAttemptsParams } from "../types/attempt.type"
+import { invalidateStatisticsAfterSubmission } from "@/features/statistics/api/statistics.key"
 
 export function useAttempt(attemptId: string) {
 	return useQuery({
@@ -45,6 +46,9 @@ export function useAttemptTransition(
 			await queryClient.invalidateQueries({
 				queryKey: attemptQueryKeys.lists(),
 			})
+			if (action === "submit") {
+				await invalidateStatisticsAfterSubmission(queryClient)
+			}
 		},
 	})
 }
