@@ -4,6 +4,7 @@ using ExamForge.Application.Admin.Exams.Abstractions;
 using ExamForge.Application.Student.ExamAttempts.Abstractions;
 using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.Exams.Abstractions;
+using ExamForge.Application.Student.Statistics.Abstractions;
 using ExamForge.Infrastructure.Auth;
 using ExamForge.Infrastructure.ExamAttempts;
 using ExamForge.Infrastructure.ExamClassifications.Admin;
@@ -11,6 +12,7 @@ using ExamForge.Infrastructure.ExamClassifications.Student;
 using ExamForge.Infrastructure.Exams.Admin;
 using ExamForge.Infrastructure.Exams.Student;
 using ExamForge.Infrastructure.Persistence;
+using ExamForge.Infrastructure.Statistics;
 using ExamForge.Infrastructure.Users;
 
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminExamCategoryRepository, AdminExamCategoryRepository>();
         services.AddScoped<IStudentExamDiscoveryQuery, StudentExamDiscoveryQuery>();
         services.AddScoped<IStudentExamQuery, StudentExamQuery>();
+        services.AddScoped<IStudentStatisticsQuery, StudentStatisticsQuery>();
 
         services.AddScoped<IAdminExamRepository, AdminExamRepository>();
         services.AddSingleton<IAdminExamSlugGenerator, AdminExamSlugGenerator>();
