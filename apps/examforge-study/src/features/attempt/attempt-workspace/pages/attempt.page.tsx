@@ -1,5 +1,9 @@
 "use client"
 
+import { ArrowUp } from "lucide-react"
+
+import { Button } from "@/components/shadcn/button"
+
 import { AttemptFailure, AttemptLoading } from "../components/attempt-workspace-feedback"
 import { AttemptWorkspaceContent } from "../components/attempt-workspace-content"
 import { AttemptWorkspaceHeader } from "../components/attempt-workspace-header"
@@ -64,6 +68,24 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
 				onClose={workspace.endDialog.close}
 				onConfirm={workspace.endDialog.confirm}
 			/>
+			<Button
+				type="button"
+				variant="outline"
+				size="icon-lg"
+				className="fixed right-4 bottom-4 z-20 rounded-full bg-white shadow-md sm:right-6 sm:bottom-6"
+				aria-label="Scroll to top"
+				title="Scroll to top"
+				onClick={() =>
+					window.scrollTo({
+						top: 0,
+						behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+							? "auto"
+							: "smooth",
+					})
+				}
+			>
+				<ArrowUp />
+			</Button>
 		</div>
 	)
 }

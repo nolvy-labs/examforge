@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, Circle, LoaderCircle, Save, TriangleAlert } from "lucide-react"
+import { CheckCircle2, Circle, FlagIcon, LoaderCircle, Save, TriangleAlert } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Checkbox } from "@/components/shadcn/checkbox"
@@ -25,6 +25,7 @@ import { Fragment } from "react/jsx-runtime"
 import { Separator } from "@/components/shadcn/separator"
 import { Badge } from "@/components/shadcn/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
+import { Toggle } from "@/components/shadcn/toggle"
 
 interface AttemptQuestionBlockProps {
 	question: AttemptQuestion
@@ -38,9 +39,9 @@ export function AttemptQuestionBlock({
 	const type = getQuestionType(question.type)
 
 	return (
-		<Card id={`question-${question.id}`}>
-			<CardContent>
-				<div className="flex items-start gap-3">
+		<Card id={`question-${question.id}`} className="scroll-mt-24 p-0">
+			<CardContent className="p-2 lg:p-4">
+				<div className="flex items-start gap-2">
 					<Badge className="aspect-square size-8">
 						{number}
 					</Badge>
@@ -202,7 +203,7 @@ export function AttemptNavigator({
 	onSelect,
 }: AttemptNavigatorProps) {
 
-	const { selectedSectionId, selectedBlockId } = useAttemptNavigation()
+	const { selectedSectionId, selectedBlockId, displayMode } = useAttemptNavigation()
 	const { drafts, dirty } = useAttemptAnswers()
 	const { saveState } = useAttemptSaveStatus()
 
@@ -210,50 +211,56 @@ export function AttemptNavigator({
 		<nav className="space-y-5">
 			{sections.map((section, sectionIndex) => (
 				<div key={section.id}>
-					<button
+					<Button
 						type="button"
+						variant={selectedSectionId === section.id ? "default" : "ghost"}
+						size="sm"
 						onClick={() => onSelect(section.id, section.questions[0]?.id ?? "")}
-						className={cn(
-							"w-full rounded-lg px-2 py-2 text-left text-sm font-semibold",
-							selectedSectionId === section.id
-								? "bg-slate-900 text-white"
-								: "text-slate-700 hover:bg-slate-100"
-						)}
+						className="w-full justify-start px-2 text-left font-semibold"
 					>
 						{sectionIndex + 1}. {section.title}
-					</button>
+					</Button>
 					<div className="mt-2 grid grid-cols-5 gap-2">
 						{section.questions.map((question, questionIndex) => {
+							const isGroup = getQuestionType(question.type) === "group"
 							const ids =
-								getQuestionType(question.type) === "group"
+								isGroup
 									? question.childQuestions.map((child) => child.id)
 									: [question.id]
-							const answered = ids.every((id) => {
+							const answeredCount = ids.filter((id) => {
 								const answer = drafts[id]
 								return Boolean(
 									answer?.textAnswer?.trim() || answer?.selectedOptionIds.length
 								)
-							})
+							}).length
+							const answered = ids.length > 0 && answeredCount === ids.length
+							const incomplete = isGroup && answeredCount > 0 && !answered
 							const failed =
 								ids.some((id) => dirty[id]) &&
 								(saveState === "failed" || saveState === "offline")
+							const answerState = answered
+								? "answered"
+								: incomplete
+									? "partially answered"
+									: "unanswered"
 							return (
-								<button
+								<Button
 									key={question.id}
 									type="button"
+									variant="outline"
+									size="icon"
+									aria-label={`Question ${questionIndex + 1}, ${answerState}`}
 									onClick={() => onSelect(section.id, question.id)}
 									className={cn(
-										"grid aspect-square place-items-center rounded-lg border text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600",
-										selectedBlockId === question.id
-											? "border-indigo-600 bg-indigo-600 text-white"
-											: answered
-												? "border-emerald-300 bg-emerald-50 text-emerald-800"
-												: "border-slate-200 bg-white text-slate-600",
-										failed && "border-red-400"
+										"aspect-square h-auto w-full rounded-lg text-xs font-semibold",
+										answered && "bg-blue-100 text-blue-800 hover:bg-blue-200",
+										incomplete && "bg-yellow-100 text-yellow-900 hover:bg-yellow-200",
+										displayMode === "one" && selectedBlockId === question.id && "ring-2 ring-indigo-600 ring-offset-1",
+										failed && "outline-2 outline-dashed outline-slate-400"
 									)}
 								>
 									{questionIndex + 1}
-								</button>
+								</Button>
 							)
 						})}
 					</div>

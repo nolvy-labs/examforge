@@ -112,7 +112,7 @@ interface DisplayModeToggleProps {
 	onChange: (mode: DisplayMode) => void
 }
 
-function DisplayModeToggle({ value, onChange }: DisplayModeToggleProps) {
+export function DisplayModeToggle({ value, onChange }: DisplayModeToggleProps) {
 	return (
 		<ButtonGroup>
 			<Button

@@ -106,14 +106,30 @@ export function useAttemptWorkspace(attemptId: string) {
 	const answered = detail ? getAnsweredQuestionCount(detail, drafts) : 0
 	const total = detail ? getAnswerableQuestionCount(detail) : 0
 
+	function scrollQuestionIntoView(blockId: string) {
+		if (!blockId) return
+		window.requestAnimationFrame(() => {
+			document.getElementById(`question-${blockId}`)?.scrollIntoView({
+				behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+					? "auto"
+					: "smooth",
+				block: "start",
+			})
+		})
+	}
+
 	function navigate(sectionId: string, blockId: string) {
 		void flush()
 		actions.setLocation(sectionId, blockId)
-		requestAnimationFrame(() =>
-			document
-				.getElementById(`question-${blockId}`)
-				?.focus({ preventScroll: false })
-		)
+		scrollQuestionIntoView(blockId)
+	}
+
+	function setDisplayMode(mode: "one" | "section") {
+		const shouldRevealQuestion = displayMode === "one" && mode === "section"
+		actions.setDisplayMode(mode)
+		if (shouldRevealQuestion && selectedBlockId) {
+			scrollQuestionIntoView(selectedBlockId)
+		}
 	}
 
 	function move(offset: number) {
@@ -199,6 +215,6 @@ export function useAttemptWorkspace(attemptId: string) {
 		navigate,
 		showPrevious: () => move(-1),
 		showNext: () => move(1),
-		setDisplayMode: actions.setDisplayMode,
+		setDisplayMode,
 	}
 }
