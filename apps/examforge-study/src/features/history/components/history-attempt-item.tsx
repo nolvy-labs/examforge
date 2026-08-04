@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Badge } from "@/components/shadcn/badge"
 import { buttonVariants } from "@/components/shadcn/button"
 import { Card, CardContent } from "@/components/shadcn/card"
+import { TableCell, TableRow } from "@/components/shadcn/table"
 import {
 	formatAttemptSummaryDate,
 	formatAttemptSummaryScore,
@@ -46,14 +47,14 @@ export function HistoryAttemptItem({
 
 	if (variant === "table") {
 		return (
-			<tr>
-				<td className="max-w-72 px-4 py-4 font-medium"><span className="line-clamp-2">{attempt.examTitle || "Untitled exam"}</span></td>
-				<td className="px-4 py-4">{badge}</td>
-				<td className="px-4 py-4">{formatAttemptSummaryDate(attempt.createdAtUtc)}</td>
-				<td className="px-4 py-4">{formatAttemptSummaryDate(attempt.updatedAtUtc)}</td>
-				<td className="px-4 py-4">{formatAttemptSummaryScore(attempt) ?? "Not available"}</td>
-				<td className="px-4 py-4 text-right">{actionLink}</td>
-			</tr>
+			<TableRow>
+				<TableCell className="max-w-72 whitespace-normal px-4 py-4 font-medium"><span className="line-clamp-2">{attempt.examTitle || "Untitled exam"}</span></TableCell>
+				<TableCell className="px-4 py-4">{badge}</TableCell>
+				<TableCell className="px-4 py-4">{formatAttemptSummaryDate(attempt.createdAtUtc)}</TableCell>
+				<TableCell className="px-4 py-4">{formatAttemptSummaryDate(attempt.updatedAtUtc)}</TableCell>
+				<TableCell className="px-4 py-4">{formatAttemptSummaryScore(attempt) ?? "Not available"}</TableCell>
+				<TableCell className="px-4 py-4 text-right">{actionLink}</TableCell>
+			</TableRow>
 		)
 	}
 

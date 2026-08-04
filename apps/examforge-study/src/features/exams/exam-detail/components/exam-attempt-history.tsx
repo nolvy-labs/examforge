@@ -13,6 +13,13 @@ import { cn } from "@/lib/utils"
 import { ExamAttemptHistoryItem } from "./exam-attempt-history-item"
 import { ExamAttemptHistoryPagination } from "./exam-attempt-history-pagination"
 import { Skeleton } from "@/components/shadcn/skeleton"
+import {
+	Table,
+	TableBody,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/shadcn/table"
 
 interface Props {
 	examId: string
@@ -86,30 +93,30 @@ export function ExamAttemptHistory({ examId }: Props) {
 							query.isPlaceholderData && "opacity-60"
 						)}
 					>
-						<table className="hidden w-full text-left text-sm md:table">
-							<thead className="border-b bg-muted text-xs text-muted-foreground">
-								<tr>
-									<th scope="col" className="px-4 py-3 font-medium">
+						<Table className="hidden text-left text-sm md:table">
+							<TableHeader className="border-b bg-muted text-xs text-muted-foreground">
+								<TableRow>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
 										Started
-									</th>
-									<th scope="col" className="px-4 py-3 font-medium">
+									</TableHead>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
 										Status
-									</th>
-									<th scope="col" className="px-4 py-3 font-medium">
+									</TableHead>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
 										Finished
-									</th>
-									<th scope="col" className="px-4 py-3 font-medium">
+									</TableHead>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
 										Score
-									</th>
-									<th scope="col" className="px-4 py-3 font-medium">
+									</TableHead>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
 										Percentage
-									</th>
-									<th scope="col" className="px-4 py-3 text-right font-medium">
+									</TableHead>
+									<TableHead scope="col" className="h-auto px-4 py-3 text-right font-medium">
 										Action
-									</th>
-								</tr>
-							</thead>
-							<tbody className="divide-y">
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody className="divide-y">
 								{query.data.items.map((attempt) => (
 									<ExamAttemptHistoryItem
 										key={`row-${attempt.attemptId}`}
@@ -117,8 +124,8 @@ export function ExamAttemptHistory({ examId }: Props) {
 										variant="table"
 									/>
 								))}
-							</tbody>
-						</table>
+							</TableBody>
+						</Table>
 					</Card>
 					<div className={cn("space-y-3 md:hidden", query.isPlaceholderData && "opacity-60")}>
 						{query.data.items.map((attempt) => (

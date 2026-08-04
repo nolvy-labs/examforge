@@ -9,6 +9,14 @@ import { Badge } from "@/components/shadcn/badge"
 import { Button, buttonVariants } from "@/components/shadcn/button"
 import { Card, CardContent } from "@/components/shadcn/card"
 import { Skeleton } from "@/components/shadcn/skeleton"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/shadcn/table"
 import { useInfiniteAttempts } from "@/features/attempt/api/attempt.query"
 import {
 	deduplicateAttempts,
@@ -81,30 +89,28 @@ export function DashboardAttemptList({
 	return (
 		<div className="space-y-3">
 			<Card className="hidden py-0 md:block">
-				<div className="overflow-x-auto">
-					<table className="w-full min-w-3xl text-left text-sm">
-						<thead className="border-b bg-slate-100 text-xs text-slate-600">
-							<tr>
-								<th scope="col" className="px-4 py-3 font-medium">Exam</th>
-								<th scope="col" className="px-4 py-3 font-medium">Status</th>
-								<th scope="col" className="px-4 py-3 font-medium">Created</th>
-								<th scope="col" className="px-4 py-3 font-medium">Last updated</th>
+				<Table className="min-w-3xl text-left text-sm">
+					<TableHeader className="border-b bg-slate-100 text-xs text-slate-600">
+						<TableRow>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Exam</TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Status</TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Created</TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Last updated</TableHead>
 								{status === "submitted" && (
-									<th scope="col" className="px-4 py-3 font-medium">Score</th>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Score</TableHead>
 								)}
-								<th scope="col" className="px-4 py-3 text-right font-medium">Action</th>
-							</tr>
-						</thead>
-						<tbody className="divide-y">
+							<TableHead scope="col" className="h-auto px-4 py-3 text-right font-medium">Action</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody className="divide-y">
 							{attempts.map((attempt) => (
 								<DashboardAttemptTableRow
 									key={attempt.attemptId}
 									attempt={attempt}
 								/>
 							))}
-						</tbody>
-					</table>
-				</div>
+					</TableBody>
+				</Table>
 			</Card>
 
 			<div className="space-y-3 md:hidden">
@@ -179,26 +185,26 @@ function AttemptStatusBadge({ attempt }: { attempt: StudentExamAttempt }) {
 function DashboardAttemptTableRow({ attempt }: { attempt: StudentExamAttempt }) {
 	const presentation = getAttemptPresentation(attempt)
 	return (
-		<tr>
-			<td className="max-w-72 px-4 py-4 font-medium text-slate-950">
+		<TableRow>
+			<TableCell className="max-w-72 whitespace-normal px-4 py-4 font-medium text-slate-950">
 				<span className="line-clamp-2" title={attempt.examTitle || "Untitled exam"}>
 					{attempt.examTitle || "Untitled exam"}
 				</span>
-			</td>
-			<td className="px-4 py-4"><AttemptStatusBadge attempt={attempt} /></td>
-			<td className="whitespace-nowrap px-4 py-4 text-slate-600">
+			</TableCell>
+			<TableCell className="px-4 py-4"><AttemptStatusBadge attempt={attempt} /></TableCell>
+			<TableCell className="whitespace-nowrap px-4 py-4 text-slate-600">
 				{formatAttemptSummaryDate(attempt.createdAtUtc)}
-			</td>
-			<td className="whitespace-nowrap px-4 py-4 text-slate-600">
+			</TableCell>
+			<TableCell className="whitespace-nowrap px-4 py-4 text-slate-600">
 				{formatAttemptSummaryDate(presentation.updatedAt)}
-			</td>
+			</TableCell>
 			{presentation.submitted && (
-				<td className="whitespace-nowrap px-4 py-4">
+				<TableCell className="whitespace-nowrap px-4 py-4">
 					{formatAttemptSummaryScore(attempt) ?? "Not available"}
-				</td>
+				</TableCell>
 			)}
-			<td className="px-4 py-4 text-right"><AttemptAction attempt={attempt} /></td>
-		</tr>
+			<TableCell className="px-4 py-4 text-right"><AttemptAction attempt={attempt} /></TableCell>
+		</TableRow>
 	)
 }
 

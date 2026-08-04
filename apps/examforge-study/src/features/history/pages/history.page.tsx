@@ -19,6 +19,13 @@ import {
 } from "@/components/shadcn/select"
 import { Skeleton } from "@/components/shadcn/skeleton"
 import {
+	Table,
+	TableBody,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/shadcn/table"
+import {
 	Pagination,
 	PaginationContent,
 	PaginationItem,
@@ -86,7 +93,9 @@ export function HistoryPage() {
 			<MainHeader />
 			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
 				<div className="flex flex-wrap items-end justify-between gap-4">
-					<div><h1 className="text-3xl font-bold tracking-tight">Attempt history</h1><p className="mt-2 text-slate-600">Review every exam attempt and continue unfinished work.</p></div>
+					<div>
+						<h1 className="text-3xl font-bold tracking-tight">Attempt history</h1>
+					</div>
 					{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-slate-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Refreshing</span> : null}
 				</div>
 
@@ -104,8 +113,8 @@ export function HistoryPage() {
 						<Card><CardContent className="p-10 text-center"><h2 className="font-semibold">No attempts on this page</h2><p className="mt-2 text-sm text-slate-600">Try another status or page.</p></CardContent></Card>
 					) : (
 						<>
-							<Card className="hidden overflow-x-auto py-0 md:block">
-								<table className="w-full text-left text-sm"><thead className="border-b bg-slate-100 text-xs text-slate-600"><tr><th scope="col" className="px-4 py-3">Exam</th><th scope="col" className="px-4 py-3">Status</th><th scope="col" className="px-4 py-3">Created</th><th scope="col" className="px-4 py-3">Last updated</th><th scope="col" className="px-4 py-3">Score / result</th><th scope="col" className="px-4 py-3 text-right">Action</th></tr></thead><tbody className="divide-y">{query.data.items.map((attempt) => <HistoryAttemptItem key={attempt.attemptId} attempt={attempt} variant="table" />)}</tbody></table>
+							<Card className="hidden py-0 md:block">
+								<Table className="text-left text-sm"><TableHeader className="border-b bg-slate-100 text-xs text-slate-600"><TableRow><TableHead scope="col" className="h-auto px-4 py-3">Exam</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Status</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Created</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Last updated</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Score / result</TableHead><TableHead scope="col" className="h-auto px-4 py-3 text-right">Action</TableHead></TableRow></TableHeader><TableBody className="divide-y">{query.data.items.map((attempt) => <HistoryAttemptItem key={attempt.attemptId} attempt={attempt} variant="table" />)}</TableBody></Table>
 							</Card>
 							<div className="space-y-3 md:hidden">{query.data.items.map((attempt) => <HistoryAttemptItem key={attempt.attemptId} attempt={attempt} variant="card" />)}</div>
 						</>

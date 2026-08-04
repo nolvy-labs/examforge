@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Badge } from "@/components/shadcn/badge"
 import { buttonVariants } from "@/components/shadcn/button"
 import { Card, CardContent } from "@/components/shadcn/card"
+import { TableCell, TableRow } from "@/components/shadcn/table"
 import type { StudentExamAttempt } from "@/features/attempt/types/attempt.type"
 import {
 	getAttemptAction,
@@ -62,17 +63,17 @@ export function ExamAttemptHistoryItem({ attempt, variant }: Props) {
 
 	if (variant === "table") {
 		return (
-			<tr>
-				<td className="px-4 py-4">{formatDate(attempt.startedAtUtc)}</td>
-				<td className="px-4 py-4">{statusBadge}</td>
-				<td className="px-4 py-4 text-muted-foreground">
+			<TableRow>
+				<TableCell className="px-4 py-4">{formatDate(attempt.startedAtUtc)}</TableCell>
+				<TableCell className="px-4 py-4">{statusBadge}</TableCell>
+				<TableCell className="px-4 py-4 text-muted-foreground">
 					{presentation.finishedAt ? formatDate(presentation.finishedAt) : "—"}
-				</td>
-				<td className="px-4 py-4">
+				</TableCell>
+				<TableCell className="px-4 py-4">
 					{formatAttemptScore(attempt) ?? "Unavailable"}
-				</td>
-				<td className="px-4 py-4">{presentation.percentage}</td>
-				<td className="px-4 py-4 text-right">
+				</TableCell>
+				<TableCell className="px-4 py-4">{presentation.percentage}</TableCell>
+				<TableCell className="px-4 py-4 text-right">
 					<Link
 						href={href}
 						className={buttonVariants({
@@ -82,8 +83,8 @@ export function ExamAttemptHistoryItem({ attempt, variant }: Props) {
 					>
 						{presentation.action}
 					</Link>
-				</td>
-			</tr>
+				</TableCell>
+			</TableRow>
 		)
 	}
 
