@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { AlertCircle, ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react"
+import { AlertCircle, LoaderCircle } from "lucide-react"
 
 import { MainHeader } from "@/components/layout/header/header"
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
@@ -18,6 +18,13 @@ import {
 	SelectValue,
 } from "@/components/shadcn/select"
 import { Skeleton } from "@/components/shadcn/skeleton"
+import {
+	Pagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/shadcn/pagination"
 import { useAttempts } from "@/features/attempt/api/attempt.query"
 import type { AttemptStatus } from "@/features/attempt/types/attempt.type"
 import { cn } from "@/lib/utils"
@@ -108,7 +115,39 @@ export function HistoryPage() {
 				{query.data ? (
 					<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 						<label className="flex items-center gap-2 text-sm">Rows per page<Select value={state.pageSize} onValueChange={(value) => { if (value != null) navigate(updateHistoryState(state, { pageSize: value })) }}><SelectTrigger aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{HISTORY_PAGE_SIZES.map((size) => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectGroup></SelectContent></Select></label>
-						<nav aria-label="History pages" className="flex items-center justify-between gap-3 sm:justify-end"><Button type="button" variant="outline" disabled={state.page <= 1} onClick={() => navigate(updateHistoryState(state, { page: state.page - 1 }, false))}><ChevronLeft />Previous</Button><span className="text-sm text-slate-600">Page {state.page}{query.data.meta.totalPages > 0 ? ` · ${query.data.meta.totalPages} total` : ""}</span><Button type="button" variant="outline" disabled={!query.data.meta.hasNextPage} onClick={() => navigate(updateHistoryState(state, { page: state.page + 1 }, false))}>Next<ChevronRight /></Button></nav>
+						<Pagination aria-label="History pages" className="sm:mx-0 sm:w-auto">
+							<PaginationContent className="w-full justify-between gap-3 sm:w-auto sm:justify-end">
+								<PaginationItem>
+									<PaginationPrevious
+										href={href(updateHistoryState(state, { page: Math.max(1, state.page - 1) }, false))}
+										aria-disabled={state.page <= 1}
+										tabIndex={state.page <= 1 ? -1 : undefined}
+										className={cn(state.page <= 1 && "pointer-events-none opacity-50")}
+										onClick={(event) => {
+											event.preventDefault()
+											if (state.page > 1) navigate(updateHistoryState(state, { page: state.page - 1 }, false))
+										}}
+									/>
+								</PaginationItem>
+								<PaginationItem>
+									<span className="text-sm text-slate-600">
+										Page {state.page}{query.data.meta.totalPages > 0 ? ` · ${query.data.meta.totalPages} total` : ""}
+									</span>
+								</PaginationItem>
+								<PaginationItem>
+									<PaginationNext
+										href={href(updateHistoryState(state, { page: state.page + 1 }, false))}
+										aria-disabled={!query.data.meta.hasNextPage}
+										tabIndex={query.data.meta.hasNextPage ? undefined : -1}
+										className={cn(!query.data.meta.hasNextPage && "pointer-events-none opacity-50")}
+										onClick={(event) => {
+											event.preventDefault()
+											if (query.data.meta.hasNextPage) navigate(updateHistoryState(state, { page: state.page + 1 }, false))
+										}}
+									/>
+								</PaginationItem>
+							</PaginationContent>
+						</Pagination>
 					</div>
 				) : null}
 			</main>
