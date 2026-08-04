@@ -145,7 +145,6 @@ public sealed class ExamAttemptsController : StudentBaseController
     [HttpPost($"~/{ApiRoutes.V1}/exam-attempts/{{attemptId:guid}}/submit")]
     public async Task<ActionResult<ExamAttemptDetailResponse>> Submit(
         Guid attemptId,
-        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SubmitExamAttemptRequest? request,
         CancellationToken cancellationToken)
     {
         if (!TryGetExpectedRevision(out var expectedRevision, out var headerError))
@@ -156,7 +155,6 @@ public sealed class ExamAttemptsController : StudentBaseController
         var result = await _service.SubmitAsync(
             attemptId,
             expectedRevision,
-            request,
             cancellationToken);
         if (!result.IsSuccess)
         {
@@ -250,27 +248,6 @@ public sealed class ExamAttemptsController : StudentBaseController
             ExamAttemptError.ExamModeRequiresTimeLimit => CreateProblem(
                 StatusCodes.Status409Conflict, "Conflict",
                 "Exam mode requires a published version with a time limit."),
-            ExamAttemptError.PracticeAnswersSubmittedOnly => CreateProblem(
-                StatusCodes.Status409Conflict, "Conflict",
-                "Practice answers can only be supplied with the final submission."),
-            ExamAttemptError.PracticeSnapshotRequired => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request",
-                "Practice submission requires a complete answer snapshot."),
-            ExamAttemptError.PracticeSnapshotNotAllowed => CreateProblem(
-                StatusCodes.Status409Conflict, "Conflict",
-                "Exam-mode submission does not accept an answer snapshot."),
-            ExamAttemptError.PracticeSnapshotMissingAnswers => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request", "The practice snapshot is incomplete."),
-            ExamAttemptError.DuplicateSnapshotQuestion => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request", "The practice snapshot contains duplicate question IDs."),
-            ExamAttemptError.UnknownSnapshotQuestion => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request", "The practice snapshot contains an unknown question ID."),
-            ExamAttemptError.ContainerSnapshotQuestion => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request", "Group questions cannot be answered directly."),
-            ExamAttemptError.InvalidSnapshotAnswerShape => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request", "An answer is incompatible with its question type."),
-            ExamAttemptError.SnapshotOptionNotInQuestion => CreateProblem(
-                StatusCodes.Status400BadRequest, "Bad Request", "A selected option does not belong to its question."),
             ExamAttemptError.AttemptAlreadySubmitted => CreateProblem(
                 StatusCodes.Status409Conflict,
                 "Conflict",
@@ -349,15 +326,6 @@ public sealed class ExamAttemptsController : StudentBaseController
             ExamAttemptError.AttemptNotFound => "attempt_not_found",
             ExamAttemptError.ActiveAttemptExists => "active_attempt_exists",
             ExamAttemptError.ExamModeRequiresTimeLimit => "exam_mode_requires_time_limit",
-            ExamAttemptError.PracticeAnswersSubmittedOnly => "practice_answers_submitted_only",
-            ExamAttemptError.PracticeSnapshotRequired => "practice_submission_snapshot_required",
-            ExamAttemptError.PracticeSnapshotNotAllowed => "practice_snapshot_not_allowed",
-            ExamAttemptError.PracticeSnapshotMissingAnswers => "practice_snapshot_missing_answers",
-            ExamAttemptError.DuplicateSnapshotQuestion => "duplicate_question_id",
-            ExamAttemptError.UnknownSnapshotQuestion => "unknown_question_id",
-            ExamAttemptError.ContainerSnapshotQuestion => "container_question_not_answerable",
-            ExamAttemptError.InvalidSnapshotAnswerShape => "invalid_answer_shape",
-            ExamAttemptError.SnapshotOptionNotInQuestion => "option_not_in_question",
             ExamAttemptError.InvalidAttemptState => "invalid_attempt_state",
             ExamAttemptError.RevisionMismatch => "revision_mismatch",
             ExamAttemptError.ConcurrencyConflict => "concurrency_conflict",

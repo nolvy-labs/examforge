@@ -349,7 +349,7 @@ public sealed class ExamAttemptServiceTests
     }
 
     [Fact]
-    public async Task Practice_patch_is_rejected_without_mutation()
+    public async Task Practice_patch_uses_normal_update_path()
     {
         var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank);
         ExamAttemptTestFactory.AddFillKey(fill, "answer", false);
@@ -361,120 +361,49 @@ public sealed class ExamAttemptServiceTests
             1,
             [Replace($"/answers/{fill.Id:D}/textAnswer", "changed")]);
 
-        Assert.Equal(ExamAttemptError.PracticeAnswersSubmittedOnly, result.Error);
-        Assert.Null(attempt.Answers.Single().TextAnswer);
-        Assert.Equal(0, repository.SaveCount);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("changed", attempt.Answers.Single().TextAnswer);
+        Assert.Equal(1, repository.SaveCount);
     }
 
     [Fact]
-    public async Task Practice_submission_requires_complete_snapshot_and_grades_atomically()
+    public async Task Practice_bodyless_submission_grades_previously_patched_answers()
     {
         var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank, 2m);
         ExamAttemptTestFactory.AddFillKey(fill, "answer", false);
         var attempt = ExamAttemptTestFactory.CreateAttempt(ExamAttemptMode.Practice, fill);
         var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
         var service = CreateService(repository, attempt.StudentId);
-
-        var missing = await service.SubmitAsync(attempt.Id, 1);
-        var submitted = await service.SubmitAsync(
+        var patched = await service.PatchAsync(
             attempt.Id,
             1,
-            new SubmitExamAttemptRequest([
-                new SubmitExamAttemptAnswerRequest(fill.Id, " Answer ", [])
-            ]));
+            [Replace($"/answers/{fill.Id:D}/textAnswer", " Answer ")]);
+        var submitted = await service.SubmitAsync(attempt.Id, patched.Value!.Revision);
 
-        Assert.Equal(ExamAttemptError.PracticeSnapshotRequired, missing.Error);
-        Assert.True(submitted.IsSuccess);
+		Assert.True(submitted.IsSuccess);
         Assert.Equal(ExamAttemptStatus.Submitted, attempt.Status);
         Assert.Equal("Answer", attempt.Answers.Single().TextAnswer);
         Assert.Equal(2m, attempt.Score);
-        Assert.Equal(2, attempt.Revision);
-        Assert.Equal(1, repository.SaveCount);
+		Assert.Equal(3, attempt.Revision);
+		Assert.Equal(2, repository.SaveCount);
     }
 
     [Fact]
-    public async Task Exam_submission_rejects_snapshot_without_mutation()
-    {
-        var attempt = ExamAttemptTestFactory.CreateAttempt();
-        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
-
-        var result = await CreateService(repository, attempt.StudentId).SubmitAsync(
-            attempt.Id,
-            1,
-            new SubmitExamAttemptRequest([]));
-
-        Assert.Equal(ExamAttemptError.PracticeSnapshotNotAllowed, result.Error);
-        Assert.Equal(ExamAttemptStatus.InProgress, attempt.Status);
-        Assert.Equal(0, repository.SaveCount);
-    }
-
-    [Fact]
-    public async Task Practice_snapshot_rejects_duplicate_unknown_missing_and_foreign_option_inputs()
-    {
-        var choice = ExamAttemptTestFactory.Question(QuestionType.MultipleChoiceSingle);
-        var option = ExamAttemptTestFactory.AddOption(choice, true, 0);
-        var attempt = ExamAttemptTestFactory.CreateAttempt(ExamAttemptMode.Practice, choice);
-        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
-        var service = CreateService(repository, attempt.StudentId);
-        var answer = new SubmitExamAttemptAnswerRequest(choice.Id, null, [option.Id]);
-
-        var duplicate = await service.SubmitAsync(
-            attempt.Id, 1, new SubmitExamAttemptRequest([answer, answer]));
-        var unknown = await service.SubmitAsync(
-            attempt.Id, 1, new SubmitExamAttemptRequest([
-                new SubmitExamAttemptAnswerRequest(Guid.NewGuid(), null, [])
-            ]));
-        var missing = await service.SubmitAsync(
-            attempt.Id, 1, new SubmitExamAttemptRequest([]));
-        var foreignOption = await service.SubmitAsync(
-            attempt.Id, 1, new SubmitExamAttemptRequest([
-                new SubmitExamAttemptAnswerRequest(choice.Id, null, [Guid.NewGuid()])
-            ]));
-
-        Assert.Equal(ExamAttemptError.DuplicateSnapshotQuestion, duplicate.Error);
-        Assert.Equal(ExamAttemptError.UnknownSnapshotQuestion, unknown.Error);
-        Assert.Equal(ExamAttemptError.PracticeSnapshotMissingAnswers, missing.Error);
-        Assert.Equal(ExamAttemptError.SnapshotOptionNotInQuestion, foreignOption.Error);
-        Assert.Equal(ExamAttemptStatus.InProgress, attempt.Status);
-        Assert.Empty(attempt.Answers.Single().SelectedOptions);
-        Assert.Equal(0, repository.SaveCount);
-    }
-
-    [Fact]
-    public async Task Practice_submission_supports_all_answerable_question_types()
+    public async Task Exam_bodyless_submission_behavior_is_unchanged()
     {
         var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank, 1m);
-        ExamAttemptTestFactory.AddFillKey(fill, "fill", false);
-        var single = ExamAttemptTestFactory.Question(QuestionType.MultipleChoiceSingle, 1m);
-        var singleCorrect = ExamAttemptTestFactory.AddOption(single, true, 0);
-        ExamAttemptTestFactory.AddOption(single, false, 1);
-        var multiple = ExamAttemptTestFactory.Question(QuestionType.MultipleChoiceMultiple, 2m);
-        var multipleCorrectOne = ExamAttemptTestFactory.AddOption(multiple, true, 0);
-        var multipleCorrectTwo = ExamAttemptTestFactory.AddOption(multiple, true, 1);
-        var attempt = ExamAttemptTestFactory.CreateAttempt(
-            ExamAttemptMode.Practice,
-            fill,
-            single,
-            multiple);
+        ExamAttemptTestFactory.AddFillKey(fill, "answer", false);
+        var attempt = ExamAttemptTestFactory.CreateAttempt(fill);
         var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
-
-        var result = await CreateService(repository, attempt.StudentId).SubmitAsync(
-            attempt.Id,
-            1,
-            new SubmitExamAttemptRequest([
-                new SubmitExamAttemptAnswerRequest(fill.Id, "fill", []),
-                new SubmitExamAttemptAnswerRequest(single.Id, null, [singleCorrect.Id]),
-                new SubmitExamAttemptAnswerRequest(
-                    multiple.Id,
-                    null,
-                    [multipleCorrectOne.Id, multipleCorrectTwo.Id])
-            ]));
+        var service = CreateService(repository, attempt.StudentId);
+        var patched = await service.PatchAsync(
+            attempt.Id, 1, [Replace($"/answers/{fill.Id:D}/textAnswer", "answer")]);
+        var result = await service.SubmitAsync(attempt.Id, patched.Value!.Revision);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(4m, result.Value!.Score);
-        Assert.All(
-            attempt.Answers,
-            answer => Assert.Equal(ExamAttemptAnswerGradingStatus.Correct, answer.GradingStatus));
+        Assert.Equal(ExamAttemptStatus.Submitted, attempt.Status);
+        Assert.Equal(1m, attempt.Score);
+        Assert.Equal(2, repository.SaveCount);
     }
 
     [Fact]

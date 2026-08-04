@@ -49,9 +49,9 @@ public sealed class ExamAttemptApiContractTests
         Assert.Equal(
             EmptyBodyBehavior.Allow,
             actions["Create"].GetParameters()[1].GetCustomAttribute<FromBodyAttribute>()!.EmptyBodyBehavior);
-        Assert.Equal(
-            EmptyBodyBehavior.Allow,
-            actions["Submit"].GetParameters()[1].GetCustomAttribute<FromBodyAttribute>()!.EmptyBodyBehavior);
+        Assert.DoesNotContain(
+            actions["Submit"].GetParameters(),
+            parameter => parameter.GetCustomAttribute<FromBodyAttribute>() is not null);
     }
 
     [Fact]

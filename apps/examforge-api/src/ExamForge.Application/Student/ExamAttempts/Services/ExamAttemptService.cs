@@ -183,11 +183,6 @@ public sealed class ExamAttemptService
             return Failure(TerminalStateError(attempt.Status));
         }
 
-        if (attempt.Mode == ExamAttemptMode.Practice)
-        {
-            return Failure(ExamAttemptError.PracticeAnswersSubmittedOnly);
-        }
-
         if (attempt.Revision != expectedRevision)
         {
             return Failure(
@@ -225,7 +220,6 @@ public sealed class ExamAttemptService
     public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> SubmitAsync(
         Guid attemptId,
         long expectedRevision,
-        SubmitExamAttemptRequest? request = null,
         CancellationToken cancellationToken = default)
     {
         var loaded = await LoadOwnedAsync(attemptId, cancellationToken);
@@ -247,11 +241,6 @@ public sealed class ExamAttemptService
             return Failure(ExamAttemptError.AttemptAlreadyAbandoned);
         }
 
-        if (attempt.Mode == ExamAttemptMode.Exam && request is not null)
-        {
-            return Failure(ExamAttemptError.PracticeSnapshotNotAllowed);
-        }
-
         var finalized = await FinalizeIfExpiredAsync(attempt, nowUtc, cancellationToken);
         if (!finalized.IsSuccess)
         {
@@ -270,22 +259,6 @@ public sealed class ExamAttemptService
             return Failure(
                 ExamAttemptError.RevisionMismatch,
                 new AttemptRevisionConflict(attempt.Revision));
-        }
-
-        if (attempt.Mode == ExamAttemptMode.Practice)
-        {
-            if (request?.Answers is null)
-            {
-                return Failure(ExamAttemptError.PracticeSnapshotRequired);
-            }
-
-            var snapshot = ValidateSnapshot(attempt, request.Answers);
-            if (!snapshot.IsSuccess)
-            {
-                return Failure(snapshot.Error);
-            }
-
-            attempt.ReplaceAnswersForSubmission(snapshot.Value!, nowUtc);
         }
 
         var score = _scoring.Calculate(attempt);
@@ -508,67 +481,6 @@ public sealed class ExamAttemptService
             _ => null
         };
         return value is null || mode.HasValue;
-    }
-
-    private static Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError> ValidateSnapshot(
-        ExamAttempt attempt,
-        IReadOnlyList<SubmitExamAttemptAnswerRequest> submitted)
-    {
-        if (submitted.Select(answer => answer.QuestionId).Distinct().Count() != submitted.Count)
-        {
-            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
-                ExamAttemptError.DuplicateSnapshotQuestion);
-        }
-
-        var allQuestions = attempt.ExamVersion.Sections
-            .SelectMany(section => section.Questions)
-            .ToDictionary(question => question.Id);
-        if (submitted.Any(answer => !allQuestions.ContainsKey(answer.QuestionId)))
-        {
-            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
-                ExamAttemptError.UnknownSnapshotQuestion);
-        }
-        if (submitted.Any(answer => allQuestions[answer.QuestionId].Type == QuestionType.Group))
-        {
-            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
-                ExamAttemptError.ContainerSnapshotQuestion);
-        }
-        if (submitted.Count != attempt.Answers.Count)
-        {
-            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
-                ExamAttemptError.PracticeSnapshotMissingAnswers);
-        }
-
-        var updates = new List<ExamAttemptAnswerUpdate>(submitted.Count);
-        foreach (var answer in submitted)
-        {
-            var question = allQuestions[answer.QuestionId];
-            var optionIds = answer.SelectedOptionIds ?? [];
-            if (optionIds.Any(id => question.Options.All(option => option.Id != id)))
-            {
-                return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
-                    ExamAttemptError.SnapshotOptionNotInQuestion);
-            }
-            if (optionIds.Count != optionIds.Distinct().Count() ||
-                (question.Type == QuestionType.FillBlank && optionIds.Count != 0) ||
-                (question.Type != QuestionType.FillBlank && answer.TextAnswer is not null) ||
-                (question.Type == QuestionType.MultipleChoiceSingle && optionIds.Count > 1) ||
-                (question.Type == QuestionType.FillBlank &&
-                    answer.TextAnswer?.Trim().Length > FillAnswerKeyConstraints.AcceptedAnswerMaxLength))
-            {
-                return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
-                    ExamAttemptError.InvalidSnapshotAnswerShape);
-            }
-
-            updates.Add(new ExamAttemptAnswerUpdate(
-                answer.QuestionId,
-                answer.TextAnswer,
-                optionIds,
-                true,
-                true));
-        }
-
-        return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Success(updates);
     }
 
     private async Task<Result<ExamAttempt, ExamAttemptError>> LoadOwnedAsync(

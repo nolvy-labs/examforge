@@ -13,14 +13,6 @@ public sealed class ExamAttemptPatchDocumentModel
 
 public sealed record StartExamAttemptRequest(ExamAttemptMode? Mode = null);
 
-public sealed record SubmitExamAttemptRequest(
-    IReadOnlyList<SubmitExamAttemptAnswerRequest>? Answers = null);
-
-public sealed record SubmitExamAttemptAnswerRequest(
-    Guid QuestionId,
-    string? TextAnswer,
-    IReadOnlyList<Guid>? SelectedOptionIds);
-
 public sealed record GetExamAttemptsRequest(
     string? Status = null,
     string? Mode = null,
