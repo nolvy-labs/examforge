@@ -80,6 +80,26 @@ public sealed class ExamAttemptRepositoryTests
     }
 
     [Fact]
+    public async Task Page_filters_mode_before_pagination()
+    {
+        var data = await SeedPageDataAsync();
+        await using var context = data.Context;
+        var repository = new ExamAttemptRepository(context);
+
+        var page = await repository.GetPageAsync(
+            data.StudentId,
+            null,
+            null,
+            ExamAttemptSortOrder.CreatedAtDescending,
+            0,
+            1,
+            ExamAttemptMode.Practice);
+
+        Assert.Equal(1, page.TotalItems);
+        Assert.Equal(ExamAttemptMode.Practice, Assert.Single(page.Items).Mode);
+    }
+
+    [Fact]
     public async Task Page_filter_for_unknown_exam_returns_empty_page()
     {
         var data = await SeedPageDataAsync();
@@ -233,6 +253,21 @@ public sealed class ExamAttemptRepositoryTests
             SetProperty(attempt, nameof(ExamAttempt.ExpiresAtUtc), deadline.AddMinutes(-1));
         }
 
+        var examAttempt = attempts.First(attempt => attempt.StudentId == data.StudentId);
+        var malformedPractice = new ExamAttempt(
+            data.StudentId,
+            examAttempt.ExamId,
+            examAttempt.ExamVersionId,
+            ExamAttemptMode.Practice,
+            deadline.AddHours(-1),
+            null,
+            []);
+        SetProperty(
+            malformedPractice,
+            nameof(ExamAttempt.ExpiresAtUtc),
+            deadline.AddMinutes(-1));
+        context.ExamAttempts.Add(malformedPractice);
+
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
         var repository = new ExamAttemptRepository(context);
@@ -240,6 +275,7 @@ public sealed class ExamAttemptRepositoryTests
         var expired = await repository.GetExpiredAsync(data.StudentId, deadline);
 
         Assert.Equal(2, expired.Count);
+        Assert.DoesNotContain(expired, attempt => attempt.Id == malformedPractice.Id);
         Assert.All(expired, attempt => Assert.Equal(data.StudentId, attempt.StudentId));
     }
 
@@ -306,6 +342,7 @@ public sealed class ExamAttemptRepositoryTests
             student.Id,
             exam.Id,
             published.Id,
+            ExamAttemptMode.Exam,
             DateTimeOffset.Parse("2026-07-26T00:05:00Z"),
             DateTimeOffset.Parse("2026-07-26T00:35:00Z"),
             [question.Id]);
@@ -364,7 +401,12 @@ public sealed class ExamAttemptRepositoryTests
         var firstAbandoned = NewAttempt(student.Id, firstExam.Id, firstVersion.Id, 4);
         firstAbandoned.Abandon(AtMinute(5));
         var secondActive = NewAttempt(student.Id, secondExam.Id, secondVersion.Id, 6);
-        var secondSubmitted = NewAttempt(student.Id, secondExam.Id, secondVersion.Id, 7);
+        var secondSubmitted = NewAttempt(
+            student.Id,
+            secondExam.Id,
+            secondVersion.Id,
+            7,
+            ExamAttemptMode.Practice);
         secondSubmitted.Submit([], 0m, 0m, AtMinute(8));
         var otherStudentAttempt = NewAttempt(
             otherStudent.Id, firstExam.Id, firstVersion.Id, 9);
@@ -404,8 +446,16 @@ public sealed class ExamAttemptRepositoryTests
         Guid studentId,
         Guid examId,
         Guid versionId,
-        int minute) =>
-        new(studentId, examId, versionId, AtMinute(minute), null, []);
+        int minute,
+        ExamAttemptMode mode = ExamAttemptMode.Exam) =>
+        new(
+            studentId,
+            examId,
+            versionId,
+            mode,
+            AtMinute(minute),
+            null,
+            []);
 
     private static DateTimeOffset AtMinute(int minute) =>
         DateTimeOffset.Parse("2026-07-26T00:00:00Z").AddMinutes(minute);

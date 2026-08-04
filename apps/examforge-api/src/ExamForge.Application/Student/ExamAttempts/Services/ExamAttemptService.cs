@@ -39,6 +39,7 @@ public sealed class ExamAttemptService
 
     public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> CreateAsync(
         Guid examId,
+        ExamAttemptMode mode = ExamAttemptMode.Practice,
         CancellationToken cancellationToken = default)
     {
         if (!_currentUser.UserId.HasValue)
@@ -48,7 +49,22 @@ public sealed class ExamAttemptService
 
         var studentId = _currentUser.UserId.Value;
         var nowUtc = _timeProvider.GetUtcNow();
-        var existing = await _repository.GetActiveAsync(studentId, examId, cancellationToken);
+        var version = await _repository.GetPublishedVersionAsync(examId, cancellationToken);
+        if (version is null)
+        {
+            var exists = await _repository.ExamExistsAsync(examId, cancellationToken);
+            return Failure(exists
+                ? ExamAttemptError.PublishedVersionNotFound
+                : ExamAttemptError.ExamNotFound);
+        }
+
+        if (mode == ExamAttemptMode.Exam && !version.DurationMinutes.HasValue)
+        {
+            return Failure(ExamAttemptError.ExamModeRequiresTimeLimit);
+        }
+
+        var existing = await _repository.GetActiveAsync(
+            studentId, version.Id, cancellationToken);
         if (existing is not null)
         {
             var finalized = await FinalizeIfExpiredAsync(existing, nowUtc, cancellationToken);
@@ -65,18 +81,8 @@ public sealed class ExamAttemptService
             }
         }
 
-        var version = await _repository.GetPublishedVersionAsync(examId, cancellationToken);
-        if (version is null)
-        {
-            var exists = await _repository.ExamExistsAsync(examId, cancellationToken);
-            return Failure(
-                exists
-                    ? ExamAttemptError.PublishedVersionNotFound
-                    : ExamAttemptError.ExamNotFound);
-        }
-
-        DateTimeOffset? expiresAtUtc = version.DurationMinutes.HasValue
-            ? nowUtc.AddMinutes(version.DurationMinutes.Value)
+        DateTimeOffset? expiresAtUtc = mode == ExamAttemptMode.Exam
+            ? nowUtc.AddMinutes(version.DurationMinutes!.Value)
             : null;
         var questionIds = version.Sections
             .SelectMany(section => section.Questions)
@@ -87,6 +93,7 @@ public sealed class ExamAttemptService
             studentId,
             examId,
             version.Id,
+            mode,
             nowUtc,
             expiresAtUtc,
             questionIds);
@@ -96,7 +103,7 @@ public sealed class ExamAttemptService
         {
             var racedAttempt = await _repository.GetActiveAsync(
                 studentId,
-                examId,
+                version.Id,
                 cancellationToken);
             if (racedAttempt is not null)
             {
@@ -176,6 +183,11 @@ public sealed class ExamAttemptService
             return Failure(TerminalStateError(attempt.Status));
         }
 
+        if (attempt.Mode == ExamAttemptMode.Practice)
+        {
+            return Failure(ExamAttemptError.PracticeAnswersSubmittedOnly);
+        }
+
         if (attempt.Revision != expectedRevision)
         {
             return Failure(
@@ -213,6 +225,7 @@ public sealed class ExamAttemptService
     public async Task<Result<ExamAttemptDetailResponse, ExamAttemptError>> SubmitAsync(
         Guid attemptId,
         long expectedRevision,
+        SubmitExamAttemptRequest? request = null,
         CancellationToken cancellationToken = default)
     {
         var loaded = await LoadOwnedAsync(attemptId, cancellationToken);
@@ -234,6 +247,11 @@ public sealed class ExamAttemptService
             return Failure(ExamAttemptError.AttemptAlreadyAbandoned);
         }
 
+        if (attempt.Mode == ExamAttemptMode.Exam && request is not null)
+        {
+            return Failure(ExamAttemptError.PracticeSnapshotNotAllowed);
+        }
+
         var finalized = await FinalizeIfExpiredAsync(attempt, nowUtc, cancellationToken);
         if (!finalized.IsSuccess)
         {
@@ -252,6 +270,22 @@ public sealed class ExamAttemptService
             return Failure(
                 ExamAttemptError.RevisionMismatch,
                 new AttemptRevisionConflict(attempt.Revision));
+        }
+
+        if (attempt.Mode == ExamAttemptMode.Practice)
+        {
+            if (request?.Answers is null)
+            {
+                return Failure(ExamAttemptError.PracticeSnapshotRequired);
+            }
+
+            var snapshot = ValidateSnapshot(attempt, request.Answers);
+            if (!snapshot.IsSuccess)
+            {
+                return Failure(snapshot.Error);
+            }
+
+            attempt.ReplaceAnswersForSubmission(snapshot.Value!, nowUtc);
         }
 
         var score = _scoring.Calculate(attempt);
@@ -364,6 +398,12 @@ public sealed class ExamAttemptService
                 ExamAttemptError.InvalidAttemptStatus);
         }
 
+        if (!TryParseMode(request.Mode, out var mode))
+        {
+            return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
+                ExamAttemptError.InvalidAttemptMode);
+        }
+
         if (!TryParseSort(request.Sort, out var sort))
         {
             return Result<CollectionResponse<ExamAttemptListItemResponse>, ExamAttemptError>.Failure(
@@ -408,6 +448,7 @@ public sealed class ExamAttemptService
             sort,
             checked((request.Page - 1) * request.PageSize),
             request.PageSize,
+            mode,
             cancellationToken);
         var totalPages = page.TotalItems == 0
             ? 0
@@ -455,6 +496,79 @@ public sealed class ExamAttemptService
                 sort = default;
                 return false;
         }
+    }
+
+    private static bool TryParseMode(string? value, out ExamAttemptMode? mode)
+    {
+        mode = value?.Trim().ToLowerInvariant() switch
+        {
+            null => null,
+            "practice" => ExamAttemptMode.Practice,
+            "exam" => ExamAttemptMode.Exam,
+            _ => null
+        };
+        return value is null || mode.HasValue;
+    }
+
+    private static Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError> ValidateSnapshot(
+        ExamAttempt attempt,
+        IReadOnlyList<SubmitExamAttemptAnswerRequest> submitted)
+    {
+        if (submitted.Select(answer => answer.QuestionId).Distinct().Count() != submitted.Count)
+        {
+            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
+                ExamAttemptError.DuplicateSnapshotQuestion);
+        }
+
+        var allQuestions = attempt.ExamVersion.Sections
+            .SelectMany(section => section.Questions)
+            .ToDictionary(question => question.Id);
+        if (submitted.Any(answer => !allQuestions.ContainsKey(answer.QuestionId)))
+        {
+            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
+                ExamAttemptError.UnknownSnapshotQuestion);
+        }
+        if (submitted.Any(answer => allQuestions[answer.QuestionId].Type == QuestionType.Group))
+        {
+            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
+                ExamAttemptError.ContainerSnapshotQuestion);
+        }
+        if (submitted.Count != attempt.Answers.Count)
+        {
+            return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
+                ExamAttemptError.PracticeSnapshotMissingAnswers);
+        }
+
+        var updates = new List<ExamAttemptAnswerUpdate>(submitted.Count);
+        foreach (var answer in submitted)
+        {
+            var question = allQuestions[answer.QuestionId];
+            var optionIds = answer.SelectedOptionIds ?? [];
+            if (optionIds.Any(id => question.Options.All(option => option.Id != id)))
+            {
+                return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
+                    ExamAttemptError.SnapshotOptionNotInQuestion);
+            }
+            if (optionIds.Count != optionIds.Distinct().Count() ||
+                (question.Type == QuestionType.FillBlank && optionIds.Count != 0) ||
+                (question.Type != QuestionType.FillBlank && answer.TextAnswer is not null) ||
+                (question.Type == QuestionType.MultipleChoiceSingle && optionIds.Count > 1) ||
+                (question.Type == QuestionType.FillBlank &&
+                    answer.TextAnswer?.Trim().Length > FillAnswerKeyConstraints.AcceptedAnswerMaxLength))
+            {
+                return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Failure(
+                    ExamAttemptError.InvalidSnapshotAnswerShape);
+            }
+
+            updates.Add(new ExamAttemptAnswerUpdate(
+                answer.QuestionId,
+                answer.TextAnswer,
+                optionIds,
+                true,
+                true));
+        }
+
+        return Result<IReadOnlyCollection<ExamAttemptAnswerUpdate>, ExamAttemptError>.Success(updates);
     }
 
     private async Task<Result<ExamAttempt, ExamAttemptError>> LoadOwnedAsync(
@@ -580,6 +694,7 @@ public sealed class ExamAttemptService
             ? CalculatePercentage(attempt.Score, attempt.MaximumScore)
             : null;
         long? remainingSeconds = attempt.Status == ExamAttemptStatus.InProgress &&
+            attempt.Mode == ExamAttemptMode.Exam &&
             attempt.ExpiresAtUtc.HasValue
                 ? (long)Math.Max(
                     0d,
@@ -590,6 +705,7 @@ public sealed class ExamAttemptService
             attempt.ExamId,
             attempt.ExamVersionId,
             attempt.Status,
+            attempt.Mode,
             attempt.Revision,
             attempt.StartedAtUtc,
             attempt.ExpiresAtUtc,
@@ -639,6 +755,7 @@ public sealed class ExamAttemptService
             attempt.ExamTitle,
             attempt.ExamSlug,
             attempt.Status,
+            attempt.Mode,
             attempt.StartedAtUtc,
             attempt.ExpiresAtUtc,
             attempt.SubmittedAtUtc,

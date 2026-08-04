@@ -1,9 +1,13 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 using ExamForge.Api.Auth;
 using ExamForge.Api.Background;
 using ExamForge.Api.Common;
 using ExamForge.Api.Extensions;
 using ExamForge.Api.Middleware;
 using ExamForge.Application;
+using ExamForge.Domain.ExamAttempts;
 using ExamForge.Infrastructure;
 
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -13,7 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options =>
 {
     options.Conventions.Add(new RouteTokenTransformerConvention(new SlugifyParameterTransformer()));
-});
+}).AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter<ExamAttemptMode>(
+            JsonNamingPolicy.CamelCase,
+            allowIntegerValues: false)));
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();

@@ -7,10 +7,12 @@ using ExamForge.Application.Common;
 using ExamForge.Application.Student.ExamAttempts.Dtos;
 using ExamForge.Application.Student.ExamAttempts.Errors;
 using ExamForge.Application.Student.ExamAttempts.Services;
+using ExamForge.Domain.ExamAttempts;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch.SystemTextJson;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ExamForge.Api.Controllers.Student.ExamAttempts;
 
@@ -26,9 +28,13 @@ public sealed class ExamAttemptsController : StudentBaseController
     [HttpPost($"~/{ApiRoutes.V1}/exams/{{examId:guid}}/attempts")]
     public async Task<ActionResult<ExamAttemptDetailResponse>> Create(
         Guid examId,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] StartExamAttemptRequest? request,
         CancellationToken cancellationToken)
     {
-        var result = await _service.CreateAsync(examId, cancellationToken);
+        var result = await _service.CreateAsync(
+            examId,
+            request?.Mode ?? ExamAttemptMode.Practice,
+            cancellationToken);
         if (!result.IsSuccess)
         {
             return ToActionResult(result.Error, result.AdditionalData);
@@ -60,6 +66,7 @@ public sealed class ExamAttemptsController : StudentBaseController
     [Authorize]
     public async Task<ActionResult<CollectionResponse<ExamAttemptListItemResponse>>> GetPage(
         [FromQuery] string? status,
+        [FromQuery] string? mode,
         [FromQuery] string? sort,
         [FromQuery] string? page,
         [FromQuery] string? pageSize,
@@ -69,6 +76,7 @@ public sealed class ExamAttemptsController : StudentBaseController
         var defaults = new GetExamAttemptsRequest();
         var request = new GetExamAttemptsRequest(
             QueryValueOrDefault("status", status),
+            QueryValueOrDefault("mode", mode),
             QueryValueOrDefault("sort", sort ?? defaults.Sort),
             QueryIntOrDefault("page", page, defaults.Page),
             QueryIntOrDefault("pageSize", pageSize, defaults.PageSize),
@@ -137,6 +145,7 @@ public sealed class ExamAttemptsController : StudentBaseController
     [HttpPost($"~/{ApiRoutes.V1}/exam-attempts/{{attemptId:guid}}/submit")]
     public async Task<ActionResult<ExamAttemptDetailResponse>> Submit(
         Guid attemptId,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] SubmitExamAttemptRequest? request,
         CancellationToken cancellationToken)
     {
         if (!TryGetExpectedRevision(out var expectedRevision, out var headerError))
@@ -147,6 +156,7 @@ public sealed class ExamAttemptsController : StudentBaseController
         var result = await _service.SubmitAsync(
             attemptId,
             expectedRevision,
+            request,
             cancellationToken);
         if (!result.IsSuccess)
         {
@@ -237,6 +247,30 @@ public sealed class ExamAttemptsController : StudentBaseController
                 StatusCodes.Status409Conflict,
                 "Conflict",
                 "An in-progress attempt already exists."),
+            ExamAttemptError.ExamModeRequiresTimeLimit => CreateProblem(
+                StatusCodes.Status409Conflict, "Conflict",
+                "Exam mode requires a published version with a time limit."),
+            ExamAttemptError.PracticeAnswersSubmittedOnly => CreateProblem(
+                StatusCodes.Status409Conflict, "Conflict",
+                "Practice answers can only be supplied with the final submission."),
+            ExamAttemptError.PracticeSnapshotRequired => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request",
+                "Practice submission requires a complete answer snapshot."),
+            ExamAttemptError.PracticeSnapshotNotAllowed => CreateProblem(
+                StatusCodes.Status409Conflict, "Conflict",
+                "Exam-mode submission does not accept an answer snapshot."),
+            ExamAttemptError.PracticeSnapshotMissingAnswers => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "The practice snapshot is incomplete."),
+            ExamAttemptError.DuplicateSnapshotQuestion => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "The practice snapshot contains duplicate question IDs."),
+            ExamAttemptError.UnknownSnapshotQuestion => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "The practice snapshot contains an unknown question ID."),
+            ExamAttemptError.ContainerSnapshotQuestion => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "Group questions cannot be answered directly."),
+            ExamAttemptError.InvalidSnapshotAnswerShape => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "An answer is incompatible with its question type."),
+            ExamAttemptError.SnapshotOptionNotInQuestion => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request", "A selected option does not belong to its question."),
             ExamAttemptError.AttemptAlreadySubmitted => CreateProblem(
                 StatusCodes.Status409Conflict,
                 "Conflict",
@@ -266,6 +300,9 @@ public sealed class ExamAttemptsController : StudentBaseController
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
                 "Status must be 'in-progress', 'submitted', or 'abandoned'."),
+            ExamAttemptError.InvalidAttemptMode => CreateProblem(
+                StatusCodes.Status400BadRequest, "Bad Request",
+                "Mode must be 'practice' or 'exam'."),
             ExamAttemptError.InvalidAttemptSort => CreateProblem(
                 StatusCodes.Status400BadRequest,
                 "Bad Request",
@@ -311,6 +348,16 @@ public sealed class ExamAttemptsController : StudentBaseController
             ExamAttemptError.PublishedVersionNotFound => "published_version_not_found",
             ExamAttemptError.AttemptNotFound => "attempt_not_found",
             ExamAttemptError.ActiveAttemptExists => "active_attempt_exists",
+            ExamAttemptError.ExamModeRequiresTimeLimit => "exam_mode_requires_time_limit",
+            ExamAttemptError.PracticeAnswersSubmittedOnly => "practice_answers_submitted_only",
+            ExamAttemptError.PracticeSnapshotRequired => "practice_submission_snapshot_required",
+            ExamAttemptError.PracticeSnapshotNotAllowed => "practice_snapshot_not_allowed",
+            ExamAttemptError.PracticeSnapshotMissingAnswers => "practice_snapshot_missing_answers",
+            ExamAttemptError.DuplicateSnapshotQuestion => "duplicate_question_id",
+            ExamAttemptError.UnknownSnapshotQuestion => "unknown_question_id",
+            ExamAttemptError.ContainerSnapshotQuestion => "container_question_not_answerable",
+            ExamAttemptError.InvalidSnapshotAnswerShape => "invalid_answer_shape",
+            ExamAttemptError.SnapshotOptionNotInQuestion => "option_not_in_question",
             ExamAttemptError.InvalidAttemptState => "invalid_attempt_state",
             ExamAttemptError.RevisionMismatch => "revision_mismatch",
             ExamAttemptError.ConcurrencyConflict => "concurrency_conflict",
@@ -319,6 +366,7 @@ public sealed class ExamAttemptsController : StudentBaseController
             ExamAttemptError.InvalidPatch => "invalid_patch",
             ExamAttemptError.InvalidScoringConfiguration => "invalid_scoring_configuration",
             ExamAttemptError.InvalidAttemptStatus => "invalid_attempt_status",
+            ExamAttemptError.InvalidAttemptMode => "invalid_attempt_mode",
             ExamAttemptError.InvalidAttemptSort => "invalid_attempt_sort",
             ExamAttemptError.InvalidPage => "invalid_page",
             ExamAttemptError.InvalidPageSize => "invalid_page_size",

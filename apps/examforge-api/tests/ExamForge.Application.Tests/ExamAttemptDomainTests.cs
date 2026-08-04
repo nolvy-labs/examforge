@@ -6,6 +6,40 @@ namespace ExamForge.Application.Tests;
 public sealed class ExamAttemptDomainTests
 {
     [Fact]
+    public void Practice_attempt_never_expires_even_with_inconsistent_timestamp()
+    {
+        var attempt = ExamAttemptTestFactory.CreateAttempt(
+            ExamAttemptMode.Practice,
+            ExamAttemptTestFactory.Question(QuestionType.FillBlank));
+        typeof(ExamAttempt).GetProperty(nameof(ExamAttempt.ExpiresAtUtc))!
+            .SetValue(attempt, DateTimeOffset.Parse("2026-07-26T00:01:00Z"));
+
+        Assert.False(attempt.IsExpired(DateTimeOffset.Parse("2026-07-26T02:00:00Z")));
+    }
+
+    [Fact]
+    public void Exam_attempt_uses_deadline_expiration_semantics()
+    {
+        var attempt = ExamAttemptTestFactory.CreateAttempt();
+
+        Assert.False(attempt.IsExpired(DateTimeOffset.Parse("2026-07-26T00:59:59Z")));
+        Assert.True(attempt.IsExpired(DateTimeOffset.Parse("2026-07-26T01:00:00Z")));
+    }
+
+    [Fact]
+    public void Creation_rejects_undefined_mode()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ExamAttempt(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            (ExamAttemptMode)999,
+            DateTimeOffset.UtcNow,
+            null,
+            []));
+    }
+
+    [Fact]
     public void Creation_initializes_only_requested_leaf_answers_without_selections()
     {
         var group = ExamAttemptTestFactory.Question(QuestionType.Group, 0m);

@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -31,6 +32,33 @@ public sealed class ExamAttemptListApiTests
     private const string Audience = "ExamForge.Tests.Client";
     private const string Secret =
         "examforge-tests-only-secret-that-is-at-least-64-characters-long-123456789";
+
+    [Fact]
+    public async Task Start_with_empty_body_defaults_to_practice_and_returns_string_mode()
+    {
+        var user = Student();
+        var author = new User("author@example.com", "hash", "Author", UserRole.Admin);
+        var exam = new Exam("Exam", "exam", null, ExamType.Simple);
+        var version = new ExamVersion(exam.Id, 1, "Version", null, null, 30, author.Id);
+        version.InitializeTotalScore(0m);
+        version.Publish(DateTimeOffset.Parse("2026-08-04T00:00:00Z"));
+        var repository = new FakeRepository { Exam = exam, Version = version };
+        await using var factory = CreateFactory(repository);
+        using var client = CreateClient(factory);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/api/v1/exams/{exam.Id:D}/attempts");
+        request.Headers.Add(
+            "Cookie",
+            $"{AuthCookieNames.AccessToken}={CreateTokenService().CreateAccessToken(user).Token}");
+
+        using var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStreamAsync());
+        Assert.Equal("practice", document.RootElement.GetProperty("mode").GetString());
+        Assert.Null(repository.Owned!.ExpiresAtUtc);
+    }
 
     [Fact]
     public async Task List_requires_authentication()
@@ -69,6 +97,8 @@ public sealed class ExamAttemptListApiTests
     [InlineData("/api/v1/exam-attempts?status=completed", "invalid_attempt_status")]
     [InlineData("/api/v1/exam-attempts?status=unknown", "invalid_attempt_status")]
     [InlineData("/api/v1/exam-attempts?status=", "invalid_attempt_status")]
+    [InlineData("/api/v1/exam-attempts?mode=timed", "invalid_attempt_mode")]
+    [InlineData("/api/v1/exam-attempts?mode=", "invalid_attempt_mode")]
     [InlineData("/api/v1/exam-attempts?sort=updated-at-desc", "invalid_attempt_sort")]
     [InlineData("/api/v1/exam-attempts?sort=", "invalid_attempt_sort")]
     [InlineData("/api/v1/exam-attempts?page=0", "invalid_page")]
@@ -112,6 +142,7 @@ public sealed class ExamAttemptListApiTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Null(repository.LastStatus);
+        Assert.Null(repository.LastMode);
         Assert.Null(repository.LastExamId);
         Assert.Equal(ExamAttemptSortOrder.CreatedAtDescending, repository.LastSort);
         Assert.Equal(0, repository.LastSkip);
@@ -135,6 +166,7 @@ public sealed class ExamAttemptListApiTests
                     "Exam",
                     "exam",
                     ExamAttemptStatus.Submitted,
+                    ExamAttemptMode.Practice,
                     createdAt,
                     null,
                     updatedAt,
@@ -148,7 +180,7 @@ public sealed class ExamAttemptListApiTests
         };
         await using var factory = CreateFactory(repository);
         using var client = CreateClient(factory);
-        var url = $"/api/v1/exam-attempts?status=submitted&examId={examId:D}" +
+        var url = $"/api/v1/exam-attempts?status=submitted&mode=practice&examId={examId:D}" +
             "&sort=created-at-asc&page=2&pageSize=20";
 
         using var response = await SendAsync(
@@ -159,6 +191,7 @@ public sealed class ExamAttemptListApiTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(user.Id, repository.LastStudentId);
         Assert.Equal(ExamAttemptStatus.Submitted, repository.LastStatus);
+        Assert.Equal(ExamAttemptMode.Practice, repository.LastMode);
         Assert.Equal(examId, repository.LastExamId);
         Assert.Equal(ExamAttemptSortOrder.CreatedAtAscending, repository.LastSort);
         Assert.Equal(20, repository.LastSkip);
@@ -166,6 +199,7 @@ public sealed class ExamAttemptListApiTests
         using var document = JsonDocument.Parse(await response.Content.ReadAsStreamAsync());
         var root = document.RootElement;
         var item = root.GetProperty("items")[0];
+        Assert.Equal("practice", item.GetProperty("mode").GetString());
         Assert.Equal(createdAt, item.GetProperty("createdAtUtc").GetDateTimeOffset());
         Assert.Equal(updatedAt, item.GetProperty("updatedAtUtc").GetDateTimeOffset());
         var meta = root.GetProperty("meta");
@@ -245,9 +279,13 @@ public sealed class ExamAttemptListApiTests
 
     private sealed class FakeRepository : IExamAttemptRepository
     {
+        public Exam? Exam { get; set; }
+        public ExamVersion? Version { get; set; }
+        public ExamAttempt? Owned { get; private set; }
         public ExamAttemptPageModel Page { get; set; } = new([], 0);
         public Guid? LastStudentId { get; private set; }
         public ExamAttemptStatus? LastStatus { get; private set; }
+        public ExamAttemptMode? LastMode { get; private set; }
         public Guid? LastExamId { get; private set; }
         public ExamAttemptSortOrder LastSort { get; private set; }
         public int LastSkip { get; private set; }
@@ -256,24 +294,29 @@ public sealed class ExamAttemptListApiTests
         public Task<bool> ExamExistsAsync(
             Guid examId,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
+            Task.FromResult(Exam?.Id == examId);
 
         public Task<ExamVersion?> GetPublishedVersionAsync(
             Guid examId,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult<ExamVersion?>(null);
+            Task.FromResult(Version?.ExamId == examId ? Version : null);
 
         public Task<ExamAttempt?> GetActiveAsync(
             Guid studentId,
-            Guid examId,
+            Guid examVersionId,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult<ExamAttempt?>(null);
+            Task.FromResult(
+                Owned?.StudentId == studentId &&
+                Owned.ExamVersionId == examVersionId &&
+                Owned.Status == ExamAttemptStatus.InProgress
+                    ? Owned
+                    : null);
 
         public Task<ExamAttempt?> GetOwnedAsync(
             Guid attemptId,
             Guid studentId,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult<ExamAttempt?>(null);
+            Task.FromResult(Owned?.Id == attemptId && Owned.StudentId == studentId ? Owned : null);
 
         public Task<ExamAttempt?> GetAsync(
             Guid attemptId,
@@ -294,8 +337,13 @@ public sealed class ExamAttemptListApiTests
 
         public Task<AttemptCreatePersistenceResult> AddAsync(
             ExamAttempt attempt,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(new AttemptCreatePersistenceResult(false, null));
+            CancellationToken cancellationToken = default)
+        {
+            Owned = attempt;
+            typeof(ExamAttempt).GetProperty(nameof(ExamAttempt.Exam))!.SetValue(attempt, Exam);
+            typeof(ExamAttempt).GetProperty(nameof(ExamAttempt.ExamVersion))!.SetValue(attempt, Version);
+            return Task.FromResult(new AttemptCreatePersistenceResult(true, null));
+        }
 
         public Task<AttemptSavePersistenceResult> SaveAsync(
             ExamAttempt attempt,
@@ -309,10 +357,12 @@ public sealed class ExamAttemptListApiTests
             ExamAttemptSortOrder sort,
             int skip,
             int take,
+            ExamAttemptMode? mode = null,
             CancellationToken cancellationToken = default)
         {
             LastStudentId = studentId;
             LastStatus = status;
+            LastMode = mode;
             LastExamId = examId;
             LastSort = sort;
             LastSkip = skip;

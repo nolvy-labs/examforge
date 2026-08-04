@@ -16,6 +16,11 @@ public sealed class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAtte
         builder.Property(attempt => attempt.ExamId).IsRequired();
         builder.Property(attempt => attempt.ExamVersionId).IsRequired();
 
+        builder.Property(attempt => attempt.Mode)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.Property(attempt => attempt.Status)
             .HasConversion<string>()
             .HasMaxLength(50)
@@ -40,17 +45,17 @@ public sealed class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAtte
         builder.Property(attempt => attempt.UpdatedAtUtc).IsRequired();
 
         builder.HasIndex(attempt => attempt.ExamVersionId);
-        builder.HasIndex(attempt => new { attempt.StudentId, attempt.ExamId })
+        builder.HasIndex(attempt => new { attempt.StudentId, attempt.ExamVersionId })
             .IsUnique()
             .HasDatabaseName("ux_exam_attempts_one_in_progress")
             .HasFilter("\"Status\" = 'InProgress'");
         builder.HasIndex(attempt => new
-            {
-                attempt.StudentId,
-                attempt.Status,
-                attempt.UpdatedAtUtc,
-                attempt.Id
-            })
+        {
+            attempt.StudentId,
+            attempt.Status,
+            attempt.UpdatedAtUtc,
+            attempt.Id
+        })
             .HasDatabaseName("ix_exam_attempts_student_status_history");
 
         builder.HasOne(attempt => attempt.Student)

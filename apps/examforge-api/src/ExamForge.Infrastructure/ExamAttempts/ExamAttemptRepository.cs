@@ -41,13 +41,13 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
 
     public Task<ExamAttempt?> GetActiveAsync(
         Guid studentId,
-        Guid examId,
+        Guid examVersionId,
         CancellationToken cancellationToken = default) =>
         AttemptGraph()
             .SingleOrDefaultAsync(
                 attempt =>
                     attempt.StudentId == studentId &&
-                    attempt.ExamId == examId &&
+                    attempt.ExamVersionId == examVersionId &&
                     attempt.Status == ExamAttemptStatus.InProgress,
                 cancellationToken);
 
@@ -76,6 +76,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
         await AttemptGraph()
             .Where(attempt =>
                 attempt.StudentId == studentId &&
+                attempt.Mode == ExamAttemptMode.Exam &&
                 attempt.Status == ExamAttemptStatus.InProgress &&
                 attempt.ExpiresAtUtc.HasValue &&
                 attempt.ExpiresAtUtc.Value <= nowUtc)
@@ -89,6 +90,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
         CancellationToken cancellationToken = default) =>
         await AttemptGraph()
             .Where(attempt =>
+                attempt.Mode == ExamAttemptMode.Exam &&
                 attempt.Status == ExamAttemptStatus.InProgress &&
                 attempt.ExpiresAtUtc.HasValue &&
                 attempt.ExpiresAtUtc.Value <= nowUtc)
@@ -114,7 +116,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
                 .AsNoTracking()
                 .Where(existing =>
                     existing.StudentId == attempt.StudentId &&
-                    existing.ExamId == attempt.ExamId &&
+                    existing.ExamVersionId == attempt.ExamVersionId &&
                     existing.Status == ExamAttemptStatus.InProgress)
                 .Select(existing => (Guid?)existing.Id)
                 .SingleOrDefaultAsync(cancellationToken);
@@ -157,6 +159,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
         ExamAttemptSortOrder sort,
         int skip,
         int take,
+        ExamAttemptMode? mode = null,
         CancellationToken cancellationToken = default)
     {
         var query = _dbContext.ExamAttempts.AsNoTracking()
@@ -164,6 +167,11 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
         if (status.HasValue)
         {
             query = query.Where(attempt => attempt.Status == status.Value);
+        }
+
+        if (mode.HasValue)
+        {
+            query = query.Where(attempt => attempt.Mode == mode.Value);
         }
 
         if (examId.HasValue)
@@ -187,6 +195,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
                 attempt.Exam.Title,
                 attempt.Exam.Slug,
                 attempt.Status,
+                attempt.Mode,
                 attempt.StartedAtUtc,
                 attempt.ExpiresAtUtc,
                 attempt.SubmittedAtUtc,

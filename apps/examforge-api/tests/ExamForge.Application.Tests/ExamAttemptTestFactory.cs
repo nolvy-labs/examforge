@@ -1,4 +1,5 @@
 using System.Reflection;
+
 using ExamForge.Domain.ExamAttempts;
 using ExamForge.Domain.Exams;
 
@@ -7,6 +8,11 @@ namespace ExamForge.Application.Tests;
 internal static class ExamAttemptTestFactory
 {
     public static ExamAttempt CreateAttempt(params Question[] questions)
+        => CreateAttempt(ExamAttemptMode.Exam, questions);
+
+    public static ExamAttempt CreateAttempt(
+        ExamAttemptMode mode,
+        params Question[] questions)
     {
         var studentId = Guid.NewGuid();
         var exam = new Exam("Exam", "exam", null, ExamType.Simple);
@@ -34,8 +40,11 @@ internal static class ExamAttemptTestFactory
             studentId,
             exam.Id,
             version.Id,
+            mode,
             DateTimeOffset.Parse("2026-07-26T00:00:00Z"),
-            DateTimeOffset.Parse("2026-07-26T01:00:00Z"),
+            mode == ExamAttemptMode.Exam
+                ? DateTimeOffset.Parse("2026-07-26T01:00:00Z")
+                : null,
             questions.Where(question => question.Type != QuestionType.Group)
                 .Select(question => question.Id));
         WireAttempt(attempt, exam, version);

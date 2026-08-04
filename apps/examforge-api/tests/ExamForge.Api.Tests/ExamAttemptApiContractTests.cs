@@ -8,6 +8,7 @@ using ExamForge.Infrastructure.Persistence;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -45,6 +46,12 @@ public sealed class ExamAttemptApiContractTests
         Assert.Equal(
             "~/api/v1/exam-attempts/{attemptId:guid}/abandon",
             Assert.Single(actions["Abandon"].GetCustomAttributes<HttpPostAttribute>()).Template);
+        Assert.Equal(
+            EmptyBodyBehavior.Allow,
+            actions["Create"].GetParameters()[1].GetCustomAttribute<FromBodyAttribute>()!.EmptyBodyBehavior);
+        Assert.Equal(
+            EmptyBodyBehavior.Allow,
+            actions["Submit"].GetParameters()[1].GetCustomAttribute<FromBodyAttribute>()!.EmptyBodyBehavior);
     }
 
     [Fact]
@@ -57,6 +64,7 @@ public sealed class ExamAttemptApiContractTests
         Assert.Contains(nameof(GetExamAttemptsRequest.Status), requestProperties);
         Assert.Contains(nameof(GetExamAttemptsRequest.Sort), requestProperties);
         Assert.Contains(nameof(GetExamAttemptsRequest.ExamId), requestProperties);
+        Assert.Contains(nameof(GetExamAttemptsRequest.Mode), requestProperties);
         Assert.DoesNotContain("State", requestProperties);
 
         var responseProperties = typeof(ExamAttemptListItemResponse)
@@ -67,6 +75,7 @@ public sealed class ExamAttemptApiContractTests
         Assert.Contains(nameof(ExamAttemptListItemResponse.UpdatedAtUtc), responseProperties);
         Assert.Contains(nameof(ExamAttemptListItemResponse.ExamTitle), responseProperties);
         Assert.Contains(nameof(ExamAttemptListItemResponse.Score), responseProperties);
+        Assert.Contains(nameof(ExamAttemptListItemResponse.Mode), responseProperties);
     }
 
     [Fact]
@@ -85,6 +94,12 @@ public sealed class ExamAttemptApiContractTests
         Assert.Equal(
             "\"Status\" = 'InProgress'",
             activeIndex.GetFilter());
+        Assert.Equal(
+            [
+                nameof(ExamAttempt.StudentId),
+                nameof(ExamAttempt.ExamVersionId)
+            ],
+            activeIndex.Properties.Select(property => property.Name));
 
         var historyIndex = attempt.GetIndexes().Single(
             index => index.GetDatabaseName() == "ix_exam_attempts_student_status_history");

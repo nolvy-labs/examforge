@@ -9,7 +9,7 @@ public interface IExamAttemptRepository
 {
     Task<bool> ExamExistsAsync(Guid examId, CancellationToken cancellationToken = default);
     Task<ExamVersion?> GetPublishedVersionAsync(Guid examId, CancellationToken cancellationToken = default);
-    Task<ExamAttempt?> GetActiveAsync(Guid studentId, Guid examId, CancellationToken cancellationToken = default);
+    Task<ExamAttempt?> GetActiveAsync(Guid studentId, Guid examVersionId, CancellationToken cancellationToken = default);
     Task<ExamAttempt?> GetOwnedAsync(Guid attemptId, Guid studentId, CancellationToken cancellationToken = default);
     Task<ExamAttempt?> GetAsync(Guid attemptId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ExamAttempt>> GetExpiredAsync(
@@ -33,5 +33,6 @@ public interface IExamAttemptRepository
         ExamAttemptSortOrder sort,
         int skip,
         int take,
+        ExamAttemptMode? mode = null,
         CancellationToken cancellationToken = default);
 }

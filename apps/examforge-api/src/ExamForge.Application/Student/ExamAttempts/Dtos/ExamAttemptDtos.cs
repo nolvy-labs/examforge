@@ -11,8 +11,19 @@ public sealed class ExamAttemptPatchDocumentModel
     public Dictionary<string, object?> Answers { get; set; } = [];
 }
 
+public sealed record StartExamAttemptRequest(ExamAttemptMode? Mode = null);
+
+public sealed record SubmitExamAttemptRequest(
+    IReadOnlyList<SubmitExamAttemptAnswerRequest>? Answers = null);
+
+public sealed record SubmitExamAttemptAnswerRequest(
+    Guid QuestionId,
+    string? TextAnswer,
+    IReadOnlyList<Guid>? SelectedOptionIds);
+
 public sealed record GetExamAttemptsRequest(
     string? Status = null,
+    string? Mode = null,
     string? Sort = "created-at-desc",
     int Page = 1,
     int PageSize = 20,
@@ -25,6 +36,7 @@ public sealed record ExamAttemptListItemResponse(
     string ExamTitle,
     string ExamSlug,
     ExamAttemptStatus Status,
+    ExamAttemptMode Mode,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset? ExpiresAtUtc,
     DateTimeOffset? SubmittedAtUtc,
@@ -41,6 +53,7 @@ public sealed record ExamAttemptDetailResponse(
     Guid ExamId,
     Guid ExamVersionId,
     ExamAttemptStatus Status,
+    ExamAttemptMode Mode,
     long Revision,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset? ExpiresAtUtc,

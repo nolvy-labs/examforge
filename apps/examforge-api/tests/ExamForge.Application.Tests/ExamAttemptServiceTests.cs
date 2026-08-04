@@ -31,7 +31,7 @@ public sealed class ExamAttemptServiceTests
         var repository = new FakeRepository(template.Exam, template.ExamVersion);
         var service = CreateService(repository, template.StudentId);
 
-        var result = await service.CreateAsync(template.ExamId);
+        var result = await service.CreateAsync(template.ExamId, ExamAttemptMode.Exam);
 
         Assert.True(result.IsSuccess);
         var created = repository.Owned!;
@@ -61,6 +61,25 @@ public sealed class ExamAttemptServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value!.ExpiresAtUtc);
+        Assert.Equal(ExamAttemptMode.Practice, result.Value.Mode);
+    }
+
+    [Fact]
+    public async Task Create_rejects_exam_mode_without_duration()
+    {
+        var template = ExamAttemptTestFactory.CreateAttempt();
+        template.ExamVersion.UpdateDetails(
+            template.ExamVersion.Title,
+            template.ExamVersion.Description,
+            template.ExamVersion.Instructions,
+            null);
+        var repository = new FakeRepository(template.Exam, template.ExamVersion);
+
+        var result = await CreateService(repository, template.StudentId)
+            .CreateAsync(template.ExamId, ExamAttemptMode.Exam);
+
+        Assert.Equal(ExamAttemptError.ExamModeRequiresTimeLimit, result.Error);
+        Assert.Null(repository.Owned);
     }
 
     [Fact]
@@ -76,7 +95,7 @@ public sealed class ExamAttemptServiceTests
         };
 
         var result = await CreateService(repository, existing.StudentId)
-            .CreateAsync(existing.ExamId);
+            .CreateAsync(existing.ExamId, ExamAttemptMode.Exam);
 
         Assert.Equal(ExamAttemptError.ActiveAttemptExists, result.Error);
         Assert.Equal(
@@ -254,6 +273,210 @@ public sealed class ExamAttemptServiceTests
         Assert.Equal(attempt.ExpiresAtUtc, attempt.SubmittedAtUtc);
     }
 
+    [Theory]
+    [InlineData(ExamAttemptMode.Practice, ExamAttemptMode.Exam)]
+    [InlineData(ExamAttemptMode.Exam, ExamAttemptMode.Practice)]
+    public async Task Create_active_conflict_applies_across_modes_for_same_version(
+        ExamAttemptMode existingMode,
+        ExamAttemptMode requestedMode)
+    {
+        var existingExam = ExamAttemptTestFactory.CreateAttempt(existingMode);
+        var repository = new FakeRepository(existingExam.Exam, existingExam.ExamVersion)
+        {
+            Active = existingExam
+        };
+
+        var result = await CreateService(repository, existingExam.StudentId)
+            .CreateAsync(existingExam.ExamId, requestedMode);
+
+        Assert.Equal(ExamAttemptError.ActiveAttemptExists, result.Error);
+        Assert.Equal(
+            existingExam.Id,
+            Assert.IsType<ActiveAttemptConflict>(result.AdditionalData).ExistingAttemptId);
+        Assert.Null(repository.Owned);
+    }
+
+    [Fact]
+    public async Task Create_active_attempt_for_different_version_does_not_conflict()
+    {
+        var target = ExamAttemptTestFactory.CreateAttempt();
+        var other = ExamAttemptTestFactory.CreateAttempt();
+        var activeOtherVersion = new ExamAttempt(
+            target.StudentId,
+            other.ExamId,
+            other.ExamVersionId,
+            ExamAttemptMode.Exam,
+            Now,
+            Now.AddMinutes(60),
+            []);
+        var repository = new FakeRepository(target.Exam, target.ExamVersion)
+        {
+            Active = activeOtherVersion
+        };
+
+        var result = await CreateService(repository, target.StudentId)
+            .CreateAsync(target.ExamId, ExamAttemptMode.Practice);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(target.ExamVersionId, repository.Owned!.ExamVersionId);
+    }
+
+    [Theory]
+    [InlineData(ExamAttemptStatus.Submitted)]
+    [InlineData(ExamAttemptStatus.Abandoned)]
+    public async Task Create_completed_or_abandoned_attempt_does_not_conflict(
+        ExamAttemptStatus terminalStatus)
+    {
+        var previous = ExamAttemptTestFactory.CreateAttempt(ExamAttemptMode.Practice);
+        if (terminalStatus == ExamAttemptStatus.Submitted)
+        {
+            previous.Submit([], 0m, 0m, Now);
+        }
+        else
+        {
+            previous.Abandon(Now);
+        }
+        var repository = new FakeRepository(previous.Exam, previous.ExamVersion)
+        {
+            Active = previous
+        };
+
+        var result = await CreateService(repository, previous.StudentId)
+            .CreateAsync(previous.ExamId, ExamAttemptMode.Exam);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(ExamAttemptMode.Exam, repository.Owned!.Mode);
+    }
+
+    [Fact]
+    public async Task Practice_patch_is_rejected_without_mutation()
+    {
+        var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank);
+        ExamAttemptTestFactory.AddFillKey(fill, "answer", false);
+        var attempt = ExamAttemptTestFactory.CreateAttempt(ExamAttemptMode.Practice, fill);
+        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
+
+        var result = await CreateService(repository, attempt.StudentId).PatchAsync(
+            attempt.Id,
+            1,
+            [Replace($"/answers/{fill.Id:D}/textAnswer", "changed")]);
+
+        Assert.Equal(ExamAttemptError.PracticeAnswersSubmittedOnly, result.Error);
+        Assert.Null(attempt.Answers.Single().TextAnswer);
+        Assert.Equal(0, repository.SaveCount);
+    }
+
+    [Fact]
+    public async Task Practice_submission_requires_complete_snapshot_and_grades_atomically()
+    {
+        var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank, 2m);
+        ExamAttemptTestFactory.AddFillKey(fill, "answer", false);
+        var attempt = ExamAttemptTestFactory.CreateAttempt(ExamAttemptMode.Practice, fill);
+        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
+        var service = CreateService(repository, attempt.StudentId);
+
+        var missing = await service.SubmitAsync(attempt.Id, 1);
+        var submitted = await service.SubmitAsync(
+            attempt.Id,
+            1,
+            new SubmitExamAttemptRequest([
+                new SubmitExamAttemptAnswerRequest(fill.Id, " Answer ", [])
+            ]));
+
+        Assert.Equal(ExamAttemptError.PracticeSnapshotRequired, missing.Error);
+        Assert.True(submitted.IsSuccess);
+        Assert.Equal(ExamAttemptStatus.Submitted, attempt.Status);
+        Assert.Equal("Answer", attempt.Answers.Single().TextAnswer);
+        Assert.Equal(2m, attempt.Score);
+        Assert.Equal(2, attempt.Revision);
+        Assert.Equal(1, repository.SaveCount);
+    }
+
+    [Fact]
+    public async Task Exam_submission_rejects_snapshot_without_mutation()
+    {
+        var attempt = ExamAttemptTestFactory.CreateAttempt();
+        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
+
+        var result = await CreateService(repository, attempt.StudentId).SubmitAsync(
+            attempt.Id,
+            1,
+            new SubmitExamAttemptRequest([]));
+
+        Assert.Equal(ExamAttemptError.PracticeSnapshotNotAllowed, result.Error);
+        Assert.Equal(ExamAttemptStatus.InProgress, attempt.Status);
+        Assert.Equal(0, repository.SaveCount);
+    }
+
+    [Fact]
+    public async Task Practice_snapshot_rejects_duplicate_unknown_missing_and_foreign_option_inputs()
+    {
+        var choice = ExamAttemptTestFactory.Question(QuestionType.MultipleChoiceSingle);
+        var option = ExamAttemptTestFactory.AddOption(choice, true, 0);
+        var attempt = ExamAttemptTestFactory.CreateAttempt(ExamAttemptMode.Practice, choice);
+        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
+        var service = CreateService(repository, attempt.StudentId);
+        var answer = new SubmitExamAttemptAnswerRequest(choice.Id, null, [option.Id]);
+
+        var duplicate = await service.SubmitAsync(
+            attempt.Id, 1, new SubmitExamAttemptRequest([answer, answer]));
+        var unknown = await service.SubmitAsync(
+            attempt.Id, 1, new SubmitExamAttemptRequest([
+                new SubmitExamAttemptAnswerRequest(Guid.NewGuid(), null, [])
+            ]));
+        var missing = await service.SubmitAsync(
+            attempt.Id, 1, new SubmitExamAttemptRequest([]));
+        var foreignOption = await service.SubmitAsync(
+            attempt.Id, 1, new SubmitExamAttemptRequest([
+                new SubmitExamAttemptAnswerRequest(choice.Id, null, [Guid.NewGuid()])
+            ]));
+
+        Assert.Equal(ExamAttemptError.DuplicateSnapshotQuestion, duplicate.Error);
+        Assert.Equal(ExamAttemptError.UnknownSnapshotQuestion, unknown.Error);
+        Assert.Equal(ExamAttemptError.PracticeSnapshotMissingAnswers, missing.Error);
+        Assert.Equal(ExamAttemptError.SnapshotOptionNotInQuestion, foreignOption.Error);
+        Assert.Equal(ExamAttemptStatus.InProgress, attempt.Status);
+        Assert.Empty(attempt.Answers.Single().SelectedOptions);
+        Assert.Equal(0, repository.SaveCount);
+    }
+
+    [Fact]
+    public async Task Practice_submission_supports_all_answerable_question_types()
+    {
+        var fill = ExamAttemptTestFactory.Question(QuestionType.FillBlank, 1m);
+        ExamAttemptTestFactory.AddFillKey(fill, "fill", false);
+        var single = ExamAttemptTestFactory.Question(QuestionType.MultipleChoiceSingle, 1m);
+        var singleCorrect = ExamAttemptTestFactory.AddOption(single, true, 0);
+        ExamAttemptTestFactory.AddOption(single, false, 1);
+        var multiple = ExamAttemptTestFactory.Question(QuestionType.MultipleChoiceMultiple, 2m);
+        var multipleCorrectOne = ExamAttemptTestFactory.AddOption(multiple, true, 0);
+        var multipleCorrectTwo = ExamAttemptTestFactory.AddOption(multiple, true, 1);
+        var attempt = ExamAttemptTestFactory.CreateAttempt(
+            ExamAttemptMode.Practice,
+            fill,
+            single,
+            multiple);
+        var repository = new FakeRepository(attempt.Exam, attempt.ExamVersion) { Owned = attempt };
+
+        var result = await CreateService(repository, attempt.StudentId).SubmitAsync(
+            attempt.Id,
+            1,
+            new SubmitExamAttemptRequest([
+                new SubmitExamAttemptAnswerRequest(fill.Id, "fill", []),
+                new SubmitExamAttemptAnswerRequest(single.Id, null, [singleCorrect.Id]),
+                new SubmitExamAttemptAnswerRequest(
+                    multiple.Id,
+                    null,
+                    [multipleCorrectOne.Id, multipleCorrectTwo.Id])
+            ]));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(4m, result.Value!.Score);
+        Assert.All(
+            attempt.Answers,
+            answer => Assert.Equal(ExamAttemptAnswerGradingStatus.Correct, answer.GradingStatus));
+    }
+
     [Fact]
     public async Task Expiration_finalizer_is_idempotent_after_concurrent_save_conflict()
     {
@@ -351,6 +574,22 @@ public sealed class ExamAttemptServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(expected, repository.LastPageStatus);
+    }
+
+    [Theory]
+    [InlineData("practice", ExamAttemptMode.Practice)]
+    [InlineData("exam", ExamAttemptMode.Exam)]
+    public async Task Page_parses_and_forwards_mode_filter(
+        string token,
+        ExamAttemptMode expected)
+    {
+        var repository = new FakeRepository(null, null);
+
+        var result = await CreateService(repository, Guid.NewGuid()).GetPageAsync(
+            new GetExamAttemptsRequest(Mode: token));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(expected, repository.LastPageMode);
     }
 
     [Theory]
@@ -494,6 +733,7 @@ public sealed class ExamAttemptServiceTests
             attempt.Exam.Title,
             attempt.Exam.Slug,
             attempt.Status,
+            attempt.Mode,
             attempt.StartedAtUtc,
             attempt.ExpiresAtUtc,
             attempt.SubmittedAtUtc,
@@ -554,6 +794,7 @@ public sealed class ExamAttemptServiceTests
         public bool SaveSucceeds { get; set; } = true;
         public Guid? LastPageStudentId { get; private set; }
         public ExamAttemptStatus? LastPageStatus { get; private set; }
+        public ExamAttemptMode? LastPageMode { get; private set; }
         public Guid? LastPageExamId { get; private set; }
         public ExamAttemptSortOrder LastPageSort { get; private set; }
         public int LastPageSkip { get; private set; }
@@ -579,7 +820,7 @@ public sealed class ExamAttemptServiceTests
 
         public Task<ExamAttempt?> GetActiveAsync(
             Guid studentId,
-            Guid examId,
+            Guid examVersionId,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(
                 Active is
@@ -587,7 +828,7 @@ public sealed class ExamAttemptServiceTests
                     Status: ExamAttemptStatus.InProgress
                 } &&
                 Active.StudentId == studentId &&
-                Active.ExamId == examId
+                Active.ExamVersionId == examVersionId
                     ? Active
                     : null);
 
@@ -656,11 +897,13 @@ public sealed class ExamAttemptServiceTests
             ExamAttemptSortOrder sort,
             int skip,
             int take,
+            ExamAttemptMode? mode = null,
             CancellationToken cancellationToken = default)
         {
             PageCalls++;
             LastPageStudentId = studentId;
             LastPageStatus = status;
+            LastPageMode = mode;
             LastPageExamId = examId;
             LastPageSort = sort;
             LastPageSkip = skip;

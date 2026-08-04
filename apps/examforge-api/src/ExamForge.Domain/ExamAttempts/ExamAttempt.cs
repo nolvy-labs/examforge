@@ -13,17 +13,24 @@ public sealed class ExamAttempt
         Guid studentId,
         Guid examId,
         Guid examVersionId,
+        ExamAttemptMode mode,
         DateTimeOffset startedAtUtc,
         DateTimeOffset? expiresAtUtc,
         IEnumerable<Guid> answerableQuestionIds)
     {
+        if (!Enum.IsDefined(mode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        }
+
         Id = Guid.NewGuid();
         StudentId = studentId;
         ExamId = examId;
         ExamVersionId = examVersionId;
+        Mode = mode;
         Status = ExamAttemptStatus.InProgress;
         StartedAtUtc = startedAtUtc;
-        ExpiresAtUtc = expiresAtUtc;
+        ExpiresAtUtc = mode == ExamAttemptMode.Exam ? expiresAtUtc : null;
         Revision = 1;
         CreatedAtUtc = startedAtUtc;
         UpdatedAtUtc = startedAtUtc;
@@ -38,6 +45,7 @@ public sealed class ExamAttempt
     public Guid StudentId { get; private set; }
     public Guid ExamId { get; private set; }
     public Guid ExamVersionId { get; private set; }
+    public ExamAttemptMode Mode { get; private set; }
     public ExamAttemptStatus Status { get; private set; }
     public DateTimeOffset StartedAtUtc { get; private set; }
     public DateTimeOffset? ExpiresAtUtc { get; private set; }
@@ -55,11 +63,25 @@ public sealed class ExamAttempt
     public IReadOnlyCollection<ExamAttemptAnswer> Answers => _answers;
 
     public bool IsExpired(DateTimeOffset nowUtc) =>
+        Mode == ExamAttemptMode.Exam &&
         Status == ExamAttemptStatus.InProgress &&
         ExpiresAtUtc.HasValue &&
         nowUtc >= ExpiresAtUtc.Value;
 
     public void ApplyAnswers(
+        IReadOnlyCollection<ExamAttemptAnswerUpdate> updates,
+        DateTimeOffset updatedAtUtc)
+    {
+        ApplyAnswerValues(updates, updatedAtUtc);
+        AdvanceRevision(updatedAtUtc);
+    }
+
+    public void ReplaceAnswersForSubmission(
+        IReadOnlyCollection<ExamAttemptAnswerUpdate> updates,
+        DateTimeOffset updatedAtUtc) =>
+        ApplyAnswerValues(updates, updatedAtUtc);
+
+    private void ApplyAnswerValues(
         IReadOnlyCollection<ExamAttemptAnswerUpdate> updates,
         DateTimeOffset updatedAtUtc)
     {
@@ -91,7 +113,6 @@ public sealed class ExamAttempt
             }
         }
 
-        AdvanceRevision(updatedAtUtc);
     }
 
     public void Submit(

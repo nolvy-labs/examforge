@@ -20,6 +20,7 @@ public sealed record ExamAttemptListModel(
     string ExamTitle,
     string ExamSlug,
     ExamAttemptStatus Status,
+    ExamAttemptMode Mode,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset? ExpiresAtUtc,
     DateTimeOffset? SubmittedAtUtc,
