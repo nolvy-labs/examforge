@@ -88,6 +88,7 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
 
 				<EndAttemptDialog
 					mode={workspace.endDialog.mode}
+					attemptMode={workspace.detail.mode}
 					answered={workspace.answered}
 					total={workspace.total}
 					expired={workspace.endDialog.expired}

@@ -7,9 +7,11 @@ import { Button, buttonVariants } from "@/components/shadcn/button"
 import { useAttemptRemainingTime } from "./attempt-timer-provider"
 import { formatRemaining } from "../hooks/attempt-timer.hook"
 import type { EndAttemptMode } from "../model/attempt-workspace"
+import { ExamAttemptMode } from "../../types/attempt.type"
 
 interface EndAttemptDialogProps {
 	mode: EndAttemptMode | null
+	attemptMode: ExamAttemptMode
 	answered: number
 	total: number
 	expired: boolean
@@ -36,6 +38,7 @@ function AttemptTimeLeft() {
 
 export function EndAttemptDialog({
 	mode,
+	attemptMode,
 	answered,
 	total,
 	expired,
@@ -101,7 +104,7 @@ export function EndAttemptDialog({
 							</dd>
 						</div>
 
-						<AttemptTimeLeft />
+						{attemptMode == "exam" && <AttemptTimeLeft />}
 					</dl>
 
 					{error && (

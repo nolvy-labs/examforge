@@ -93,7 +93,8 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 					<Switch
 						id="exam-mode"
 						checked={dialog?.attemptMode === "exam"}
-						disabled={dialog?.isPending || detail.durationMinutes == null}
+						// disabled={dialog?.isPending || detail.durationMinutes == null}
+						disabled={true} // Disabled for now
 						onCheckedChange={(checked) => controller.setAttemptMode(checked ? "exam" : "practice")}
 					/>
 				</div>
