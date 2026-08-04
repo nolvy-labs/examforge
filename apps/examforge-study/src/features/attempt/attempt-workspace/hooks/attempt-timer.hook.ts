@@ -17,22 +17,11 @@ export function useAttemptTimer(
 	onZero: () => void
 ) {
 	const initialRemaining = normalizeRemaining(initialRemainingTimeSeconds)
-	const sourceRef = useRef({
-		timerKey,
-		initialRemaining,
-	})
 	const activeTimerKeyRef = useRef(timerKey)
 	const deadlineRef = useRef<number | null>(null)
 	const firedRef = useRef(false)
 	const generationRef = useRef(0)
 	const onZeroRef = useRef(onZero)
-
-	if (sourceRef.current.timerKey !== timerKey) {
-		sourceRef.current = {
-			timerKey,
-			initialRemaining,
-		}
-	}
 
 	const [timerState, setTimerState] = useState<TimerState>({
 		timerKey,
@@ -42,7 +31,7 @@ export function useAttemptTimer(
 	const remaining =
 		timerState.timerKey === timerKey
 			? timerState.remaining
-			: sourceRef.current.initialRemaining
+			: initialRemaining
 
 	useEffect(() => {
 		onZeroRef.current = onZero
@@ -95,27 +84,28 @@ export function useAttemptTimer(
 	}, [])
 
 	useEffect(() => {
-		const source = sourceRef.current
 		const generation = ++generationRef.current
 
 		activeTimerKeyRef.current = timerKey
 		firedRef.current = false
 
-		if (source.initialRemaining == null) {
+		if (initialRemaining == null) {
 			deadlineRef.current = null
-			setTimerState({
-				timerKey,
-				remaining: null,
+			queueMicrotask(() => {
+				if (generationRef.current === generation) {
+					setTimerState({ timerKey, remaining: null })
+				}
 			})
 		} else {
 			deadlineRef.current =
-				performance.now() + source.initialRemaining * 1000
-			setTimerState({
-				timerKey,
-				remaining: source.initialRemaining,
+				performance.now() + initialRemaining * 1000
+			queueMicrotask(() => {
+				if (generationRef.current === generation) {
+					setTimerState({ timerKey, remaining: initialRemaining })
+				}
 			})
 
-			if (source.initialRemaining === 0) {
+			if (initialRemaining === 0) {
 				queueMicrotask(() => {
 					if (generationRef.current === generation) {
 						recalculate()
@@ -129,7 +119,7 @@ export function useAttemptTimer(
 				generationRef.current += 1
 			}
 		}
-	}, [recalculate, timerKey])
+	}, [initialRemaining, recalculate, timerKey])
 
 	useEffect(() => {
 		if (deadlineRef.current == null) return
@@ -170,4 +160,66 @@ export function formatRemaining(seconds: number) {
 	return hours > 0
 		? `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`
 		: `${minutes}:${String(remainder).padStart(2, "0")}`
+}
+
+export function usePracticeAttemptTimer(
+	timerKey: string,
+	persistedElapsedMs: number,
+	active: boolean,
+	onCheckpoint: (elapsedMs: number) => void
+) {
+	const [displayMs, setDisplayMs] = useState(persistedElapsedMs)
+	const accumulatedRef = useRef(persistedElapsedMs)
+	const segmentStartedRef = useRef<number | null>(null)
+	const checkpointRef = useRef(onCheckpoint)
+	useEffect(() => {
+		checkpointRef.current = onCheckpoint
+	}, [onCheckpoint])
+
+	const currentElapsed = useCallback(() =>
+		accumulatedRef.current + (segmentStartedRef.current == null ? 0 : performance.now() - segmentStartedRef.current), [])
+
+	const closeSegment = useCallback(() => {
+		if (segmentStartedRef.current != null) {
+			accumulatedRef.current = currentElapsed()
+			segmentStartedRef.current = null
+		}
+		setDisplayMs(accumulatedRef.current)
+		checkpointRef.current(accumulatedRef.current)
+	}, [currentElapsed])
+
+	useEffect(() => {
+		const canRun = () => active && document.visibilityState === "visible" && document.hasFocus()
+		const updateActivity = () => {
+			if (canRun()) {
+				if (segmentStartedRef.current == null) segmentStartedRef.current = performance.now()
+			} else {
+				closeSegment()
+			}
+		}
+		updateActivity()
+		const tick = window.setInterval(() => {
+			updateActivity()
+			setDisplayMs(currentElapsed())
+		}, 1000)
+		const checkpoint = window.setInterval(() => {
+			if (segmentStartedRef.current != null) checkpointRef.current(currentElapsed())
+		}, 5000)
+		window.addEventListener("focus", updateActivity)
+		window.addEventListener("blur", updateActivity)
+		document.addEventListener("visibilitychange", updateActivity)
+		return () => {
+			window.clearInterval(tick)
+			window.clearInterval(checkpoint)
+			window.removeEventListener("focus", updateActivity)
+			window.removeEventListener("blur", updateActivity)
+			document.removeEventListener("visibilitychange", updateActivity)
+			closeSegment()
+		}
+	}, [active, closeSegment, currentElapsed, timerKey])
+
+	return {
+		seconds: Math.floor(displayMs / 1000),
+		checkpoint: closeSegment,
+	}
 }

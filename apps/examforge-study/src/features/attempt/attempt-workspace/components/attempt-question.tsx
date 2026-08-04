@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, Circle, FlagIcon, LoaderCircle, Save, TriangleAlert } from "lucide-react"
+import { CheckCircle2, Circle, LoaderCircle, Save, TriangleAlert } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Checkbox } from "@/components/shadcn/checkbox"
@@ -25,7 +25,6 @@ import { Fragment } from "react/jsx-runtime"
 import { Separator } from "@/components/shadcn/separator"
 import { Badge } from "@/components/shadcn/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
-import { Toggle } from "@/components/shadcn/toggle"
 
 interface AttemptQuestionBlockProps {
 	question: AttemptQuestion
@@ -273,11 +272,11 @@ export function AttemptNavigator({
 export function SaveStatus() {
 	const { saveState: state, saveMessage: message } = useAttemptSaveStatus()
 	const config = {
-		saved: { label: "All changes saved", icon: CheckCircle2 },
-		waiting: { label: "Waiting to save", icon: Circle },
-		saving: { label: "Saving…", icon: LoaderCircle },
-		failed: { label: "Save failed", icon: TriangleAlert },
-		offline: { label: "Offline — unsaved", icon: Save },
+		saved: { label: "Synchronized", icon: CheckCircle2 },
+		waiting: { label: "Saved locally", icon: Circle },
+		saving: { label: "Saving...", icon: LoaderCircle },
+		failed: { label: "Synchronization failed", icon: TriangleAlert },
+		offline: { label: "Offline - unsaved", icon: Save },
 	}[state]
 	const Icon = config.icon
 	return (
@@ -288,12 +287,19 @@ export function SaveStatus() {
 	)
 }
 
-export function SaveError() {
-	const { saveMessage: message } = useAttemptSaveStatus()
-	if (!message) return null
+export function SaveError({ onRetry }: { onRetry: () => void }) {
+	const { saveState, saveMessage: message } = useAttemptSaveStatus()
+	if (!message || (saveState !== "failed" && !message.startsWith("Local storage"))) return null
 	return (
 		<Alert variant="destructive">
-			<AlertDescription>{message}</AlertDescription>
+			<AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+				<span>{message}</span>
+				{saveState === "failed" && (
+					<Button type="button" size="sm" variant="outline" onClick={onRetry}>
+						Retry synchronization
+					</Button>
+				)}
+			</AlertDescription>
 		</Alert>
 	)
 }

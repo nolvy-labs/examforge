@@ -10,9 +10,11 @@ import {
 import { useRouter } from "next/navigation"
 
 import { ApiError } from "@/lib/api/api.error"
+import { useAuthSession } from "@/features/auth/stores/auth.store"
 
 import { useAttempt, useAttemptTransition } from "../../api/attempt.query"
 import { useAttemptAutosave } from "./attempt-autosave.hook"
+import { readAttemptDraft, removeAttemptDraft } from "../persistence/attempt-draft.storage"
 import {
 	useAttemptActions,
 	useAttemptAnswers,
@@ -30,6 +32,8 @@ import {
 
 export function useAttemptWorkspace(attemptId: string) {
 	const router = useRouter()
+	const session = useAuthSession()
+	const studentId = session.user?.id ?? ""
 	const query = useAttempt(attemptId)
 	const submit = useAttemptTransition(attemptId, "submit")
 	const abandon = useAttemptTransition(attemptId, "abandon")
@@ -48,15 +52,27 @@ export function useAttemptWorkspace(attemptId: string) {
 	const { drafts } = useAttemptAnswers()
 	const locked = useAttemptLocked()
 	const actions = useAttemptActions()
+	const detail = query.data?.data
+	const active = detail ? getAttemptStatus(detail.status) === "in-progress" : false
 
 	const goToResult = useCallback(
 		() => router.replace(`/attempts/${attemptId}/result`),
 		[attemptId, router]
 	)
 
-	const { flush } = useAttemptAutosave(attemptId, goToResult)
+	const { flush } = useAttemptAutosave(attemptId, {
+		mode: detail?.mode ?? "practice",
+		active,
+		initialRemainingTimeSeconds: detail?.remainingTimeSeconds,
+		onTerminal: goToResult,
+	})
 	const refetchAttempt = query.refetch
 	const submitAttempt = submit.mutateAsync
+	const checkpointPracticeTimer = useCallback(() => {
+		if (typeof window !== "undefined" && detail?.mode === "practice") {
+			window.dispatchEvent(new Event("examforge:attempt-timer-checkpoint"))
+		}
+	}, [detail?.mode])
 
 	const convergeAfterTerminalRace = useCallback(async () => {
 		try {
@@ -85,6 +101,7 @@ export function useAttemptWorkspace(attemptId: string) {
 		const operation = (async () => {
 			setIsTimeoutFinalizing(true)
 			setActionError("")
+			checkpointPracticeTimer()
 			actions.setLocked(true)
 
 			try {
@@ -104,6 +121,7 @@ export function useAttemptWorkspace(attemptId: string) {
 					await submitAttempt(
 						actions.getConcurrency().etag
 					)
+					removeAttemptDraft(studentId, attemptId)
 					goToResult()
 				} catch {
 					if (await convergeAfterTerminalRace()) return
@@ -136,9 +154,12 @@ export function useAttemptWorkspace(attemptId: string) {
 		return operation
 	}, [
 		actions,
+		checkpointPracticeTimer,
 		convergeAfterTerminalRace,
 		flush,
 		goToResult,
+		attemptId,
+		studentId,
 		submitAttempt,
 	])
 
@@ -194,13 +215,20 @@ export function useAttemptWorkspace(attemptId: string) {
 		if (
 			getAttemptStatus(response.data.status) !== "in-progress"
 		) {
+			removeAttemptDraft(studentId, attemptId)
 			goToResult()
 			return
 		}
 
-		actions.initialize(response.data, response.etag)
+		const localDraft = readAttemptDraft(
+			studentId,
+			attemptId,
+			response.data.examVersionId,
+			response.data.mode
+		)
+		actions.initialize(response.data, response.etag, studentId, localDraft)
 		document.title = `${response.data.exam.title} | Attempt`
-	}, [actions, goToResult, query.data, query.isFetching])
+	}, [actions, attemptId, goToResult, query.data, query.isFetching, studentId])
 
 	useEffect(
 		() => () => {
@@ -211,7 +239,6 @@ export function useAttemptWorkspace(attemptId: string) {
 		[actions, attemptId]
 	)
 
-	const detail = query.data?.data
 	const blocks = useMemo(() => getAttemptBlocks(detail), [detail])
 	const currentIndex = blocks.findIndex(
 		(block) =>
@@ -249,7 +276,7 @@ export function useAttemptWorkspace(attemptId: string) {
 	}
 
 	function navigate(sectionId: string, blockId: string) {
-		void flush()
+		actions.persist()
 		actions.setLocation(sectionId, blockId)
 		scrollQuestionIntoView(blockId)
 	}
@@ -302,14 +329,16 @@ export function useAttemptWorkspace(attemptId: string) {
 		}
 
 		setActionError("")
-
-		const saved = await flush()
-
-		if (!saved) {
-			setActionError(
-				"Your latest answers are not saved yet. Retry before ending the attempt."
-			)
-			return
+		checkpointPracticeTimer()
+		actions.setLocked(true)
+		actions.persist()
+		if (endMode === "submit") {
+			const saved = await flush()
+			if (!saved) {
+				actions.setLocked(false)
+				setActionError("Submission is blocked because answers could not synchronize. They remain saved locally; retry when connected.")
+				return
+			}
 		}
 
 		try {
@@ -321,8 +350,9 @@ export function useAttemptWorkspace(attemptId: string) {
 
 			if (
 				getAttemptStatus(response.data.status) !==
-				"in-progress"
+					"in-progress"
 			) {
+				removeAttemptDraft(studentId, attemptId)
 				goToResult()
 			}
 		} catch (error) {
@@ -349,6 +379,7 @@ export function useAttemptWorkspace(attemptId: string) {
 					? "We could not submit this attempt. Your saved answers remain available."
 					: "We could not abandon this attempt. It remains in progress."
 			)
+			actions.setLocked(false)
 		}
 	}
 
@@ -369,13 +400,17 @@ export function useAttemptWorkspace(attemptId: string) {
 			retry: () => void query.refetch(),
 		},
 		detail,
+		active,
 		timer: {
-			key: `${attemptId}:${detail?.expiresAtUtc ?? "untimed"}`,
+			key: `${attemptId}:${detail?.mode ?? "unknown"}:${detail?.expiresAtUtc ?? "untimed"}`,
 			initialRemainingTimeSeconds:
 				detail?.remainingTimeSeconds,
 			onExpired: handleTimeout,
 		},
 		locked,
+		synchronization: {
+			retry: () => void flush(),
+		},
 		displayMode,
 		selectedSection,
 		selectedBlock,

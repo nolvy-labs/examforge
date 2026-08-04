@@ -12,10 +12,22 @@ import type { StudentExamDetail } from "../../types/exam.types"
 import { useExamAttemptActions } from "../hooks/use-exam-attempt-actions"
 import { StartAttemptDialog } from "./start-attempt-dialog"
 import { Fragment } from "react"
+import { getExamCounts } from "../model/exam-detail"
 
 export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 	const controller = useExamAttemptActions(detail)
 	const state = controller.availability
+	const counts = getExamCounts(detail)
+	const startContext = {
+		examId: detail.exam.id,
+		examSlug: detail.exam.slug,
+		examTitle: detail.exam.title,
+		examVersionId: detail.publishedVersion.id,
+		durationMinutes: detail.publishedVersion.durationMinutes,
+		questionCount: counts.questionCount,
+		sectionCount: counts.sectionCount,
+		totalScore: detail.publishedVersion.totalScore,
+	}
 	let content
 
 	switch (state.kind) {
@@ -138,7 +150,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 	return (
 		<Fragment>
 			{content}
-			<StartAttemptDialog detail={detail} controller={controller} />
+			<StartAttemptDialog detail={startContext} controller={controller} />
 		</Fragment>
 	)
 }

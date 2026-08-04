@@ -4,6 +4,7 @@ import { parseApiResponse } from "@/lib/api/api.schema"
 import type {
 	AttemptPatchOperation,
 	AttemptResponse,
+	CreateExamAttemptRequest,
 	GetAttemptsParams,
 } from "../types/attempt.type"
 import {
@@ -84,9 +85,13 @@ export async function getStudentExamAttempts(
 	)
 }
 
-export async function createStudentExamAttempt(examId: string) {
+export async function createStudentExamAttempt(
+	examId: string,
+	request: CreateExamAttemptRequest
+) {
 	const response = await apiClient.post<unknown>(
-		`/api/v1/exams/${encodeURIComponent(examId)}/attempts`
+		`/api/v1/exams/${encodeURIComponent(examId)}/attempts`,
+		request
 	)
 	const attempt = parseApiResponse(
 		createdExamAttemptSchema,

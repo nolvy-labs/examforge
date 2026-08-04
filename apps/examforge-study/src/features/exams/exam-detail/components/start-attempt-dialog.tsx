@@ -4,6 +4,8 @@ import { LoaderCircle, X } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
+import { Label } from "@/components/shadcn/label"
+import { Switch } from "@/components/shadcn/switch"
 import {
 	Dialog,
 	DialogClose,
@@ -14,34 +16,32 @@ import {
 	DialogTitle,
 } from "@/components/shadcn/dialog"
 
-import type { StudentExamDetail } from "../../types/exam.types"
-import type { ExamAttemptActionsController } from "../hooks/use-exam-attempt-actions"
-import { formatNumber, getExamCounts } from "../model/exam-detail"
+import type { AttemptStartContext, StartAttemptDialogController } from "../hooks/use-start-attempt-dialog"
+import { formatNumber } from "../model/exam-detail"
 
 interface Props {
-	detail: StudentExamDetail
-	controller: ExamAttemptActionsController
+	detail: AttemptStartContext
+	controller: StartAttemptDialogController
 }
 
 export function StartAttemptDialog({ detail, controller }: Props) {
 	const dialog = controller.dialog
-	const counts = getExamCounts(detail)
 	const facts = [
 		{ 
 			label: "Questions", 
-			value: String(counts.questionCount) 
+			value: String(detail.questionCount)
 		},
 		{ 	
 			label: "Sections", 
-			value: String(counts.sectionCount) 
+			value: String(detail.sectionCount)
 		},
 		{
 			label: "Duration",
-			value: detail.publishedVersion.durationMinutes == null ? "No time limit" : `${detail.publishedVersion.durationMinutes} min`,
+			value: detail.durationMinutes == null ? "No time limit" : `${detail.durationMinutes} min`,
 		},
 		{
 			label: "Total points",
-			value: formatNumber(detail.publishedVersion.totalScore),
+			value: formatNumber(detail.totalScore),
 		},
 	]
 
@@ -59,7 +59,7 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 							{dialog?.mode === "retake" ? "Retake exam?" : "Start exam?"}
 						</DialogTitle>
 						<DialogDescription>
-							A new attempt will be created for {detail.exam.title}.
+							A new attempt will be created for {detail.examTitle}.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogClose
@@ -79,23 +79,39 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 					))}
 				</dl>
 
-				{detail.publishedVersion.durationMinutes != null && (
-					<Alert>
-						<AlertDescription>
-							The timed attempt begins immediately after it is created.
-						</AlertDescription>
-					</Alert>
-				)}
+				<div className="flex items-start justify-between gap-4 rounded-md border p-4">
+					<div className="space-y-1">
+						<Label htmlFor="exam-mode">Exam mode</Label>
+						<p className="text-sm text-muted-foreground">
+							{detail.durationMinutes == null
+								? "Exam mode requires a time limit."
+								: dialog?.attemptMode === "exam"
+									? "Uses the server-enforced time limit."
+									: "No deadline; active time is tracked locally."}
+						</p>
+					</div>
+					<Switch
+						id="exam-mode"
+						checked={dialog?.attemptMode === "exam"}
+						disabled={dialog?.isPending || detail.durationMinutes == null}
+						onCheckedChange={(checked) => controller.setAttemptMode(checked ? "exam" : "practice")}
+					/>
+				</div>
 				{dialog?.error && (
 					<Alert variant="destructive">
 						<AlertDescription>{dialog.error}</AlertDescription>
 					</Alert>
 				)}
+				{dialog?.existingAttemptId && (
+					<Button type="button" variant="outline" onClick={controller.continueExisting}>
+						Continue existing attempt
+					</Button>
+				)}
 
 				<DialogFooter>
 					<DialogClose
 						render={<Button variant="outline" />}
-						disabled={dialog?.isPending}
+						disabled={dialog?.isPending || Boolean(dialog?.existingAttemptId)}
 					>
 						Cancel
 					</DialogClose>

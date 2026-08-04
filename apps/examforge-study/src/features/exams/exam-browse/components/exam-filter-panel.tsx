@@ -10,22 +10,10 @@ import { Skeleton } from "@/components/shadcn/skeleton"
 import { cn } from "@/lib/utils"
 
 import type { ExamBrowseFilterData } from "../hooks/use-exam-browse-query"
-import type { ExamTagType } from "../../types/exam.types"
 import { Separator } from "@/components/shadcn/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
-import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldTitle } from "@/components/shadcn/field"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/shadcn/field"
 import { Label } from "@/components/shadcn/label"
-
-const TAG_TYPE_LABELS: Record<ExamTagType, string> = {
-	unknown: "Other",
-	subject: "Subject",
-	"exam-type": "Exam type",
-	year: "Year",
-	grade: "Grade",
-	skill: "Skill",
-	level: "Level",
-	topic: "Topic",
-}
 
 interface Props {
 	data: ExamBrowseFilterData

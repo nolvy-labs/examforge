@@ -1,4 +1,5 @@
 export type AttemptStatus = "in-progress" | "submitted" | "abandoned"
+export type ExamAttemptMode = "practice" | "exam"
 export type AttemptSort = "created-at-desc" | "created-at-asc"
 
 export interface GetAttemptsParams {
@@ -84,6 +85,7 @@ export interface AttemptDetail {
 	examId: string
 	examVersionId: string
 	status: AttemptStatus
+	mode: ExamAttemptMode
 	revision: number
 	startedAtUtc: string
 	expiresAtUtc: string | null
@@ -132,6 +134,7 @@ export interface StudentExamAttempt {
 	examTitle: string
 	examSlug: string
 	status: AttemptStatus
+	mode: ExamAttemptMode
 	startedAtUtc: string
 	expiresAtUtc: string | null
 	submittedAtUtc: string | null
@@ -142,6 +145,10 @@ export interface StudentExamAttempt {
 	revision: number
 	createdAtUtc: string
 	updatedAtUtc: string
+}
+
+export interface CreateExamAttemptRequest {
+	mode: ExamAttemptMode
 }
 
 export interface StudentExamAttemptPage {

@@ -6,14 +6,16 @@ import { cn } from "@/lib/utils"
 import { SaveStatus } from "./attempt-question"
 import { useAttemptRemainingTime } from "./attempt-timer-provider"
 import { formatRemaining } from "../hooks/attempt-timer.hook"
+import type { ExamAttemptMode } from "../../types/attempt.type"
 
 interface AttemptWorkspaceHeaderProps {
 	title: string
+	mode: ExamAttemptMode
 	locked: boolean
 	onSubmit: () => void
 }
 
-function AttemptCountdown() {
+function AttemptCountdown({ mode }: { mode: ExamAttemptMode }) {
 	const remaining = useAttemptRemainingTime()
 
 	if (remaining == null) return null
@@ -22,11 +24,13 @@ function AttemptCountdown() {
 		<div
 			className={cn(
 				"flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-sm font-semibold",
-				remaining <= 60
-					? "bg-red-50 text-red-700"
-					: remaining <= 300
-						? "bg-amber-50 text-amber-800"
-						: "bg-slate-100 text-slate-800"
+				mode === "exam"
+					? remaining <= 60
+						? "bg-red-50 text-red-700"
+						: remaining <= 300
+							? "bg-amber-50 text-amber-800"
+							: "bg-slate-100 text-slate-800"
+					: "bg-slate-100 text-slate-800"
 			)}
 		>
 			<Clock3 className="size-4" />
@@ -37,6 +41,7 @@ function AttemptCountdown() {
 
 export function AttemptWorkspaceHeader({
 	title,
+	mode,
 	locked,
 	onSubmit,
 }: AttemptWorkspaceHeaderProps) {
@@ -50,7 +55,7 @@ export function AttemptWorkspaceHeader({
 					<SaveStatus />
 				</div>
 
-				<AttemptCountdown />
+				<AttemptCountdown mode={mode} />
 
 				<Button type="button" disabled={locked} onClick={onSubmit}>
 					Submit

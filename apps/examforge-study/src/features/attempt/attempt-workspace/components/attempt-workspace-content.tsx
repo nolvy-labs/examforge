@@ -26,6 +26,7 @@ interface AttemptWorkspaceContentProps {
 	onDisplayModeChange: (mode: DisplayMode) => void
 	onPrevious: () => void
 	onNext: () => void
+	onRetrySynchronization: () => void
 }
 
 export function AttemptWorkspaceContent({
@@ -42,6 +43,7 @@ export function AttemptWorkspaceContent({
 	onDisplayModeChange,
 	onPrevious,
 	onNext,
+	onRetrySynchronization,
 }: AttemptWorkspaceContentProps) {
 	return (
 		<main className="min-w-0">
@@ -69,12 +71,10 @@ export function AttemptWorkspaceContent({
 					onChange={onDisplayModeChange}
 				/>
 			</div>
-			<SaveError />
+			<SaveError onRetry={onRetrySynchronization} />
 			{locked && (
 				<Alert className="mb-4">
-					<AlertDescription>
-						Time has ended. Answers are locked while we finalize your attempt.
-					</AlertDescription>
+					<AlertDescription>Answers are locked while the attempt is being finalized.</AlertDescription>
 				</Alert>
 			)}
 			<div className="space-y-5">

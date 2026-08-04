@@ -14,6 +14,8 @@ export const attemptStatusSchema = z
 			(["in-progress", "submitted", "abandoned"] as const)[value]
 	)
 
+export const examAttemptModeSchema = z.enum(["practice", "exam"])
+
 const examTypeSchema = z
 	.union([z.literal(0), z.literal(1)])
 	.transform((value) => (value === 0 ? ("simple" as const) : ("ielts" as const)))
@@ -107,6 +109,7 @@ export const attemptDetailSchema = z.object({
 	examId: uuidSchema,
 	examVersionId: uuidSchema,
 	status: attemptStatusSchema,
+	mode: examAttemptModeSchema,
 	revision: nonnegativeIntegerSchema,
 	startedAtUtc: dateTimeSchema,
 	expiresAtUtc: dateTimeSchema.nullable(),
@@ -188,6 +191,7 @@ export const studentExamAttemptPageSchema = z.object({
 			examTitle: z.string(),
 			examSlug: z.string(),
 			status: attemptStatusSchema,
+			mode: examAttemptModeSchema,
 			startedAtUtc: dateTimeSchema,
 			expiresAtUtc: dateTimeSchema.nullable(),
 			submittedAtUtc: dateTimeSchema.nullable(),
@@ -205,5 +209,6 @@ export const studentExamAttemptPageSchema = z.object({
 
 export const createdExamAttemptSchema = z.object({
 	attemptId: uuidSchema,
+	mode: examAttemptModeSchema,
 	revision: nonnegativeIntegerSchema,
 })

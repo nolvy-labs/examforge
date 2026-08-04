@@ -19,7 +19,7 @@ import {
 	ATTEMPT_HISTORY_PAGE_SIZE,
 	attemptQueryKeys,
 } from "./attempt.query-key"
-import type { GetAttemptsParams } from "../types/attempt.type"
+import type { CreateExamAttemptRequest, GetAttemptsParams } from "../types/attempt.type"
 
 export function useAttempt(attemptId: string) {
 	return useQuery({
@@ -101,7 +101,8 @@ export function useInfiniteAttempts(
 export function useCreateExamAttempt(examId: string) {
 	const queryClient = useQueryClient()
 	return useMutation({
-		mutationFn: () => createStudentExamAttempt(examId),
+		mutationFn: (request: CreateExamAttemptRequest) =>
+			createStudentExamAttempt(examId, request),
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({
 				queryKey: attemptQueryKeys.lists(),

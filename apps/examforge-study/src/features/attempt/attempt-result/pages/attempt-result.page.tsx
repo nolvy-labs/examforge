@@ -14,6 +14,8 @@ import { AttemptResultSummary } from "../components/attempt-result-summary"
 import { useAttemptResult } from "../hooks/use-attempt-result"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/shadcn/button"
+import { StartAttemptDialog } from "@/features/exams/exam-detail/components/start-attempt-dialog"
+import { flattenAnswerableQuestions } from "../../types/attempt.type"
 
 interface AttemptResultPageProps {
 	attemptId: string
@@ -36,6 +38,17 @@ export function AttemptResultPage({ attemptId }: AttemptResultPageProps) {
 	}
 
 	const examHref = `/exams/${encodeURIComponent(result.detail.exam.slug)}`
+	const startContext = {
+		examId: result.detail.examId,
+		examSlug: result.detail.exam.slug,
+		examTitle: result.detail.exam.title,
+		examVersionId: result.detail.examVersionId,
+		durationMinutes: result.detail.examVersion.durationMinutes,
+		questionCount: flattenAnswerableQuestions(result.detail.sections).length,
+		sectionCount: result.detail.sections.length,
+		totalScore: result.detail.maximumScore ?? flattenAnswerableQuestions(result.detail.sections)
+			.reduce((total, question) => total + question.points, 0),
+	}
 
 	return (
 		<div className="min-h-svh bg-slate-50">
@@ -51,14 +64,15 @@ export function AttemptResultPage({ attemptId }: AttemptResultPageProps) {
 						submitted={result.submitted}
 						finishedAt={result.finishedAt}
 						elapsedMinutes={result.elapsedMinutes}
-						isRetakePending={result.retake.isPending}
-						onRetake={result.retake.create}
+						isRetakePending={Boolean(result.retake.dialog?.isPending)}
+						onRetake={() => result.retake.openDialog("retake")}
 					/>
 					<AttemptQuestionReview
 						sections={result.detail.sections}
 						showGrading={result.submitted}
 					/>
 				</div>
+				<StartAttemptDialog detail={startContext} controller={result.retake} />
 			</main>
 		</div>
 	)

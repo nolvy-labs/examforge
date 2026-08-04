@@ -38,6 +38,8 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
 	return (
 		<AttemptTimerProvider
 			timerKey={workspace.timer.key}
+			mode={workspace.detail.mode}
+			practiceActive={workspace.active && !workspace.locked}
 			initialRemainingTimeSeconds={
 				workspace.timer.initialRemainingTimeSeconds
 			}
@@ -46,6 +48,7 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
 			<div className="min-h-svh bg-slate-50">
 				<AttemptWorkspaceHeader
 					title={workspace.detail.exam.title}
+					mode={workspace.detail.mode}
 					locked={workspace.locked}
 					onSubmit={() =>
 						workspace.endDialog.open("submit")
@@ -69,6 +72,7 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
 						selectedBlock={workspace.selectedBlock}
 						displayMode={workspace.displayMode}
 						locked={workspace.locked}
+						onRetrySynchronization={workspace.synchronization.retry}
 						answered={workspace.answered}
 						total={workspace.total}
 						hasPrevious={workspace.hasPrevious}
