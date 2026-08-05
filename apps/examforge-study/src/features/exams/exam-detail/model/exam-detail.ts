@@ -5,28 +5,6 @@ import type {
 	StudentExamSection,
 } from "../../types/exam.types"
 
-const EXAM_TYPE_LABELS = {
-	simple: "Standard exam",
-	ielts: "IELTS",
-} as const
-
-const SECTION_KIND_LABELS = {
-	default: "General",
-	reading: "Reading",
-	listening: "Listening",
-	writing: "Writing",
-	speaking: "Speaking",
-	custom: "Custom",
-} as const
-
-export function getExamTypeLabel(type: StudentExamDetail["exam"]["type"]) {
-	return EXAM_TYPE_LABELS[type]
-}
-
-export function getSectionKindLabel(kind: StudentExamSection["kind"]) {
-	return SECTION_KIND_LABELS[kind]
-}
-
 export function getOrderedSections(detail: StudentExamDetail) {
 	return [...detail.sections].sort(
 		(left, right) => left.displayOrder - right.displayOrder
@@ -43,22 +21,22 @@ export function getExamCounts(detail: StudentExamDetail) {
 	}
 }
 
-export function formatNumber(value: number) {
-	return new Intl.NumberFormat(undefined, {
+export function formatNumber(value: number, locale = "en") {
+	return new Intl.NumberFormat(locale, {
 		maximumFractionDigits: 2,
 	}).format(value)
 }
 
-export function formatDate(value: string, includeTime = true) {
+export function formatDate(value: string, includeTime = true, locale = "en", unavailable = "—") {
 	const date = new Date(value)
-	if (Number.isNaN(date.getTime())) return "Unavailable"
-	return new Intl.DateTimeFormat(undefined, {
+	if (Number.isNaN(date.getTime())) return unavailable
+	return new Intl.DateTimeFormat(locale, {
 		dateStyle: "medium",
 		...(includeTime ? { timeStyle: "short" as const } : {}),
 	}).format(date)
 }
 
-export function formatAttemptScore(attempt: StudentExamAttempt) {
+export function formatAttemptScore(attempt: StudentExamAttempt, locale = "en") {
 	if (
 		attempt.status !== "submitted" ||
 		attempt.score == null ||
@@ -66,7 +44,7 @@ export function formatAttemptScore(attempt: StudentExamAttempt) {
 	) {
 		return null
 	}
-	return `${formatNumber(attempt.score)} / ${formatNumber(attempt.maximumScore)}`
+	return `${formatNumber(attempt.score, locale)} / ${formatNumber(attempt.maximumScore, locale)}`
 }
 
 export function isGuid(value: unknown): value is string {
@@ -82,10 +60,10 @@ export function getLatestAttempt(attempts: StudentExamAttempt[]) {
 	return attempts[0]
 }
 
-export function getSectionFacts(section: StudentExamSection) {
-	return `${section.questionCount} ${
-		section.questionCount === 1 ? "question" : "questions"
-	} · ${formatNumber(section.totalPoints)} ${
-		section.totalPoints === 1 ? "point" : "points"
-	}`
+export function getSectionFacts(
+	section: StudentExamSection,
+	locale: string,
+	translate: (key: "questions" | "points", values: { count: number | string }) => string
+) {
+	return `${translate("questions", { count: section.questionCount })} · ${translate("points", { count: formatNumber(section.totalPoints, locale) })}`
 }

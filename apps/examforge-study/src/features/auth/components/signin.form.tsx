@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle, TriangleAlert } from "lucide-react"
 import { useForm } from "react-hook-form"
+import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 
 import {
 	Alert,
@@ -25,17 +27,23 @@ import {
 } from "@/features/auth/auth.constants"
 import { useSigninMutation } from "@/features/auth/hooks/auth.hook"
 import {
-	signinSchema,
+	createAuthSchemas,
 	type SigninFormValues,
 } from "@/features/auth/schemas/auth.schema"
 import { ApiError } from "@/lib/api/api.error"
 import { PasswordInput } from "@/features/auth/components/password.input"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { localizeError } from "@/features/shared/errors/localized-error"
 
 export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 	const router = useRouter()
 	const signinMutation = useSigninMutation()
+	const translateAuth = useTranslations("auth")
+	const translateValidation = useTranslations("validation")
+	const translateErrors = useTranslations("errors")
+	const schema = useMemo(() => createAuthSchemas(translateValidation).signin, [translateValidation])
 	const form = useForm<SigninFormValues>({
-		resolver: zodResolver(signinSchema),
+		resolver: zodResolver(schema),
 		defaultValues: {
 			email: "",
 			password: "",
@@ -59,8 +67,8 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 					return
 				}
 
-				const emailError = error.getFieldMessages("email")?.[0]
-				const passwordError = error.getFieldMessages("password")?.[0]
+				const emailError = error.getFieldMessages("email")?.[0] && translateValidation("fieldInvalid")
+				const passwordError = error.getFieldMessages("password")?.[0] && translateValidation("fieldInvalid")
 
 				if (emailError) {
 					form.setError("email", { type: "server", message: emailError })
@@ -82,8 +90,8 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 			{apiError && (
 				<Alert variant="destructive">
 					<TriangleAlert />
-					<AlertTitle>We could not sign you in</AlertTitle>
-					<AlertDescription>{apiError.message}</AlertDescription>
+					<AlertTitle><LocaleMessage messageId="auth.signInErrorTitle" /></AlertTitle>
+					<AlertDescription>{localizeError(apiError, translateErrors)}</AlertDescription>
 				</Alert>
 			)}
 
@@ -92,7 +100,7 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 					data-invalid={Boolean(form.formState.errors.email)}
 					className="relative gap-1"
 				>
-					<FieldLabel htmlFor="signin-email">Email</FieldLabel>
+					<FieldLabel htmlFor="signin-email"><LocaleMessage messageId="auth.email" /></FieldLabel>
 					<Input
 						id="signin-email"
 						type="email"
@@ -113,11 +121,11 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 					data-invalid={Boolean(form.formState.errors.password)}
 					className="relative gap-1"
 				>
-					<FieldLabel htmlFor="signin-password">Password</FieldLabel>
+					<FieldLabel htmlFor="signin-password"><LocaleMessage messageId="auth.password" /></FieldLabel>
 					<PasswordInput
 						id="signin-password"
 						autoComplete="current-password"
-						visibilityLabel="password"
+						visibilityLabel={translateAuth("passwordField")}
 						{...form.register("password")}
 					/>
 					<FieldError
@@ -132,7 +140,7 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 						variant={"link"}
 						className="rounded-sm text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
-						Forgot password?
+						<LocaleMessage messageId="auth.forgotPassword" />
 					</Button>
 				</div>
 			</FieldGroup>
@@ -146,16 +154,16 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 				{signinMutation.isPending && (
 					<LoaderCircle className="animate-spin" />
 				)}
-				{signinMutation.isPending ? "Signing in…" : "Sign in"}
+				<LocaleMessage messageId={signinMutation.isPending ? "auth.signingIn" : "auth.signIn"} />
 			</Button>
 
 			<p className="text-center text-sm text-muted-foreground">
-				{"New to ExamForge? "}
+				<LocaleMessage messageId="auth.newToExamForge" />
 				<Link
 					href={AUTH_ROUTES.signup}
 					className="rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
-					Create an account
+					<LocaleMessage messageId="auth.signUp" />
 				</Link>
 			</p>
 		</form>

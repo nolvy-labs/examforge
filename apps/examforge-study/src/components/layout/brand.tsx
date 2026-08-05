@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function Brand({ className }: { className?: string }) {
 	return (
@@ -12,9 +13,9 @@ export function Brand({ className }: { className?: string }) {
 			)}
 		>
 			<span className="grid p-2 place-items-center rounded-lg bg-primary text-white shadow-sm">
-				<Image src="/icon.svg" alt="examforge-icon" width={28} height={28}/>
+				<Image src="/icon.svg" alt="" width={28} height={28}/>
 			</span>
-			<span>ExamForge</span>
+			<span>ExamForge</span><span className="sr-only"><LocaleMessage messageId="accessibility.brandHome" /></span>
 		</Link>
 	)
 }

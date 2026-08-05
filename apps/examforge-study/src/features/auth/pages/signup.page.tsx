@@ -6,6 +6,7 @@ import {
 	CardTitle,
 } from "@/components/shadcn/card"
 import { SignupForm } from "@/features/auth/components/signup.form"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function SignupPage({ callbackUrl }: { callbackUrl?: string }) {
 	return (
@@ -14,7 +15,7 @@ export function SignupPage({ callbackUrl }: { callbackUrl?: string }) {
 			<Card className="shadow-lg shadow-foreground/5">
 				<CardHeader className="gap-2">
 					<CardTitle className="text-2xl font-semibold tracking-tight">
-						Create your account
+						<LocaleMessage messageId="auth.signUpTitle" />
 					</CardTitle>
 				</CardHeader>
 				<CardContent>

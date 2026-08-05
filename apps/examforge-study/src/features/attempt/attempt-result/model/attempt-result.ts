@@ -12,10 +12,10 @@ export function getElapsedMinutes(startedAt: string, finishedAt?: string | null)
 	)
 }
 
-export function getAnswerText(question: AttemptQuestion) {
+export function getAnswerText(question: AttemptQuestion, unanswered = "—") {
 	const answer = question.answer
 	if (getQuestionType(question.type) === "fill-blank") {
-		return answer?.textAnswer?.trim() || "Unanswered"
+		return answer?.textAnswer?.trim() || unanswered
 	}
 
 	const selected = new Set(answer?.selectedOptionIds ?? [])
@@ -23,17 +23,17 @@ export function getAnswerText(question: AttemptQuestion) {
 		question.options
 			.filter((option) => selected.has(option.id))
 			.map((option) => `${option.label ? `${option.label}. ` : ""}${option.text}`)
-			.join("\n") || "Unanswered"
+			.join("\n") || unanswered
 	)
 }
 
-export function formatAttemptDate(value: string) {
-	return new Intl.DateTimeFormat(undefined, {
+export function formatAttemptDate(value: string, locale = "en") {
+	return new Intl.DateTimeFormat(locale, {
 		dateStyle: "medium",
 		timeStyle: "short",
 	}).format(new Date(value))
 }
 
-export function formatAttemptNumber(value: number) {
-	return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
+export function formatAttemptNumber(value: number, locale = "en") {
+	return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)
 }

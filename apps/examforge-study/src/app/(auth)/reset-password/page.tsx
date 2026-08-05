@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 import { ResetPasswordPage } from "@/features/auth/pages/reset-password.page"
 
-export const metadata: Metadata = {
-	title: "Reset password",
+export async function generateMetadata(): Promise<Metadata> {
+	return { title: (await getTranslations("metadata"))("resetPassword") }
 }
 
 interface ResetPasswordRouteProps {

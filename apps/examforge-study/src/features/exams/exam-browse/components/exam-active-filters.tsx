@@ -6,6 +6,8 @@ import { Badge } from "@/components/shadcn/badge"
 import { Button } from "@/components/shadcn/button"
 
 import type { ExamBrowseFiltersViewModel } from "../hooks/use-exam-browse-query"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 interface Props {
 	search: string
@@ -13,9 +15,10 @@ interface Props {
 }
 
 export function ExamActiveFilters({ search, filters }: Props) {
+	const translate = useTranslations("exams")
 	const items = [
 		...(search
-			? [{ id: "search", label: `Title: ${search}`, remove: filters.onClearSearch }]
+			? [{ id: "search", label: translate("titleFilter", { title: search }), remove: filters.onClearSearch }]
 			: []),
 		...(filters.activeCategoryName
 			? [
@@ -56,7 +59,7 @@ export function ExamActiveFilters({ search, filters }: Props) {
 				size="sm"
 				onClick={filters.onClearAll}
 			>
-				Clear all
+				<LocaleMessage messageId="exams.clearAll" />
 			</Button>
 		</div>
 	)

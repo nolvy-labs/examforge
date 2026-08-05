@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 import { SignupPage } from "@/features/auth/pages/signup.page"
 
-export const metadata: Metadata = {
-	title: "Create account",
+export async function generateMetadata(): Promise<Metadata> {
+	return { title: (await getTranslations("metadata"))("signUp") }
 }
 
 interface SignupRouteProps {

@@ -11,6 +11,8 @@ import {
 } from "../model/attempt-result"
 import { Card, CardContent, CardHeader } from "@/components/shadcn/card"
 import { Separator } from "@/components/shadcn/separator"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
 
 interface AttemptResultSummaryProps {
 	detail: AttemptDetail
@@ -29,6 +31,10 @@ export function AttemptResultSummary({
 	isRetakePending,
 	onRetake,
 }: AttemptResultSummaryProps) {
+	const locale = useLocale()
+	const translate = useTranslations("attempt")
+	const common = useTranslations("common")
+	const exams = useTranslations("exams")
 	const examHref = `/exams/${encodeURIComponent(detail.exam.slug)}`
 
 	return (
@@ -36,7 +42,7 @@ export function AttemptResultSummary({
 			<CardHeader className="px-0">
 				<div className={cn("p-6 sm:p-8", submitted ? "bg-primary text-background" : "text-background bg-warning")} >
 					<p className="text-sm font-medium opacity-80">
-						{submitted ? "Attempt submitted" : "Attempt abandoned"}
+						<LocaleMessage messageId={submitted ? "attempt.attemptSubmitted" : "attempt.attemptAbandoned"} />
 					</p>
 					<h1 className="mt-2 text-2xl font-bold sm:text-3xl">
 						{detail.exam.title || detail.examVersion.title}
@@ -46,13 +52,13 @@ export function AttemptResultSummary({
 							<div className="flex items-center gap-2">
 								<Trophy className="size-6" />
 								<span className="text-3xl font-bold">
-									{formatAttemptNumber(detail.score)} /{" "}
-									{formatAttemptNumber(detail.maximumScore)}
+									{formatAttemptNumber(detail.score, locale)} /{" "}
+									{formatAttemptNumber(detail.maximumScore, locale)}
 								</span>
 							</div>
 							{detail.percentage != null && (
 								<span className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold">
-									{formatAttemptNumber(detail.percentage)}%
+									{new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(detail.percentage / 100)}
 								</span>
 							)}
 						</div>
@@ -62,27 +68,27 @@ export function AttemptResultSummary({
 			<CardContent className="px-0">
 				<dl className="grid gap-4 p-4 sm:grid-cols-3 sm:p-6">
 					<ResultFact 
-						label="Started" 
-						value={formatAttemptDate(detail.startedAtUtc)}
+						label={translate("started")}
+						value={formatAttemptDate(detail.startedAtUtc, locale)}
 					/>
 					<ResultFact
-						label={submitted ? "Submitted" : "Abandoned"}
-						value={finishedAt ? formatAttemptDate(finishedAt) : "Unavailable"}
+						label={translate(submitted ? "submitted" : "abandoned")}
+						value={finishedAt ? formatAttemptDate(finishedAt, locale) : common("notAvailable")}
 					/>
 					<ResultFact
-						label="Time spent"
-						value={elapsedMinutes == null ? "Unavailable" : `${elapsedMinutes} min`}
+						label={translate("timeSpent")}
+						value={elapsedMinutes == null ? common("notAvailable") : exams("minutes", { count: elapsedMinutes })}
 						icon={Clock3}
 					/>
 				</dl>
 				<Separator />
 				<div className="flex flex-row justify-end flex-wrap gap-2 p-4 sm:px-6">
 					<Link href={examHref} className={buttonVariants({ variant: "outline" })}>
-						Return to exam
+						<LocaleMessage messageId="attempt.backToExam" />
 					</Link>
 					<Button disabled={isRetakePending} onClick={onRetake}>
 						<RotateCcw />
-						{isRetakePending ? "Starting…" : "Retake"}
+						<LocaleMessage messageId={isRetakePending ? "exams.starting" : "attempt.retake"} />
 					</Button>
 				</div>
 			</CardContent>

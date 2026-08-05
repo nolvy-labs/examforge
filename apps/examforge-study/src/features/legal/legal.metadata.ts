@@ -24,8 +24,7 @@ export async function createLegalMetadata(document: LegalDocumentType, locale: L
 		description: descriptions[locale][document],
 		robots: { index: true, follow: true },
 		alternates: {
-			canonical: `${path}?lang=${locale}`,
-			languages: { vi: `${path}?lang=vi`, en: `${path}?lang=en` },
+			canonical: path,
 		},
 	}
 }

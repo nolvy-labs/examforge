@@ -20,6 +20,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/shadcn/table"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 interface Props {
 	examId: string
@@ -52,13 +53,13 @@ export function ExamAttemptHistory({ examId }: Props) {
 			<div className="flex flex-wrap items-end justify-between gap-3">
 				<div>
 					<h2 id="past-attempts-heading" className="text-xl font-semibold">
-						Past Attempts
+						<LocaleMessage messageId="exams.attemptHistory" />
 					</h2>
 				</div>
 				{query.isFetching && query.data && (
 					<span className="flex items-center gap-2 text-xs text-muted-foreground">
 						<LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />
-						Refreshing
+						<LocaleMessage messageId="history.refreshing" />
 					</span>
 				)}
 			</div>
@@ -68,21 +69,21 @@ export function ExamAttemptHistory({ examId }: Props) {
 			) : query.isError ? (
 				<Alert>
 					<AlertDescription>
-						<p>We couldn&apos;t load your past attempts.</p>
+						<p><LocaleMessage messageId="exams.attemptHistoryError" /></p>
 						<Button
 							type="button"
 							variant="outline"
 							className="mt-3"
 							onClick={() => void query.refetch()}
 						>
-							Try again
+							<LocaleMessage messageId="common.retry" />
 						</Button>
 					</AlertDescription>
 				</Alert>
 			) : !query.data?.items.length ? (
 				<Card>
 					<CardContent className="p-8 text-center text-sm text-muted-foreground">
-						You have no past attempts for this exam.
+						<LocaleMessage messageId="exams.noPastAttempts" />
 					</CardContent>
 				</Card>
 			) : (
@@ -97,22 +98,22 @@ export function ExamAttemptHistory({ examId }: Props) {
 							<TableHeader className="border-b bg-muted text-xs text-muted-foreground">
 								<TableRow>
 									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
-										Started
+										<LocaleMessage messageId="exams.started" />
 									</TableHead>
 									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
-										Status
+										<LocaleMessage messageId="history.status" />
 									</TableHead>
 									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
-										Finished
+										<LocaleMessage messageId="exams.finished" />
 									</TableHead>
 									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
-										Score
+										<LocaleMessage messageId="exams.score" />
 									</TableHead>
 									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">
-										Percentage
+										<LocaleMessage messageId="history.percentage" />
 									</TableHead>
 									<TableHead scope="col" className="h-auto px-4 py-3 text-right font-medium">
-										Action
+										<LocaleMessage messageId="history.action" />
 									</TableHead>
 								</TableRow>
 							</TableHeader>

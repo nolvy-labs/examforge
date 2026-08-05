@@ -1,13 +1,15 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
+import { getTranslations } from "next-intl/server"
 
 import { MainHeader } from "@/components/layout/header/header"
 import { Skeleton } from "@/components/shadcn/skeleton"
 import { ExamBrowsePage } from "@/features/exams/exam-browse/pages/exam-browse.page"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
-export const metadata: Metadata = {
-	title: "Browse Exams",
-	description: "Discover published ExamForge exams by title, category, and topic.",
+export async function generateMetadata(): Promise<Metadata> {
+	const translate = await getTranslations("metadata")
+	return { title: translate("exams"), description: translate("examsDescription") }
 }
 
 export default function ExamsPage() {
@@ -31,7 +33,7 @@ function ExamBrowseFallback() {
 					<Skeleton className="mt-7 h-12 w-full max-w-3xl" />
 				</div>
 			</div>
-			<p className="sr-only">Loading exams…</p>
+			<p className="sr-only"><LocaleMessage messageId="accessibility.loadingExams" /></p>
 		</main>
 	)
 }

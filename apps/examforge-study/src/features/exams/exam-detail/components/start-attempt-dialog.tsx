@@ -18,6 +18,9 @@ import {
 
 import type { AttemptStartContext, StartAttemptDialogController } from "../hooks/use-start-attempt-dialog"
 import { formatNumber } from "../model/exam-detail"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
+import { localizeError } from "@/features/shared/errors/localized-error"
 
 interface Props {
 	detail: AttemptStartContext
@@ -25,23 +28,26 @@ interface Props {
 }
 
 export function StartAttemptDialog({ detail, controller }: Props) {
+	const locale = useLocale()
+	const translate = useTranslations("exams")
+	const translateErrors = useTranslations("errors")
 	const dialog = controller.dialog
 	const facts = [
 		{ 
-			label: "Questions", 
-			value: String(detail.questionCount)
+			label: translate("questions", { count: detail.questionCount }),
+			value: new Intl.NumberFormat(locale).format(detail.questionCount)
 		},
 		{ 	
-			label: "Sections", 
-			value: String(detail.sectionCount)
+			label: translate("sections", { count: detail.sectionCount }),
+			value: new Intl.NumberFormat(locale).format(detail.sectionCount)
 		},
 		{
-			label: "Duration",
-			value: detail.durationMinutes == null ? "No time limit" : `${detail.durationMinutes} min`,
+			label: translate("duration"),
+			value: detail.durationMinutes == null ? translate("noTimeLimit") : translate("minutes", { count: detail.durationMinutes }),
 		},
 		{
-			label: "Total points",
-			value: formatNumber(detail.totalScore),
+			label: translate("totalScore"),
+			value: formatNumber(detail.totalScore, locale),
 		},
 	]
 
@@ -56,10 +62,10 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 				<div className="flex items-start justify-between">
 					<DialogHeader>
 						<DialogTitle className="text-xl">
-							{dialog?.mode === "retake" ? "Retake exam?" : "Start exam?"}
+							<LocaleMessage messageId={dialog?.mode === "retake" ? "exams.retakeDialogTitle" : "exams.startDialogTitle"} />
 						</DialogTitle>
 						<DialogDescription>
-							A new attempt will be created for {detail.examTitle}.
+							<LocaleMessage messageId="exams.newAttemptDescription" values={{ title: detail.examTitle }} />
 						</DialogDescription>
 					</DialogHeader>
 					<DialogClose
@@ -81,9 +87,9 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 
 				<div className="flex items-start justify-between gap-4 rounded-md border p-4">
 					<div className="space-y-1">
-						<Label htmlFor="exam-mode">Exam mode</Label>
+						<Label htmlFor="exam-mode"><LocaleMessage messageId="exams.examMode" /></Label>
 						<p className="text-sm text-warning">
-							Disabled for now
+							<LocaleMessage messageId="exams.modeDisabled" />
 						</p>
 					</div>
 					<Switch
@@ -94,14 +100,14 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 						onCheckedChange={(checked) => controller.setAttemptMode(checked ? "exam" : "practice")}
 					/>
 				</div>
-				{dialog?.error && (
+				{dialog && Boolean(dialog.error) && (
 					<Alert variant="destructive">
-						<AlertDescription>{dialog.error}</AlertDescription>
+						<AlertDescription>{localizeError(dialog.error, translateErrors)}</AlertDescription>
 					</Alert>
 				)}
 				{dialog?.existingAttemptId && (
 					<Button type="button" variant="outline" onClick={controller.continueExisting}>
-						Continue existing attempt
+						<LocaleMessage messageId="exams.continueExisting" />
 					</Button>
 				)}
 
@@ -110,7 +116,7 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 						render={<Button variant="outline" />}
 						disabled={dialog?.isPending || Boolean(dialog?.existingAttemptId)}
 					>
-						Cancel
+						<LocaleMessage messageId="common.cancel" />
 					</DialogClose>
 					<Button
 						type="button"
@@ -121,10 +127,10 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 							<LoaderCircle className="animate-spin motion-reduce:animate-none" />
 						)}
 						{dialog?.isPending
-							? "Creating attempt…"
+							? translate("creatingAttempt")
 							: dialog?.mode === "retake"
-								? "Create retake"
-								: "Start now"}
+								? translate("createRetake")
+								: translate("startNow")}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

@@ -8,6 +8,8 @@ import { useAttemptRemainingTime } from "./attempt-timer-provider"
 import { formatRemaining } from "../hooks/attempt-timer.hook"
 import type { EndAttemptMode } from "../model/attempt-workspace"
 import { ExamAttemptMode } from "../../types/attempt.type"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 interface EndAttemptDialogProps {
 	mode: EndAttemptMode | null
@@ -28,7 +30,7 @@ function AttemptTimeLeft() {
 
 	return (
 		<div>
-			<dt className="text-neutral-500">Time left</dt>
+			<dt className="text-neutral-500"><LocaleMessage messageId="attempt.timeLeft" /></dt>
 			<dd className="font-semibold">
 				{formatRemaining(remaining)}
 			</dd>
@@ -47,6 +49,7 @@ export function EndAttemptDialog({
 	onClose,
 	onConfirm,
 }: EndAttemptDialogProps) {
+	const translate = useTranslations("attempt")
 	return (
 		<Dialog.Root
 			open={mode !== null}
@@ -64,18 +67,18 @@ export function EndAttemptDialog({
 						<div>
 							<Dialog.Title className="text-xl font-semibold">
 								{expired
-									? "Time expired"
+									? translate("timeExpired")
 									: mode === "submit"
-										? "Submit attempt?"
-										: "Abandon attempt?"}
+										? translate("submitTitle")
+										: translate("abandonTitle")}
 							</Dialog.Title>
 
 							<Dialog.Description className="mt-2 text-sm leading-6 text-neutral-600">
 								{expired
-									? "The attempt is locked. We will save pending answers before submitting it."
+									? translate("expiredDescription")
 									: mode === "submit"
-										? "Submission is final. We will save pending answers first."
-										: "Abandonment ends this attempt and cannot be undone."}
+										? translate("submissionFinalDescription")
+										: translate("abandonFinalDescription")}
 							</Dialog.Description>
 						</div>
 
@@ -93,12 +96,12 @@ export function EndAttemptDialog({
 
 					<dl className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-neutral-50 p-4 text-sm">
 						<div>
-							<dt className="text-neutral-500">Answered</dt>
+							<dt className="text-neutral-500"><LocaleMessage messageId="attempt.answered" /></dt>
 							<dd className="font-semibold">{answered}</dd>
 						</div>
 
 						<div>
-							<dt className="text-neutral-500">Unanswered</dt>
+							<dt className="text-neutral-500"><LocaleMessage messageId="attempt.unanswered" /></dt>
 							<dd className="font-semibold">
 								{total - answered}
 							</dd>
@@ -109,7 +112,7 @@ export function EndAttemptDialog({
 
 					{error && (
 						<Alert variant="destructive" className="mt-4">
-							<AlertDescription>{error}</AlertDescription>
+							<AlertDescription><LocaleMessage messageId="errors.generic" /></AlertDescription>
 						</Alert>
 					)}
 
@@ -121,7 +124,7 @@ export function EndAttemptDialog({
 									variant: "outline",
 								})}
 							>
-								Cancel
+								<LocaleMessage messageId="common.cancel" />
 							</Dialog.Close>
 						)}
 
@@ -140,12 +143,12 @@ export function EndAttemptDialog({
 							)}
 
 							{pending
-								? "Finishing…"
+								? translate("finishing")
 								: expired
-									? "Retry submission"
+									? translate("retrySubmission")
 									: mode === "submit"
-										? "Submit now"
-										: "Abandon"}
+										? translate("submitNow")
+										: translate("abandon")}
 						</Button>
 					</div>
 				</Dialog.Popup>

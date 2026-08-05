@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/shadcn/button"
 import { XIcon } from "lucide-react"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -72,7 +73,7 @@ function DialogContent({
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <span className="sr-only"><LocaleMessage messageId="common.close" /></span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

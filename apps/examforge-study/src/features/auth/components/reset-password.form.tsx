@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CircleAlert, Info } from "lucide-react"
@@ -22,14 +23,18 @@ import {
 import { AUTH_ROUTES } from "@/features/auth/auth.constants"
 import { PasswordInput } from "@/features/auth/components/password.input"
 import {
-	resetPasswordSchema,
+	createAuthSchemas,
 	type ResetPasswordFormValues,
 } from "@/features/auth/schemas/auth.schema"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 	const [isUnavailable, setIsUnavailable] = useState(false)
+	const translateAuth = useTranslations("auth")
+	const translateValidation = useTranslations("validation")
+	const schema = useMemo(() => createAuthSchemas(translateValidation).resetPassword, [translateValidation])
 	const form = useForm<ResetPasswordFormValues>({
-		resolver: zodResolver(resetPasswordSchema),
+		resolver: zodResolver(schema),
 		defaultValues: {
 			password: "",
 			confirmPassword: "",
@@ -46,11 +51,8 @@ export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 			<div className="space-y-6">
 				<Alert variant="destructive">
 					<CircleAlert />
-					<AlertTitle>This reset link is invalid</AlertTitle>
-					<AlertDescription>
-						A reset token is required. Password recovery is not available yet,
-						so please return to sign in.
-					</AlertDescription>
+					<AlertTitle><LocaleMessage messageId="auth.invalidResetTitle" /></AlertTitle>
+					<AlertDescription><LocaleMessage messageId="auth.invalidResetDescription" /></AlertDescription>
 				</Alert>
 				<Link
 					href={AUTH_ROUTES.signin}
@@ -60,7 +62,7 @@ export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 						className: "w-full",
 					})}
 				>
-					Back to sign in
+					<LocaleMessage messageId="auth.backToSignIn" />
 				</Link>
 			</div>
 		)
@@ -75,25 +77,22 @@ export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 			{isUnavailable && (
 				<Alert>
 					<Info />
-					<AlertTitle>Password reset is not available yet</AlertTitle>
-					<AlertDescription>
-						Your password was not changed. Please return when password recovery
-						has been enabled.
-					</AlertDescription>
+					<AlertTitle><LocaleMessage messageId="auth.resetUnavailable" /></AlertTitle>
+					<AlertDescription><LocaleMessage messageId="auth.resetUnavailableDescription" /></AlertDescription>
 				</Alert>
 			)}
 
 			<FieldGroup className="gap-5">
 				<Field data-invalid={Boolean(form.formState.errors.password)}>
-					<FieldLabel htmlFor="reset-password">New password</FieldLabel>
+					<FieldLabel htmlFor="reset-password"><LocaleMessage messageId="auth.newPassword" /></FieldLabel>
 					<PasswordInput
 						id="reset-password"
 						autoComplete="new-password"
-						visibilityLabel="new password"
+						visibilityLabel={translateAuth("newPasswordField")}
 						{...form.register("password")}
 					/>
 					<FieldDescription id="reset-password-description">
-						Choose a password you do not use on other sites.
+						<LocaleMessage messageId="auth.passwordHint" />
 					</FieldDescription>
 					<FieldError
 						id="reset-password-error"
@@ -103,12 +102,12 @@ export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 
 				<Field data-invalid={Boolean(form.formState.errors.confirmPassword)}>
 					<FieldLabel htmlFor="reset-confirm-password">
-						Confirm new password
+						<LocaleMessage messageId="auth.confirmNewPassword" />
 					</FieldLabel>
 					<PasswordInput
 						id="reset-confirm-password"
 						autoComplete="new-password"
-						visibilityLabel="new password confirmation"
+						visibilityLabel={translateAuth("confirmPasswordField")}
 						{...form.register("confirmPassword")}
 					/>
 					<FieldError
@@ -119,7 +118,7 @@ export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 			</FieldGroup>
 
 			<Button type="submit" size="lg" className="w-full">
-				Continue
+				<LocaleMessage messageId="common.continue" />
 			</Button>
 
 			<p className="text-center text-sm">
@@ -127,7 +126,7 @@ export function ResetPasswordForm({ hasToken }: { hasToken: boolean }) {
 					href={AUTH_ROUTES.signin}
 					className="rounded-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
-					Back to sign in
+					<LocaleMessage messageId="auth.backToSignIn" />
 				</Link>
 			</p>
 		</form>

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, Menu } from "lucide-react"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
@@ -49,7 +50,7 @@ export function AttemptWorkspaceContent({
 		<main className="min-w-0">
 			<details className="mb-4 rounded-xl border bg-white p-3 lg:hidden">
 				<summary className="flex cursor-pointer list-none items-center gap-2 font-medium">
-					<Menu className="size-4" /> Sections and questions
+					<Menu className="size-4" /> <LocaleMessage messageId="attempt.sectionsAndQuestions" />
 				</summary>
 				<div className="mt-4">
 					<AttemptNavigator sections={sections} onSelect={onSelect} />
@@ -74,7 +75,7 @@ export function AttemptWorkspaceContent({
 			<SaveError onRetry={onRetrySynchronization} />
 			{locked && (
 				<Alert className="mb-4">
-					<AlertDescription>Answers are locked while the attempt is being finalized.</AlertDescription>
+					<AlertDescription><LocaleMessage messageId="attempt.answersLocked" /></AlertDescription>
 				</Alert>
 			)}
 			<div className="space-y-5">
@@ -120,14 +121,14 @@ export function DisplayModeToggle({ value, onChange }: DisplayModeToggleProps) {
 				variant={value === "one" ? "default" : "outline"}
 				onClick={() => onChange("one")}
 			>
-				One question
+				<LocaleMessage messageId="attempt.oneQuestion" />
 			</Button>
 			<Button
 				size={"sm"}
 				variant={value === "section" ? "default" : "outline"}
 				onClick={() => onChange("section")}
 			>
-				Whole section
+				<LocaleMessage messageId="attempt.wholeSection" />
 			</Button>
 		</ButtonGroup>
 	)
@@ -158,7 +159,7 @@ function AttemptWorkspaceNavigation({
 				disabled={!hasPrevious}
 				onClick={onPrevious}
 			>
-				<ChevronLeft /> Previous
+				<ChevronLeft /> <LocaleMessage messageId="attempt.previous" />
 			</Button>
 			<span className="text-xs text-neutral-500">
 				{answered} of {total} answered
@@ -169,7 +170,7 @@ function AttemptWorkspaceNavigation({
 				disabled={!hasNext}
 				onClick={onNext}
 			>
-				Next <ChevronRight />
+				<LocaleMessage messageId="attempt.next" /> <ChevronRight />
 			</Button>
 		</div>
 	)

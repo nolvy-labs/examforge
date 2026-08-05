@@ -13,6 +13,7 @@ import { useExamAttemptActions } from "../hooks/use-exam-attempt-actions"
 import { StartAttemptDialog } from "./start-attempt-dialog"
 import { Fragment } from "react"
 import { getExamCounts } from "../model/exam-detail"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 	const controller = useExamAttemptActions(detail)
@@ -45,7 +46,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 					href={state.href}
 					className={cn(buttonVariants({ size: "lg" }), "w-full")}
 				>
-					Sign in to start
+					<LocaleMessage messageId="exams.signInToStart" />
 					<ArrowRight />
 				</Link>
 			)
@@ -56,7 +57,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 					href={state.href}
 					className={cn(buttonVariants({ size: "lg" }), "w-full")}
 				>
-					Continue Exam
+					<LocaleMessage messageId="exams.continueAttempt" />
 					<ArrowRight />
 				</Link>
 			)
@@ -69,7 +70,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 					className="w-full"
 					onClick={() => controller.openDialog("start")}
 				>
-					Start Exam
+					<LocaleMessage messageId="exams.startAttempt" />
 				</Button>
 			)
 			break
@@ -80,7 +81,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 						href={state.href}
 						className={cn(buttonVariants({ size: "lg" }), "w-full")}
 					>
-						View Latest Attempt
+						<LocaleMessage messageId="exams.viewLatestAttempt" />
 					</Link>
 					<Button
 						type="button"
@@ -90,7 +91,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 						onClick={() => controller.openDialog("retake")}
 					>
 						<RotateCcw />
-						Retake
+						<LocaleMessage messageId="exams.retakeExam" />
 					</Button>
 				</div>
 			)
@@ -105,7 +106,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 					onClick={() => controller.openDialog("retake")}
 				>
 					<RotateCcw />
-					Retake
+					<LocaleMessage messageId="exams.retakeExam" />
 				</Button>
 			)
 			break
@@ -114,7 +115,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 				<div className="space-y-3">
 					<Alert>
 						<AlertDescription>
-							This exam is not currently available for a new attempt.
+							<LocaleMessage messageId="exams.newAttemptUnavailable" />
 						</AlertDescription>
 					</Alert>
 					<Button
@@ -123,7 +124,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 						className="w-full"
 						onClick={controller.retryAvailability}
 					>
-						Check availability again
+						<LocaleMessage messageId="exams.checkAgain" />
 					</Button>
 				</div>
 			)
@@ -132,7 +133,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 			content = (
 				<div className="space-y-3">
 					<p className="text-sm leading-6 text-muted-foreground">
-						{state.message}
+						<LocaleMessage messageId={`exams.${state.messageKey}`} />
 					</p>
 					<Button
 						type="button"
@@ -140,7 +141,7 @@ export function ExamAttemptActions({ detail }: { detail: StudentExamDetail }) {
 						className="w-full"
 						onClick={controller.retryAvailability}
 					>
-						Retry attempt status
+						<LocaleMessage messageId="exams.retryStatus" />
 					</Button>
 				</div>
 			)

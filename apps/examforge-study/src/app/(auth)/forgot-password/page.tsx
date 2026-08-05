@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 import { ForgotPasswordPage } from "@/features/auth/pages/forgot-password.page"
 
-export const metadata: Metadata = {
-	title: "Forgot password",
+export async function generateMetadata(): Promise<Metadata> {
+	return { title: (await getTranslations("metadata"))("forgotPassword") }
 }
 
 export default function Page() {

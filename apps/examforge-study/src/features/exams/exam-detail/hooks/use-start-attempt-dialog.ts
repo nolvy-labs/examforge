@@ -26,7 +26,7 @@ export interface StartAttemptDialogController {
 		mode: AttemptDialogMode
 		attemptMode: ExamAttemptMode
 		isPending: boolean
-		error: string
+		error: unknown
 		existingAttemptId: string | null
 	} | null
 	openDialog: (mode: AttemptDialogMode) => void
@@ -44,7 +44,7 @@ export function useStartAttemptDialog(
 	const mutation = useCreateExamAttempt(context.examId)
 	const [dialogMode, setDialogMode] = useState<AttemptDialogMode | null>(null)
 	const [attemptMode, setAttemptModeState] = useState<ExamAttemptMode>("practice")
-	const [customError, setCustomError] = useState("")
+	const [customError, setCustomError] = useState<unknown>(null)
 	const [existingAttemptId, setExistingAttemptId] = useState<string | null>(null)
 	const signinHref = useMemo(
 		() => `${AUTH_ROUTES.signin}?callbackUrl=${encodeURIComponent(`/exams/${encodeURIComponent(context.examSlug)}`)}`,
@@ -54,7 +54,7 @@ export function useStartAttemptDialog(
 	function openDialog(mode: AttemptDialogMode) {
 		mutation.reset()
 		setAttemptModeState("practice")
-		setCustomError("")
+		setCustomError(null)
 		setExistingAttemptId(null)
 		setDialogMode(mode)
 	}
@@ -66,12 +66,12 @@ export function useStartAttemptDialog(
 	function setAttemptMode(mode: ExamAttemptMode) {
 		if (context.durationMinutes == null && mode === "exam") return
 		setAttemptModeState(mode)
-		setCustomError("")
+		setCustomError(null)
 	}
 
 	function confirmDialog() {
 		if (!dialogMode || mutation.isPending || existingAttemptId) return
-		setCustomError("")
+		setCustomError(null)
 		mutation.mutate({ mode: attemptMode }, {
 			onSuccess: (attempt) => {
 				onCreated?.()
@@ -79,7 +79,7 @@ export function useStartAttemptDialog(
 			},
 			onError: (error) => {
 				if (!(error instanceof ApiError)) {
-					setCustomError("We could not create the attempt. Please try again.")
+					setCustomError(error)
 					return
 				}
 				if (error.status === 401) {
@@ -89,10 +89,10 @@ export function useStartAttemptDialog(
 				}
 				if (error.problemCode === "active_attempt_exists" && error.existingAttemptId) {
 					setExistingAttemptId(error.existingAttemptId)
-					setCustomError("An in-progress attempt already exists for this exam version.")
+					setCustomError(error)
 					return
 				}
-				setCustomError(error.message)
+				setCustomError(error)
 			},
 		})
 	}

@@ -1,20 +1,9 @@
-export function formatPercentage(value: number | null) {
+export function formatPercentage(value: number | null, locale = "en", emptyLabel = "—") {
 	return value == null
-		? "No data yet"
-		: `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)}%`
+		? emptyLabel
+		: new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 2 }).format(value / 100)
 }
 
-export function formatPoints(value: number) {
-	return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value)
-}
-
-const questionTypeLabels: Record<number, string> = {
-	0: "Fill in the blank",
-	1: "Single-choice",
-	2: "Multiple-choice",
-	3: "Question group",
-}
-
-export function formatQuestionType(value: number) {
-	return questionTypeLabels[value] ?? `Question type ${value}`
+export function formatPoints(value: number, locale = "en") {
+	return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)
 }

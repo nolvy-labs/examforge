@@ -4,6 +4,7 @@ import { ExamBrowseFilters } from "../components/exam-browse-filters"
 import { ExamBrowseResults } from "../components/exam-browse-results"
 import { ExamBrowseSearch } from "../components/exam-browse-search"
 import { useExamBrowseQuery } from "../hooks/use-exam-browse-query"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function ExamBrowsePage() {
 	const browse = useExamBrowseQuery()
@@ -38,7 +39,7 @@ export function ExamBrowseHeader({ search }: ExamBrowseHeaderProps) {
 			<div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
 				<div className="max-w-3xl">
 					<h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-						Browse Exams
+						<LocaleMessage messageId="exams.browseTitle" />
 					</h1>
 				</div>
 				<ExamBrowseSearch

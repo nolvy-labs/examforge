@@ -1,5 +1,6 @@
 import { MainHeader } from "@/components/layout/header/header"
 import { Button } from "@/components/shadcn/button"
+import { LocaleMessage } from "@/components/locale/locale-message"
 import { ApiError } from "@/lib/api/api.error"
 
 interface AttemptResultErrorProps {
@@ -15,14 +16,18 @@ export function AttemptResultError({
 		<div className="min-h-svh bg-neutral-50">
 			<MainHeader />
 			<main className="mx-auto max-w-lg px-4 py-16 text-center">
-				<h1 className="text-2xl font-semibold">Result unavailable</h1>
+				<h1 className="text-2xl font-semibold"><LocaleMessage messageId="attempt.resultUnavailable" /></h1>
 				<p className="mt-2 text-sm text-neutral-600">
-					{error instanceof ApiError && error.status === 404
-						? "This attempt does not exist or is inaccessible."
-						: "We couldn't load the result. Try again."}
+					<LocaleMessage
+						messageId={
+							error instanceof ApiError && error.status === 404
+								? "attempt.resultNotFoundDescription"
+								: "attempt.resultUnavailableDescription"
+						}
+					/>
 				</p>
 				<Button className="mt-5" onClick={onRetry}>
-					Retry
+					<LocaleMessage messageId="common.retry" />
 				</Button>
 			</main>
 		</div>

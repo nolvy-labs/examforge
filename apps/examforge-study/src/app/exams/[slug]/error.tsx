@@ -4,6 +4,7 @@ import { MainHeader } from "@/components/layout/header/header"
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert"
 import { Button, buttonVariants } from "@/components/shadcn/button"
 import Link from "next/link"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export default function ErrorPage({ reset }: { reset: () => void }) {
 	return <ExamDetailError onRetry={reset} />
@@ -19,18 +20,18 @@ function ExamDetailError({ onRetry }: Props) {
 			<MainHeader />
 			<main className="mx-auto w-full max-w-xl flex-1 px-4 py-16 sm:px-6">
 				<Alert>
-					<AlertTitle>We couldn&apos;t load this exam</AlertTitle>
+					<AlertTitle><LocaleMessage messageId="exams.unavailableTitle" /></AlertTitle>
 					<AlertDescription>
-						<p>The exam service is unavailable right now.</p>
+						<p><LocaleMessage messageId="exams.unavailableDescription" /></p>
 						<div className="mt-4 flex flex-wrap gap-2">
 							<Button type="button" onClick={onRetry}>
-								Try again
+								<LocaleMessage messageId="common.retry" />
 							</Button>
 							<Link
 								href="/exams"
 								className={buttonVariants({ variant: "outline" })}
 							>
-								Back to exams
+								<LocaleMessage messageId="exams.backToBrowse" />
 							</Link>
 						</div>
 					</AlertDescription>

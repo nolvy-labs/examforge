@@ -7,6 +7,7 @@ import { SaveStatus } from "./attempt-question"
 import { useAttemptRemainingTime } from "./attempt-timer-provider"
 import { formatRemaining } from "../hooks/attempt-timer.hook"
 import type { ExamAttemptMode } from "../../types/attempt.type"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 interface AttemptWorkspaceHeaderProps {
 	title: string
@@ -58,7 +59,7 @@ export function AttemptWorkspaceHeader({
 				<AttemptCountdown mode={mode} />
 
 				<Button type="button" disabled={locked} onClick={onSubmit}>
-					Submit
+					<LocaleMessage messageId="attempt.submit" />
 				</Button>
 			</div>
 		</header>

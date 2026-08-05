@@ -14,6 +14,8 @@ import { Separator } from "@/components/shadcn/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/shadcn/field"
 import { Label } from "@/components/shadcn/label"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 interface Props {
 	data: ExamBrowseFilterData
@@ -37,7 +39,7 @@ export function ExamFilterPanel({
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between gap-3">
-				<h2 className="text-base font-semibold">Filters</h2>
+				<h2 className="text-base font-semibold"><LocaleMessage messageId="exams.filters" /></h2>
 				<Button
 					type="button"
 					variant="link"
@@ -45,7 +47,7 @@ export function ExamFilterPanel({
 					onClick={onClear}
 					disabled={!category && tagIds.length === 0}
 				>
-					Clear all
+					<LocaleMessage messageId="exams.clearAll" />
 				</Button>
 			</div>
 			<Separator />
@@ -81,7 +83,7 @@ function CategoryList({ data, category, idPrefix = "desktop", onCategoryChange }
 		<Fragment>
 			{data.categoryError ? (
 				<Alert>
-					<AlertTitle>Could not load categories.</AlertTitle>
+					<AlertTitle><LocaleMessage messageId="exams.categoriesError" /></AlertTitle>
 					<AlertDescription>
 						<Button
 							type="button"
@@ -90,7 +92,7 @@ function CategoryList({ data, category, idPrefix = "desktop", onCategoryChange }
 							className="px-0"
 							onClick={data.onRetryCategories}
 						>
-							Try again
+							<LocaleMessage messageId="common.retry" />
 						</Button>
 					</AlertDescription>
 				</Alert>
@@ -102,12 +104,12 @@ function CategoryList({ data, category, idPrefix = "desktop", onCategoryChange }
 				</div>
 			) : (
 				<RadioGroup value={category} onValueChange={onCategoryChange} className="gap-4">
-					<Label htmlFor={`${idPrefix}-category`}>Category</Label>
+					<Label htmlFor={`${idPrefix}-category`}><LocaleMessage messageId="exams.category" /></Label>
 					<Field orientation="horizontal">
 						<RadioGroupItem value={""} id={"all categories"} />
 						<FieldContent className="flex-row gap-2 items-start justify-start">
 							<FieldLabel htmlFor={"all categories"}>
-								All categories
+								<LocaleMessage messageId="exams.allCategories" />
 							</FieldLabel>
 						</FieldContent>
 					</Field>
@@ -143,12 +145,13 @@ interface TagListProps {
 
 function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListProps) {
 	const [expandedGroups, setExpandedGroups] = useState<string[]>([])
+	const translate = useTranslations("exams")
 
 	return (
 		<Fragment>
 			{data.tagError ? (
 				<Alert>
-					<AlertTitle>Could not load tags.</AlertTitle>
+					<AlertTitle><LocaleMessage messageId="exams.tagsError" /></AlertTitle>
 					<AlertDescription>
 						<Button
 							type="button"
@@ -157,7 +160,7 @@ function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListPro
 							className="px-0"
 							onClick={data.onRetryTags}
 						>
-							Try again
+							<LocaleMessage messageId="common.retry" />
 						</Button>
 					</AlertDescription>
 				</Alert>
@@ -193,7 +196,7 @@ function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListPro
 
 					return (
 						<FieldGroup key={key} className="gap-4">
-							<Label htmlFor={`${idPrefix}-tag-${key}`}>Tag</Label>
+							<Label htmlFor={`${idPrefix}-tag-${key}`}><LocaleMessage messageId="exams.tag" /></Label>
 							{displayItems.map((item) => {
 								const id = item.id.toLowerCase()
 								const inputId = `${idPrefix}-tag-${key}-${id}`
@@ -230,7 +233,7 @@ function TagList({ data, tagIds, idPrefix = "desktop", onTagChange }: TagListPro
 										)
 									}
 								>
-									{expanded ? "Show less" : `Show all ${items.length}`}
+									{translate(expanded ? "showLess" : "showAll", { count: items.length })}
 									<ChevronDown className={cn("transition-transform", expanded && "rotate-180")} />
 								</Button>
 							)}

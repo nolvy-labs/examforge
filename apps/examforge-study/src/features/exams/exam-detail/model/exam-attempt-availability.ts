@@ -12,7 +12,7 @@ export type ExamAttemptAvailability =
 	| {
 			kind: "error"
 			source: "active" | "latest" | "unexpected"
-			message: string
+			messageKey: "activeCheckError" | "latestCheckError" | "unexpectedAttemptStatus"
 		}
 
 export interface ExamAttemptAvailabilityInput {
@@ -49,7 +49,7 @@ export function getExamAttemptAvailability(attemptAvailabilityInput: ExamAttempt
 		return {
 			kind: "error",
 			source: "active",
-			message: "We couldn't check for an active attempt. Starting is disabled until your status is known.",
+			messageKey: "activeCheckError",
 		}
 	}
 	if (activeAttempt) {
@@ -63,7 +63,7 @@ export function getExamAttemptAvailability(attemptAvailabilityInput: ExamAttempt
 		return {
 			kind: "error",
 			source: "latest",
-			message: "We couldn't determine your latest attempt. Try again before starting.",
+			messageKey: "latestCheckError",
 		}
 	}
 	if (failedVersionId === publishedVersionId) return { kind: "unavailable" }
@@ -79,7 +79,7 @@ export function getExamAttemptAvailability(attemptAvailabilityInput: ExamAttempt
 	return {
 		kind: "error",
 		source: "unexpected",
-		message: "Your latest attempt has an unexpected active status.",
+		messageKey: "unexpectedAttemptStatus",
 	}
 }
 

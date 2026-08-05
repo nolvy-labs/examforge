@@ -13,12 +13,15 @@ import {
 
 import type { ExamBrowseFiltersViewModel } from "../hooks/use-exam-browse-query"
 import { ExamFilterPanel } from "./exam-filter-panel"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 interface Props {
 	filters: ExamBrowseFiltersViewModel
 }
 
 export function ExamFilterSheet({ filters }: Props) {
+	const translate = useTranslations("exams")
 	const [open, setOpen] = useState(false)
 	const [draftCategory, setDraftCategory] = useState(filters.category)
 	const [draftTagIds, setDraftTagIds] = useState(filters.tagIds)
@@ -37,7 +40,7 @@ export function ExamFilterSheet({ filters }: Props) {
 				render={<Button type="button" variant="outline" className="lg:hidden" />}
 			>
 				<SlidersHorizontal />
-				Filters{filters.activeCount > 0 ? ` (${filters.activeCount})` : ""}
+				<LocaleMessage messageId="exams.filters" />{filters.activeCount > 0 ? ` (${translate("resultCount", { count: filters.activeCount })})` : ""}
 			</SheetTrigger>
 			<SheetContent className="flex flex-col py-4">
 				<div className="min-h-0 max-h-dvh flex-1 overflow-y-auto px-4">
@@ -69,7 +72,7 @@ export function ExamFilterSheet({ filters }: Props) {
 							setDraftTagIds([])
 						}}
 					>
-						Clear
+						<LocaleMessage messageId="common.clear" />
 					</Button>
 					<Button
 						type="button"
@@ -78,7 +81,7 @@ export function ExamFilterSheet({ filters }: Props) {
 							setOpen(false)
 						}}
 					>
-						Apply filters
+						<LocaleMessage messageId="exams.applyFilters" />
 					</Button>
 				</SheetFooter>
 			</SheetContent>

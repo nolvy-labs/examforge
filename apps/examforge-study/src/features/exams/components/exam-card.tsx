@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 
 import { ExamMetadata } from "./exam-metadata"
 import type { StudentExam } from "../types/exam.types"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 interface ExamCardProps {
 	exam: StudentExam
@@ -51,7 +52,7 @@ export default function ExamCard({ exam }: ExamCardProps) {
 					href={`/exams/${encodeURIComponent(exam.slug)}`}
 					className={cn(buttonVariants({ variant: "outline" }), "w-full")}
 				>
-					View Exam
+					<LocaleMessage messageId="exams.viewExam" />
 					<ArrowRight />
 				</Link>
 			</CardFooter>

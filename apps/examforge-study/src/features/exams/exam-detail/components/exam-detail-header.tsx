@@ -5,22 +5,24 @@ import { Badge } from "@/components/shadcn/badge"
 import { buttonVariants } from "@/components/shadcn/button"
 
 import type { StudentExamDetail } from "../../types/exam.types"
-import { getExamTypeLabel } from "../model/exam-detail"
 import { cn } from "@/lib/utils"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 interface Props {
 	detail: StudentExamDetail
 }
 
 export function ExamDetailHeader({ detail }: Props) {
+	const translate = useTranslations("exams")
 	return (
 		<header className="flex flex-col gap-4 items-start">
 			<Link href="/exams" className={cn(buttonVariants({ variant: "link" }), "px-0")}>
 				<ArrowLeft />
-				Back to Browse Exams
+				<LocaleMessage messageId="exams.backToBrowse" />
 			</Link>
 			<div className="flex flex-wrap gap-2">
-				<Badge>{getExamTypeLabel(detail.exam.type)}</Badge>
+				<Badge>{translate(detail.exam.type === "ielts" ? "ielts" : "standardExam")}</Badge>
 				{detail.exam.tags.map((tag) => (
 					<Badge key={tag.id} variant="secondary" className="max-w-full">
 						<span className="wrap-break-word">{tag.name}</span>

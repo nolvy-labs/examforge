@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle, TriangleAlert } from "lucide-react"
 import { useForm } from "react-hook-form"
+import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 
 import {
 	Alert,
@@ -26,16 +28,22 @@ import {
 import { PasswordInput } from "@/features/auth/components/password.input"
 import { useSignupMutation } from "@/features/auth/hooks/auth.hook"
 import {
-	signupSchema,
+	createAuthSchemas,
 	type SignupFormValues,
 } from "@/features/auth/schemas/auth.schema"
 import { ApiError } from "@/lib/api/api.error"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { localizeError } from "@/features/shared/errors/localized-error"
 
 export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 	const router = useRouter()
 	const signupMutation = useSignupMutation()
+	const translateAuth = useTranslations("auth")
+	const translateValidation = useTranslations("validation")
+	const translateErrors = useTranslations("errors")
+	const schema = useMemo(() => createAuthSchemas(translateValidation).signup, [translateValidation])
 	const form = useForm<SignupFormValues>({
-		resolver: zodResolver(signupSchema),
+		resolver: zodResolver(schema),
 		defaultValues: {
 			displayName: "",
 			email: "",
@@ -70,7 +78,7 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 					const fields = ["displayName", "email", "password"] as const
 
 					fields.forEach((field) => {
-						const message = error.getFieldMessages(field)?.[0]
+						const message = error.getFieldMessages(field)?.[0] && translateValidation("fieldInvalid")
 
 						if (message) {
 							form.setError(field, { type: "server", message })
@@ -90,8 +98,8 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 			{apiError && (
 				<Alert variant="destructive">
 					<TriangleAlert />
-					<AlertTitle>We could not create your account</AlertTitle>
-					<AlertDescription>{apiError.message}</AlertDescription>
+					<AlertTitle><LocaleMessage messageId="auth.signUpErrorTitle" /></AlertTitle>
+					<AlertDescription>{localizeError(apiError, translateErrors)}</AlertDescription>
 				</Alert>
 			)}
 
@@ -101,7 +109,7 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 					className="relative gap-1"
 				>
 					<FieldLabel htmlFor="signup-name">
-						Display name
+						<LocaleMessage messageId="auth.displayName" />
 					</FieldLabel>
 					<Input
 						id="signup-name"
@@ -121,7 +129,7 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 					data-invalid={Boolean(form.formState.errors.email)}
 					className="relative gap-1"
 				>
-					<FieldLabel htmlFor="signup-email">Email</FieldLabel>
+					<FieldLabel htmlFor="signup-email"><LocaleMessage messageId="auth.email" /></FieldLabel>
 					<Input
 						id="signup-email"
 						type="email"
@@ -143,11 +151,11 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 					data-invalid={Boolean(form.formState.errors.password)}
 					className="relative gap-1"
 				>
-					<FieldLabel htmlFor="signup-password">Password</FieldLabel>
+					<FieldLabel htmlFor="signup-password"><LocaleMessage messageId="auth.password" /></FieldLabel>
 					<PasswordInput
 						id="signup-password"
 						autoComplete="new-password"
-						visibilityLabel="password"
+						visibilityLabel={translateAuth("passwordField")}
 						{...form.register("password")}
 					/>
 					<FieldError
@@ -162,12 +170,12 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 					className="relative gap-1"
 				>
 					<FieldLabel htmlFor="signup-confirm-password">
-						Confirm password
+						<LocaleMessage messageId="auth.confirmPassword" />
 					</FieldLabel>
 					<PasswordInput
 						id="signup-confirm-password"
 						autoComplete="new-password"
-						visibilityLabel="password confirmation"
+						visibilityLabel={translateAuth("confirmPasswordField")}
 						{...form.register("confirmPassword")}
 					/>
 					<FieldError
@@ -187,16 +195,16 @@ export function SignupForm({ callbackUrl }: { callbackUrl?: string }) {
 				{signupMutation.isPending && (
 					<LoaderCircle className="animate-spin" />
 				)}
-				{signupMutation.isPending ? "Creating your free account…" : "Create your free account"}
+				<LocaleMessage messageId={signupMutation.isPending ? "auth.creatingAccount" : "auth.signUp"} />
 			</Button>
 
 			<p className="text-center text-sm text-muted-foreground">
-				Already have an account?{" "}
+				<LocaleMessage messageId="auth.alreadyHaveAccount" />
 				<Link
 					href={AUTH_ROUTES.signin}
 					className="rounded-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
-					Sign in
+					<LocaleMessage messageId="auth.signIn" />
 				</Link>
 			</p>
 		</form>

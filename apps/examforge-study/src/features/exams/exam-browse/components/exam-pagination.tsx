@@ -10,6 +10,7 @@ import {
 	PaginationPrevious,
 } from "@/components/shadcn/pagination"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 export function getExamPageItems(current: number, total: number): Array<number | "ellipsis"> {
 	if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1)
@@ -43,10 +44,12 @@ export function ExamPagination({
 	hasNextPage,
 	onPageChange,
 }: Props) {
+	const translate = useTranslations("accessibility")
+	const translateExams = useTranslations("exams")
 	if (totalPages <= 1) return null
 
 	return (
-		<Pagination aria-label="Exam result pages">
+		<Pagination aria-label={translateExams("resultsPages")}>
 			<PaginationContent className="flex-wrap">
 				<PaginationItem>
 					<PaginationPrevious
@@ -71,7 +74,7 @@ export function ExamPagination({
 							<PaginationLink
 								href="#"
 								isActive={item === page}
-								aria-label={`Go to page ${item}`}
+								aria-label={translate("goToPage", { page: item })}
 								onClick={(event) => {
 									event.preventDefault()
 									onPageChange(item)

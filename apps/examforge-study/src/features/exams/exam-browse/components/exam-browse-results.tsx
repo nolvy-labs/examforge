@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import ExamCard from "../../components/exam-card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 interface Props {
 	headingRef: RefObject<HTMLHeadingElement | null>
@@ -117,14 +118,11 @@ interface ExamResultsErrorProps {
 export function ExamResultsError({ onRetry }: ExamResultsErrorProps) {
 	return (
 		<Alert>
-			<AlertTitle>We couldn&apos;t load the exams</AlertTitle>
+			<AlertTitle><LocaleMessage messageId="exams.loadErrorTitle" /></AlertTitle>
 			<AlertDescription>
-				<p>
-					The exam service is unavailable right now. Your filters have been
-					preserved.
-				</p>
+				<p><LocaleMessage messageId="exams.loadErrorDescription" /></p>
 				<Button type="button" className="mt-4" onClick={onRetry}>
-					Try again
+					<LocaleMessage messageId="common.retry" />
 				</Button>
 			</AlertDescription>
 		</Alert>
@@ -141,18 +139,14 @@ export function ExamResultsEmpty({ hasDiscoveryFilters, onClear }: ExamResultsEm
 		<Card>
 			<CardContent className="px-6 py-16 text-center">
 				<h3 className="text-lg font-semibold">
-					{hasDiscoveryFilters
-						? "No exams match these filters"
-						: "No exams are available yet"}
+					<LocaleMessage messageId={hasDiscoveryFilters ? "exams.emptyFilteredTitle" : "exams.emptyAvailableTitle"} />
 				</h3>
 				<p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-					{hasDiscoveryFilters
-						? "Try a different title or remove some filters."
-						: "Published exams will appear here when they become available."}
+					<LocaleMessage messageId={hasDiscoveryFilters ? "exams.emptyFilteredDescription" : "exams.emptyAvailableDescription"} />
 				</p>
 				{hasDiscoveryFilters && (
 					<Button type="button" className="mt-5" onClick={onClear}>
-						Clear filters
+						<LocaleMessage messageId="exams.clearFilters" />
 					</Button>
 				)}
 			</CardContent>

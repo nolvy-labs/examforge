@@ -6,7 +6,7 @@ import {
 	CardTitle,
 } from "@/components/shadcn/card"
 import { SigninForm } from "@/features/auth/components/signin.form"
-import Link from "next/link"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function SigninPage({ callbackUrl }: { callbackUrl?: string }) {
 	return (
@@ -15,7 +15,7 @@ export function SigninPage({ callbackUrl }: { callbackUrl?: string }) {
 			<Card className="shadow-lg shadow-foreground/5">
 				<CardHeader className="gap-2">
 					<CardTitle className="text-2xl font-semibold tracking-tight">
-						Welcome back
+						<LocaleMessage messageId="auth.signInTitle" />
 					</CardTitle>
 				</CardHeader>
 				<CardContent>

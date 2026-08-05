@@ -5,6 +5,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/shadcn/button"
 import ExamCard from "@/features/exams/components/exam-card"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function DashboardExams() {
 	return (
@@ -12,7 +13,7 @@ export function DashboardExams() {
 			<div>
 				<div className="flex justify-between">
 					<h2 id="exams-heading" className="text-xl font-semibold tracking-tight text-neutral-950">
-						Recommended exams
+						<LocaleMessage messageId="dashboard.recommendedExams" />
 					</h2>
 					<Link
 						href={"/exams"}
@@ -21,7 +22,7 @@ export function DashboardExams() {
 							"text-sm h-fit"
 						)}
 					>
-						{"View all exams"}
+						<LocaleMessage messageId="dashboard.viewAllExams" />
 						<ChevronsRight />
 					</Link>
 				</div>

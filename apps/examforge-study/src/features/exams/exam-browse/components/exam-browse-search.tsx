@@ -3,6 +3,8 @@
 import { Search } from "lucide-react"
 
 import { Input } from "@/components/shadcn/input"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 interface Props {
 	value: string
@@ -15,6 +17,7 @@ export function ExamBrowseSearch({
 	onChange,
 	onSubmit,
 }: Props) {
+	const translate = useTranslations("exams")
 	return (
 		<form
 			role="search"
@@ -25,7 +28,7 @@ export function ExamBrowseSearch({
 			}}
 		>
 			<label htmlFor="exam-search" className="sr-only">
-				Search exam titles
+				<LocaleMessage messageId="exams.search" />
 			</label>
 			<Search className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
 			<Input
@@ -33,7 +36,7 @@ export function ExamBrowseSearch({
 				type="search"
 				value={value}
 				onChange={(event) => onChange(event.target.value)}
-				placeholder="Search exam titles…"
+				placeholder={translate("searchPlaceholder")}
 				className="h-12 pr-4 pl-12 text-base"
 			/>
 		</form>

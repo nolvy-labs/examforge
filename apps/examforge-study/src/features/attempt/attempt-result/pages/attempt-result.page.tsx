@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import { MainHeader } from "@/components/layout/header/header"
 
 import { AttemptQuestionReview } from "../components/attempt-question-review"
+import { LocaleMessage } from "@/components/locale/locale-message"
 import {
 	AttemptResultError,
 	AttemptResultLoading,
@@ -57,7 +58,7 @@ export function AttemptResultPage({ attemptId }: AttemptResultPageProps) {
 				<div className="flex flex-col gap-4 items-start">
 					<Link href={examHref} className={cn(buttonVariants({ variant: "link" }), "px-0")}>
 						<ArrowLeft />
-						Return to exam
+						<LocaleMessage messageId="attempt.backToExam" />
 					</Link>
 					<AttemptResultSummary
 						detail={result.detail}

@@ -17,10 +17,6 @@ const frontMatterSchema = z.object({
 const placeholderPattern = /\[[^\]\n]*(?:TÊN|ĐỊA CHỈ|EMAIL|XÁC NHẬN|CONFIRM|ADDRESS|OPERATOR|PROVIDER|COOKIE_NAME|COOKIE,|_KEY|_KEYS|TTL|LIFETIME|HOST\/LOAD)[^\]\n]*\]/giu
 const draftNoticePattern = /^>\s*\*\*(?:Cần hoàn thiện trước khi phát hành|Complete before publication):\*\*.*(?:\r?\n|$)/gimu
 
-export function resolveLegalLocale(value: string | string[] | undefined): LegalLocale {
-	return value === "en" || value === "vi" ? value : "vi"
-}
-
 export function isLegalDocument(value: string): value is LegalDocumentType {
 	return LEGAL_DOCUMENTS.includes(value as LegalDocumentType)
 }

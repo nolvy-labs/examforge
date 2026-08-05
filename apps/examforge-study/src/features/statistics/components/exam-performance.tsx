@@ -5,11 +5,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import type { ExamPerformance } from "../types/statistics.type"
 import { formatPercentage } from "../utils/statistics.format"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
 
 export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) {
+	const locale = useLocale()
+	const translate = useTranslations("statistics")
 	return (
 		<Card>
-			<CardHeader><CardTitle>Performance by exam</CardTitle><p className="text-sm text-neutral-600">Top 10 by completed attempts.</p></CardHeader>
+			<CardHeader><CardTitle><LocaleMessage messageId="statistics.performanceByExam" /></CardTitle><p className="text-sm text-neutral-600"><LocaleMessage messageId="statistics.performanceByExamDescription" /></p></CardHeader>
 			<CardContent>
 				{exams.length === 0 ? <Empty /> : (
 					<>
@@ -17,11 +21,11 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 							<Table>
 								<TableHeader>
 									<TableRow>
-										<TableHead>Exam</TableHead>
-										<TableHead>Attempts</TableHead>
-										<TableHead>Latest</TableHead>
-										<TableHead>Average</TableHead>
-										<TableHead>Best</TableHead>
+										<TableHead><LocaleMessage messageId="statistics.exam" /></TableHead>
+										<TableHead><LocaleMessage messageId="statistics.attempts" /></TableHead>
+										<TableHead><LocaleMessage messageId="statistics.latest" /></TableHead>
+										<TableHead><LocaleMessage messageId="statistics.average" /></TableHead>
+										<TableHead><LocaleMessage messageId="statistics.best" /></TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
@@ -36,10 +40,10 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 													{exam.examTitle}
 												</Link>
 											</TableCell>
-											<TableCell>{exam.attemptCount}</TableCell>
-											<TableCell>{formatPercentage(exam.latestScorePercentage)}</TableCell>
-											<TableCell>{formatPercentage(exam.averageScorePercentage)}</TableCell>
-											<TableCell>{formatPercentage(exam.bestScorePercentage)}</TableCell>
+											<TableCell>{new Intl.NumberFormat(locale).format(exam.attemptCount)}</TableCell>
+											<TableCell>{formatPercentage(exam.latestScorePercentage, locale)}</TableCell>
+											<TableCell>{formatPercentage(exam.averageScorePercentage, locale)}</TableCell>
+											<TableCell>{formatPercentage(exam.bestScorePercentage, locale)}</TableCell>
 										</TableRow>))}
 								</TableBody>
 							</Table>
@@ -53,11 +57,11 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 										title={exam.examTitle}>
 										{exam.examTitle}
 									</Link>
-									<p className="mt-1 text-sm text-neutral-600">{exam.attemptCount} {exam.attemptCount === 1 ? "attempt" : "attempts"}</p>
+									<p className="mt-1 text-sm text-neutral-600">{translate("attemptCount", { count: exam.attemptCount })}</p>
 									<dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-										<Score label="Latest" value={exam.latestScorePercentage} />
-										<Score label="Average" value={exam.averageScorePercentage} />
-										<Score label="Best" value={exam.bestScorePercentage} />
+										<Score label={translate("latest")} value={exam.latestScorePercentage} />
+										<Score label={translate("average")} value={exam.averageScorePercentage} />
+										<Score label={translate("best")} value={exam.bestScorePercentage} />
 									</dl>
 								</div>
 							))}
@@ -70,11 +74,12 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 }
 
 function Score({ label, value }: { label: string; value: number | null }) {
+	const locale = useLocale()
 	return (
 		<div>
 			<dt className="text-xs text-neutral-500">{label}</dt>
-			<dd className="mt-1 font-medium">{formatPercentage(value)}</dd>
+			<dd className="mt-1 font-medium">{formatPercentage(value, locale)}</dd>
 		</div>
 	)
 }
-function Empty() { return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-neutral-600">No completed attempts match these filters yet.</div> }
+function Empty() { return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-neutral-600"><LocaleMessage messageId="statistics.noExamPerformance" /></div> }

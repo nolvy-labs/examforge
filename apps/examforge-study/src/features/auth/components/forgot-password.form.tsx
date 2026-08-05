@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, CircleCheck } from "lucide-react"
@@ -20,14 +21,17 @@ import {
 import { Input } from "@/components/shadcn/input"
 import { AUTH_ROUTES } from "@/features/auth/auth.constants"
 import {
-	forgotPasswordSchema,
+	createAuthSchemas,
 	type ForgotPasswordFormValues,
 } from "@/features/auth/schemas/auth.schema"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function ForgotPasswordForm() {
 	const [isConfirmed, setIsConfirmed] = useState(false)
+	const translateValidation = useTranslations("validation")
+	const schema = useMemo(() => createAuthSchemas(translateValidation).forgotPassword, [translateValidation])
 	const form = useForm<ForgotPasswordFormValues>({
-		resolver: zodResolver(forgotPasswordSchema),
+		resolver: zodResolver(schema),
 		defaultValues: {
 			email: "",
 		},
@@ -43,7 +47,7 @@ export function ForgotPasswordForm() {
 			<div className="space-y-6">
 				<Alert>
 					<CircleCheck />
-					<AlertTitle>Password recovery is not available yet</AlertTitle>
+					<AlertTitle><LocaleMessage messageId="auth.recoveryUnavailable" /></AlertTitle>
 				</Alert>
 				<Link
 					href={AUTH_ROUTES.signin}
@@ -54,7 +58,7 @@ export function ForgotPasswordForm() {
 					})}
 				>
 					<ArrowLeft />
-					Back to sign in
+					<LocaleMessage messageId="auth.backToSignIn" />
 				</Link>
 			</div>
 		)
@@ -68,7 +72,7 @@ export function ForgotPasswordForm() {
 		>
 			<FieldGroup className="gap-5">
 				<Field data-invalid={Boolean(form.formState.errors.email)}>
-					<FieldLabel htmlFor="forgot-email">Email</FieldLabel>
+					<FieldLabel htmlFor="forgot-email"><LocaleMessage messageId="auth.email" /></FieldLabel>
 					<Input
 						id="forgot-email"
 						type="email"
@@ -87,7 +91,7 @@ export function ForgotPasswordForm() {
 			</FieldGroup>
 
 			<Button type="submit" size="lg" className="w-full">
-				Continue
+				<LocaleMessage messageId="common.continue" />
 			</Button>
 
 			<p className="text-center text-sm">
@@ -96,7 +100,7 @@ export function ForgotPasswordForm() {
 					className="inline-flex items-center gap-2 rounded-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					<ArrowLeft />
-					Back to sign in
+					<LocaleMessage messageId="auth.backToSignIn" />
 				</Link>
 			</p>
 		</form>

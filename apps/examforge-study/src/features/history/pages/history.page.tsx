@@ -35,6 +35,9 @@ import {
 import { useAttempts } from "@/features/attempt/api/attempt.query"
 import type { AttemptStatus } from "@/features/attempt/types/attempt.type"
 import { cn } from "@/lib/utils"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import type { LocaleMessageId } from "@/i18n/locale.type"
+import { useTranslations } from "next-intl"
 
 import { HistoryAttemptItem } from "../components/history-attempt-item"
 import {
@@ -46,17 +49,18 @@ import {
 	type HistoryState,
 } from "../model/history-query"
 
-const STATUS_FILTERS: Array<{ label: string; status?: AttemptStatus }> = [
-	{ label: "All" },
-	{ label: "In progress", status: "in-progress" },
-	{ label: "Submitted", status: "submitted" },
-	{ label: "Abandoned", status: "abandoned" },
+const STATUS_FILTERS: Array<{ label: LocaleMessageId; status?: AttemptStatus }> = [
+	{ label: "history.all" },
+	{ label: "history.inProgress", status: "in-progress" },
+	{ label: "history.submitted", status: "submitted" },
+	{ label: "history.abandoned", status: "abandoned" },
 ]
 
 export function HistoryPage() {
 	const pathname = usePathname()
 	const router = useRouter()
 	const searchParams = useSearchParams()
+	const translate = useTranslations("history")
 	const rawQuery = searchParams.toString()
 	const state = useMemo(
 		() => parseHistoryQuery(new URLSearchParams(rawQuery)),
@@ -94,12 +98,12 @@ export function HistoryPage() {
 			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
-						<h1 className="text-3xl font-bold tracking-tight">Attempt history</h1>
+						<h1 className="text-3xl font-bold tracking-tight"><LocaleMessage messageId="history.title" /></h1>
 					</div>
-					{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-neutral-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Refreshing</span> : null}
+					{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-neutral-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" /><LocaleMessage messageId="history.refreshing" /></span> : null}
 				</div>
 
-				<nav aria-label="Attempt status" className="mt-8 flex gap-1 overflow-x-auto border-b">
+				<nav aria-label={translate("statusLabel")} className="mt-8 flex gap-1 overflow-x-auto border-b">
 					{STATUS_FILTERS.map((filter) => {
 						const active = filter.status === state.status
 						return (
@@ -108,7 +112,7 @@ export function HistoryPage() {
 								href={href(updateHistoryState(state, { status: filter.status }))}
 								className={cn("shrink-0 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-neutral-600 outline-none hover:background focus-visible:ring-2 focus-visible:ring-ring", active && "border-primary text-primary")}
 							>
-								{filter.label}
+								<LocaleMessage messageId={filter.label} />
 							</Link>
 						)
 					})}
@@ -119,17 +123,17 @@ export function HistoryPage() {
 						<Alert>
 							<AlertCircle />
 							<AlertDescription>
-								<p>We couldn&apos;t load your attempt history.</p>
+								<p><LocaleMessage messageId="history.loadError" /></p>
 								<Button type="button" variant="outline" className="mt-3" onClick={() => void query.refetch()}>
-									Try again
+									<LocaleMessage messageId="common.retry" />
 								</Button>
 							</AlertDescription>
 						</Alert>
 					) : !query.data?.items.length ? (
 						<Card>
 							<CardContent className="p-10 text-center">
-								<h2 className="font-semibold">No attempts on this page</h2>
-								<p className="mt-2 text-sm text-neutral-600">Try another status or page.</p>
+								<h2 className="font-semibold"><LocaleMessage messageId="history.emptyTitle" /></h2>
+								<p className="mt-2 text-sm text-neutral-600"><LocaleMessage messageId="history.emptyDescription" /></p>
 							</CardContent>
 						</Card>
 					) : (
@@ -138,12 +142,12 @@ export function HistoryPage() {
 								<Table className="text-left text-sm">
 									<TableHeader className="border-b bg-neutral-100 text-xs text-foreground">
 										<TableRow>
-											<TableHead scope="col" className="h-auto px-4 py-3">Exam</TableHead>
-											<TableHead scope="col" className="h-auto px-4 py-3">Status</TableHead>
-											<TableHead scope="col" className="h-auto px-4 py-3">Created</TableHead>
-											<TableHead scope="col" className="h-auto px-4 py-3">Last updated</TableHead>
-											<TableHead scope="col" className="h-auto px-4 py-3">Score / result</TableHead>
-											<TableHead scope="col" className="h-auto px-4 py-3 text-right">Action</TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3"><LocaleMessage messageId="history.exam" /></TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3"><LocaleMessage messageId="history.status" /></TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3"><LocaleMessage messageId="history.created" /></TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3"><LocaleMessage messageId="history.updated" /></TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3"><LocaleMessage messageId="history.scoreResult" /></TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3 text-right"><LocaleMessage messageId="history.action" /></TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody className="divide-y">
@@ -158,8 +162,8 @@ export function HistoryPage() {
 
 				{query.data ? (
 					<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<label className="flex items-center gap-2 text-sm">Rows per page<Select value={state.pageSize} onValueChange={(value) => { if (value != null) navigate(updateHistoryState(state, { pageSize: value })) }}><SelectTrigger aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{HISTORY_PAGE_SIZES.map((size) => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectGroup></SelectContent></Select></label>
-						<Pagination aria-label="History pages" className="sm:mx-0 sm:w-auto">
+						<label className="flex items-center gap-2 text-sm"><LocaleMessage messageId="history.rowsPerPage" /><Select value={state.pageSize} onValueChange={(value) => { if (value != null) navigate(updateHistoryState(state, { pageSize: value })) }}><SelectTrigger aria-label={translate("rowsPerPage")}><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{HISTORY_PAGE_SIZES.map((size) => <SelectItem key={size} value={size}>{size}</SelectItem>)}</SelectGroup></SelectContent></Select></label>
+						<Pagination aria-label={translate("pages")} className="sm:mx-0 sm:w-auto">
 							<PaginationContent className="w-full justify-between gap-3 sm:w-auto sm:justify-end">
 								<PaginationItem>
 									<PaginationPrevious
@@ -175,7 +179,7 @@ export function HistoryPage() {
 								</PaginationItem>
 								<PaginationItem>
 									<span className="text-sm text-neutral-600">
-										Page {state.page}{query.data.meta.totalPages > 0 ? ` · ${query.data.meta.totalPages} total` : ""}
+										{translate("pageStatus", { page: state.page, total: query.data.meta.totalPages })}
 									</span>
 								</PaginationItem>
 								<PaginationItem>
@@ -200,5 +204,5 @@ export function HistoryPage() {
 }
 
 function HistorySkeleton() {
-	return <div className="space-y-3" aria-label="Loading attempt history">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-20 w-full" />)}</div>
+	return <div className="space-y-3" aria-label={useTranslations("accessibility")("loadingHistory")}>{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-20 w-full" />)}</div>
 }

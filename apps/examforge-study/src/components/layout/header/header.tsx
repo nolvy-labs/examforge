@@ -6,6 +6,7 @@ import HeaderNavigation from "./header.navigation"
 import HeaderAuthNavigation from "./header-auth.navigation"
 import ProfileDropdown from "./profile.dropdown"
 import { Fragment } from "react"
+import { LocaleSwitcher } from "@/components/locale/locale-switcher"
 
 export function MainHeader() {
 	const session = useAuthSession();
@@ -21,7 +22,12 @@ export function MainHeader() {
 					</Fragment>
 				)}
 
-				{session.status === "guest" && <HeaderAuthNavigation />}
+				{session.status === "guest" && (
+					<div className="ml-auto flex items-center gap-1 sm:gap-3">
+						<LocaleSwitcher />
+						<HeaderAuthNavigation />
+					</div>
+				)}
 			</div>
 		</header>
 	)

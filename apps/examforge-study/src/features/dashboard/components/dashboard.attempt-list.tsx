@@ -28,10 +28,13 @@ import type {
 	StudentExamAttempt,
 } from "@/features/attempt/types/attempt.type"
 import { useAuthSession } from "@/features/auth/stores/auth.store"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import type { LocaleMessageId } from "@/i18n/locale.type"
+import { useLocale, useTranslations } from "next-intl"
 interface DashboardAttemptListProps {
 	status: Extract<AttemptStatus, "in-progress" | "submitted">
-	emptyTitle: string
-	emptyDescription: string
+	emptyTitle: LocaleMessageId
+	emptyDescription: LocaleMessageId
 }
 
 export function DashboardAttemptList({
@@ -67,7 +70,7 @@ export function DashboardAttemptList({
 	if (query.isError && !query.data) {
 		return (
 			<AttemptError
-				message="We couldn't load these attempts."
+				message="dashboard.attemptsError"
 				onRetry={() => void query.refetch()}
 			/>
 		)
@@ -79,8 +82,8 @@ export function DashboardAttemptList({
 					<BookOpen className="size-5" />
 				</span>
 				<div>
-					<h3 className="font-semibold text-neutral-900">{emptyTitle}</h3>
-					<p className="mt-1 text-sm text-neutral-600">{emptyDescription}</p>
+					<h3 className="font-semibold text-neutral-900"><LocaleMessage messageId={emptyTitle} /></h3>
+					<p className="mt-1 text-sm text-neutral-600"><LocaleMessage messageId={emptyDescription} /></p>
 				</div>
 			</Card>
 		)
@@ -92,14 +95,14 @@ export function DashboardAttemptList({
 				<Table className="min-w-3xl text-left text-sm">
 					<TableHeader className="border-b bg-neutral-100 text-xs text-neutral-600">
 						<TableRow>
-							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Exam</TableHead>
-							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Status</TableHead>
-							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Created</TableHead>
-							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Last updated</TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium"><LocaleMessage messageId="dashboard.tableExam" /></TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium"><LocaleMessage messageId="dashboard.tableStatus" /></TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium"><LocaleMessage messageId="dashboard.tableCreated" /></TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 font-medium"><LocaleMessage messageId="dashboard.tableUpdated" /></TableHead>
 								{status === "submitted" && (
-									<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Score</TableHead>
+									<TableHead scope="col" className="h-auto px-4 py-3 font-medium"><LocaleMessage messageId="dashboard.tableScore" /></TableHead>
 								)}
-							<TableHead scope="col" className="h-auto px-4 py-3 text-right font-medium">Action</TableHead>
+							<TableHead scope="col" className="h-auto px-4 py-3 text-right font-medium"><LocaleMessage messageId="dashboard.tableAction" /></TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody className="divide-y">
@@ -124,7 +127,7 @@ export function DashboardAttemptList({
 
 			{query.isFetchNextPageError && (
 				<AttemptError
-					message="The next page couldn't be loaded. Your current attempts are still here."
+					message="dashboard.nextPageError"
 					onRetry={() => void loadMore()}
 				/>
 			)}
@@ -132,11 +135,11 @@ export function DashboardAttemptList({
 				<div className="flex justify-center">
 					<Button type="button" variant="outline" disabled={query.isFetchingNextPage} onClick={() => void loadMore()}>
 						{query.isFetchingNextPage ? <LoaderCircle className="animate-spin motion-reduce:animate-none" /> : null}
-						{query.isFetchingNextPage ? "Loading more…" : "Load more"}
+						<LocaleMessage messageId={query.isFetchingNextPage ? "dashboard.loadingMore" : "dashboard.loadMore"} />
 					</Button>
 				</div>
 			) : (
-				<p className="text-center text-xs text-neutral-500">You&apos;re all caught up.</p>
+				<p className="text-center text-xs text-neutral-500"><LocaleMessage messageId="dashboard.allCaughtUp" /></p>
 			)}
 		</div>
 	)
@@ -146,8 +149,6 @@ function getAttemptPresentation(attempt: StudentExamAttempt) {
 	const submitted = attempt.status === "submitted"
 	return {
 		submitted,
-		label: submitted ? "Submitted" : "In progress",
-		action: submitted ? "Review" : "Continue",
 		href: submitted
 			? `/attempts/${attempt.attemptId}/result`
 			: `/attempts/${attempt.attemptId}`,
@@ -159,48 +160,53 @@ function getAttemptPresentation(attempt: StudentExamAttempt) {
 
 function AttemptAction({ attempt }: { attempt: StudentExamAttempt }) {
 	const presentation = getAttemptPresentation(attempt)
+	const translate = useTranslations("dashboard")
+	const action = translate(presentation.submitted ? "reviewAction" : "continueAction")
 	return (
 		<Link
 			href={presentation.href}
-			aria-label={`${presentation.action} ${attempt.examTitle || "exam"}`}
+			aria-label={`${action} ${attempt.examTitle || translate("examFallback")}`}
 			className={buttonVariants({
 				variant: presentation.submitted ? "outline" : "default",
 				size: "sm",
 			})}
 		>
-			{presentation.action}
+			{action}
 		</Link>
 	)
 }
 
 function AttemptStatusBadge({ attempt }: { attempt: StudentExamAttempt }) {
 	const presentation = getAttemptPresentation(attempt)
+	const translate = useTranslations("attempt")
 	return (
 		<Badge variant={presentation.submitted ? "default" : "secondary"}>
-			{presentation.label}
+			{translate(presentation.submitted ? "submitted" : "inProgress")}
 		</Badge>
 	)
 }
 
 function DashboardAttemptTableRow({ attempt }: { attempt: StudentExamAttempt }) {
 	const presentation = getAttemptPresentation(attempt)
+	const locale = useLocale()
+	const translate = useTranslations("dashboard")
 	return (
 		<TableRow>
 			<TableCell className="max-w-72 whitespace-normal px-4 py-4 font-medium text-neutral-950">
-				<span className="line-clamp-2" title={attempt.examTitle || "Untitled exam"}>
-					{attempt.examTitle || "Untitled exam"}
+				<span className="line-clamp-2" title={attempt.examTitle || translate("untitledExam")}>
+					{attempt.examTitle || translate("untitledExam")}
 				</span>
 			</TableCell>
 			<TableCell className="px-4 py-4"><AttemptStatusBadge attempt={attempt} /></TableCell>
 			<TableCell className="whitespace-nowrap px-4 py-4 text-neutral-600">
-				{formatAttemptSummaryDate(attempt.createdAtUtc)}
+				{formatAttemptSummaryDate(attempt.createdAtUtc, locale)}
 			</TableCell>
 			<TableCell className="whitespace-nowrap px-4 py-4 text-neutral-600">
-				{formatAttemptSummaryDate(presentation.updatedAt)}
+				{formatAttemptSummaryDate(presentation.updatedAt, locale)}
 			</TableCell>
 			{presentation.submitted && (
 				<TableCell className="whitespace-nowrap px-4 py-4">
-					{formatAttemptSummaryScore(attempt) ?? "Not available"}
+					{formatAttemptSummaryScore(attempt, locale) ?? <LocaleMessage messageId="common.notAvailable" />}
 				</TableCell>
 			)}
 			<TableCell className="px-4 py-4 text-right"><AttemptAction attempt={attempt} /></TableCell>
@@ -210,36 +216,38 @@ function DashboardAttemptTableRow({ attempt }: { attempt: StudentExamAttempt }) 
 
 function DashboardAttemptCard({ attempt }: { attempt: StudentExamAttempt }) {
 	const presentation = getAttemptPresentation(attempt)
+	const locale = useLocale()
+	const translate = useTranslations("dashboard")
 	return (
 		<Card size="sm">
 			<CardContent className="space-y-4">
 				<div className="flex items-start justify-between gap-3">
 					<h3
 						className="min-w-0 truncate font-semibold text-neutral-950"
-						title={attempt.examTitle || "Untitled exam"}
+						title={attempt.examTitle || translate("untitledExam")}
 					>
-						{attempt.examTitle || "Untitled exam"}
+						{attempt.examTitle || translate("untitledExam")}
 					</h3>
 					<AttemptStatusBadge attempt={attempt} />
 				</div>
 				<dl className="grid grid-cols-2 gap-3 text-xs text-neutral-600">
 					<div>
-						<dt>Created</dt>
+						<dt><LocaleMessage messageId="dashboard.tableCreated" /></dt>
 						<dd className="mt-1 font-medium text-neutral-900">
-							{formatAttemptSummaryDate(attempt.createdAtUtc)}
+							{formatAttemptSummaryDate(attempt.createdAtUtc, locale)}
 						</dd>
 					</div>
 					<div>
-						<dt>{presentation.submitted ? "Submitted / updated" : "Last updated"}</dt>
+						<dt>{translate(presentation.submitted ? "submittedUpdated" : "tableUpdated")}</dt>
 						<dd className="mt-1 font-medium text-neutral-900">
-							{formatAttemptSummaryDate(presentation.updatedAt)}
+							{formatAttemptSummaryDate(presentation.updatedAt, locale)}
 						</dd>
 					</div>
 					{presentation.submitted && (
 						<div className="col-span-2">
-							<dt>Score</dt>
+							<dt><LocaleMessage messageId="dashboard.tableScore" /></dt>
 							<dd className="mt-1 font-medium text-neutral-900">
-								{formatAttemptSummaryScore(attempt) ?? "Not available"}
+								{formatAttemptSummaryScore(attempt, locale) ?? <LocaleMessage messageId="common.notAvailable" />}
 							</dd>
 						</div>
 					)}
@@ -250,14 +258,14 @@ function DashboardAttemptCard({ attempt }: { attempt: StudentExamAttempt }) {
 	)
 }
 
-function AttemptError({ message, onRetry }: { message: string; onRetry: () => void }) {
+function AttemptError({ message, onRetry }: { message: LocaleMessageId; onRetry: () => void }) {
 	return (
 		<Alert>
 			<AlertCircle />
 			<AlertDescription>
-				<p>{message}</p>
+				<p><LocaleMessage messageId={message} /></p>
 				<Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
-					<RotateCcw /> Try again
+					<RotateCcw /> <LocaleMessage messageId="common.retry" />
 				</Button>
 			</AlertDescription>
 		</Alert>
@@ -266,7 +274,7 @@ function AttemptError({ message, onRetry }: { message: string; onRetry: () => vo
 
 function DashboardAttemptListSkeleton() {
 	return (
-		<div aria-label="Loading attempts">
+		<div aria-label={useTranslations("dashboard")("loadingAttempts")}>
 			<Card className="hidden py-0 md:block">
 				<div className="space-y-1 p-4">
 					<Skeleton className="h-10 w-full" />

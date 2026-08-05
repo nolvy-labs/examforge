@@ -3,6 +3,7 @@ import { ChevronDown } from "lucide-react"
 import type { AttemptDetail, AttemptQuestion, GradingStatus } from "../../types/attempt.type"
 import { getQuestionType } from "../../types/attempt.type"
 import { AttemptAnswerReview } from "./attempt-answer-review"
+import { LocaleMessage } from "@/components/locale/locale-message"
 import { Card, CardContent, CardHeader } from "@/components/shadcn/card"
 import ContentRenderer from "@/components/common/content-renderer"
 import { Separator } from "@/components/shadcn/separator"
@@ -22,7 +23,7 @@ export function AttemptQuestionReview({
 	return (
 		<section className="flex flex-col w-full gap-4 mt-8">
 			<h2 id="review-heading" className="text-xl font-semibold">
-				Question review
+				<LocaleMessage messageId="attempt.questionReview" />
 			</h2>
 			{sections.flatMap((section) =>
 				section.questions.map((question, index) => (
@@ -75,15 +76,15 @@ function AttemptQuestionResult({
 	const statusLabel = useCallback((status: GradingStatus | null) => {
 		switch (status) {
 			case "correct":
-				return <p className="text-success">Correct</p>
+				return <p className="text-success"><LocaleMessage messageId="attempt.correct" /></p>
 			case "incorrect":
-				return <p className="text-destructive">Incorrect</p>
+				return <p className="text-destructive"><LocaleMessage messageId="attempt.incorrect" /></p>
 			case "partially-correct":
-				return <p className="text-warning">Partially correct</p>
+				return <p className="text-warning"><LocaleMessage messageId="attempt.partiallyCorrect" /></p>
 			case "unanswered":
-				return <p className="text-neutral-500">Unanswered</p>
+				return <p className="text-neutral-500"><LocaleMessage messageId="attempt.unanswered" /></p>
 			default:
-				return <p className="text-neutral-500">Ungraded</p>
+				return <p className="text-neutral-500"><LocaleMessage messageId="attempt.ungraded" /></p>
 		}
 	}, [])
 

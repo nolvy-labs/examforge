@@ -7,12 +7,15 @@ import { ChartContainer, type ChartConfig } from "@/components/shadcn/chart"
 
 import type { ScoreTrendPoint } from "../types/statistics.type"
 import { formatPercentage } from "../utils/statistics.format"
-
-const chartConfig = {
-	scorePercentage: { label: "Score", color: "var(--color-primary)" },
-} satisfies ChartConfig
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
 
 export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
+	const locale = useLocale()
+	const translate = useTranslations("statistics")
+	const attempt = useTranslations("attempt")
+	const accessibility = useTranslations("accessibility")
+	const chartConfig = { scorePercentage: { label: translate("averageScore"), color: "var(--color-primary)" } } satisfies ChartConfig
 	const data = [...points].sort((left, right) =>
 		left.submittedAtUtc.localeCompare(right.submittedAtUtc) || left.attemptId.localeCompare(right.attemptId)
 	)
@@ -20,18 +23,18 @@ export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Score trend</CardTitle>
-				<p className="text-sm text-neutral-600">Your latest 20 scored attempts, oldest to newest.</p>
+				<CardTitle><LocaleMessage messageId="statistics.scoreTrend" /></CardTitle>
+				<p className="text-sm text-neutral-600"><LocaleMessage messageId="statistics.scoreTrendDescription" /></p>
 			</CardHeader>
 			<CardContent>
 				{data.length === 0 ? (
-					<EmptyMessage>No scored attempts match these filters yet.</EmptyMessage>
+					<EmptyMessage><LocaleMessage messageId="statistics.noScoreTrend" /></EmptyMessage>
 				) : (
 					<>
-						<ChartContainer config={chartConfig} className="h-64 w-full sm:h-72" aria-label="Score trend chart">
+						<ChartContainer config={chartConfig} className="h-64 w-full sm:h-72" aria-label={accessibility("scoreTrendChart")}>
 							<LineChart data={data} margin={{ left: 4, right: 12, top: 8, bottom: 8 }} accessibilityLayer>
 								<CartesianGrid vertical={false} />
-								<XAxis dataKey="submittedAtUtc" tickLine={false} axisLine={false} minTickGap={28} tickFormatter={formatShortDate} />
+								<XAxis dataKey="submittedAtUtc" tickLine={false} axisLine={false} minTickGap={28} tickFormatter={(value) => formatShortDate(value, locale)} />
 								<YAxis domain={[0, 100]} width={38} tickLine={false} axisLine={false} tickFormatter={(value: number) => `${value}%`} />
 								<Tooltip content={({ active, payload }) => {
 									const point = payload?.[0]?.payload as ScoreTrendPoint | undefined
@@ -39,8 +42,8 @@ export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
 									return (
 										<div className="max-w-64 rounded-lg border bg-white p-3 text-sm shadow-md">
 											<p className="truncate font-medium" title={point.examTitle}>{point.examTitle}</p>
-											<p className="mt-1 text-neutral-600">{formatLongDate(point.submittedAtUtc)} · {point.mode === "practice" ? "Practice" : "Exam"}</p>
-											<p className="mt-1 font-semibold text-primary">{formatPercentage(point.scorePercentage)}</p>
+											<p className="mt-1 text-neutral-600">{formatLongDate(point.submittedAtUtc, locale)} · {attempt(point.mode)}</p>
+											<p className="mt-1 font-semibold text-primary">{formatPercentage(point.scorePercentage, locale)}</p>
 										</div>
 									)
 								}} />
@@ -49,7 +52,7 @@ export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
 						</ChartContainer>
 						<ul className="sr-only">{data.map((point) => (
 							<li key={point.attemptId}>
-								{formatLongDate(point.submittedAtUtc)}, {point.examTitle}, {point.mode}, {formatPercentage(point.scorePercentage)}
+								{formatLongDate(point.submittedAtUtc, locale)}, {point.examTitle}, {attempt(point.mode)}, {formatPercentage(point.scorePercentage, locale)}
 							</li>))}
 						</ul>
 					</>
@@ -63,10 +66,10 @@ function EmptyMessage({ children }: { children: React.ReactNode }) {
 	return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-neutral-600">{children}</div>
 }
 
-function formatShortDate(value: string) {
-	return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(new Date(value))
+function formatShortDate(value: string, locale: string) {
+	return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(value))
 }
 
-function formatLongDate(value: string) {
-	return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
+function formatLongDate(value: string, locale: string) {
+	return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
 }

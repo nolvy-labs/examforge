@@ -9,6 +9,7 @@ import {
 } from "@/components/shadcn/pagination"
 import type { StudentExamAttemptPage } from "@/features/attempt/types/attempt.type"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface Props {
 	data: StudentExamAttemptPage
@@ -16,10 +17,11 @@ interface Props {
 }
 
 export function ExamAttemptHistoryPagination({ data, onPageChange }: Props) {
+	const translate = useTranslations("exams")
 	if (data.meta.totalPages <= 1) return null
 
 	return (
-		<Pagination aria-label="Exam attempt history pages">
+		<Pagination aria-label={translate("attemptHistoryPages")}>
 			<PaginationContent className="w-full justify-between gap-3">
 				<PaginationItem>
 					<PaginationPrevious
@@ -35,7 +37,7 @@ export function ExamAttemptHistoryPagination({ data, onPageChange }: Props) {
 				</PaginationItem>
 				<PaginationItem>
 					<span className="text-sm text-muted-foreground">
-						Page {data.meta.page} of {data.meta.totalPages}
+						{translate("pageOf", { page: data.meta.page, total: data.meta.totalPages })}
 					</span>
 				</PaginationItem>
 				<PaginationItem>

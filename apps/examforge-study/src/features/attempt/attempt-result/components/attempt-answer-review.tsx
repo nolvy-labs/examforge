@@ -3,9 +3,11 @@ import { CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 import type { AttemptQuestion } from "../../types/attempt.type"
+import { LocaleMessage } from "@/components/locale/locale-message"
 import { getGradingStatus, getQuestionType } from "../../types/attempt.type"
 import { formatAttemptNumber, getAnswerText } from "../model/attempt-result"
 import { Fragment } from "react"
+import { useLocale, useTranslations } from "next-intl"
 
 interface AttemptAnswerReviewProps {
 	question: AttemptQuestion
@@ -16,6 +18,9 @@ export function AttemptAnswerReview({
 	question,
 	showGrading,
 }: AttemptAnswerReviewProps) {
+	const locale = useLocale()
+	const translate = useTranslations("attempt")
+	const exams = useTranslations("exams")
 	const type = getQuestionType(question.type)
 	const answer = question.answer
 	const status = getGradingStatus(answer?.gradingStatus)
@@ -25,7 +30,7 @@ export function AttemptAnswerReview({
 			{(type === "multiple-choice-single" || type === "multiple-choice-multiple") && (
 				<div className="rounded-xl bg-neutral-50 p-4">
 					<p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-						Options
+						<LocaleMessage messageId="attempt.options" />
 					</p>
 					<ul className="mt-2 space-y-2">
 						{question.options.map((option) => {
@@ -50,10 +55,10 @@ export function AttemptAnswerReview({
 
 			<div className="rounded-xl bg-neutral-50 p-4">
 				<p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-					Your answer
+					<LocaleMessage messageId="attempt.yourAnswer" />
 				</p>
 				<p className="mt-2 whitespace-pre-line text-neutral-900">
-					{getAnswerText(question)}
+					{getAnswerText(question, translate("unanswered"))}
 				</p>
 			</div>
 			{showGrading && (
@@ -62,15 +67,14 @@ export function AttemptAnswerReview({
 						{status && <GradingBadge status={status} />}
 						{answer?.awardedScore != null && answer.maximumScore != null && (
 							<span className="text-xs font-medium text-neutral-600">
-								{formatAttemptNumber(answer.awardedScore)} /{" "}
-								{formatAttemptNumber(answer.maximumScore)} points
+								{exams("points", { count: `${formatAttemptNumber(answer.awardedScore, locale)} / ${formatAttemptNumber(answer.maximumScore, locale)}` })}
 							</span>
 						)}
 					</div>
 					{question.solution && (
 						<div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
 							<p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">
-								Correct solution
+								<LocaleMessage messageId="attempt.correctSolution" />
 							</p>
 							{type === "fill-blank" ? (
 								<ul className="mt-2 list-inside list-disc text-neutral-800">
@@ -106,7 +110,7 @@ export function AttemptAnswerReview({
 							)}
 							{question.solution.explanation && (
 								<div className="mt-3 border-t border-emerald-200 pt-3">
-									<p className="font-medium text-neutral-800">Explanation</p>
+									<p className="font-medium text-neutral-800"><LocaleMessage messageId="attempt.explanation" /></p>
 									<p className="mt-1 whitespace-pre-line leading-6 text-neutral-700">
 										{question.solution.explanation}
 									</p>
@@ -125,6 +129,7 @@ interface GradingBadgeProps {
 }
 
 function GradingBadge({ status }: GradingBadgeProps) {
+	const translate = useTranslations("attempt")
 	return (
 		<span
 			className={cn(
@@ -137,7 +142,7 @@ function GradingBadge({ status }: GradingBadgeProps) {
 			)}
 		>
 			{status === "correct" && <CheckCircle2 className="size-3.5" />}
-			{status.replace("-", " ")}
+			{translate(status === "partially-correct" ? "partiallyCorrect" : status)}
 		</span>
 	)
 }

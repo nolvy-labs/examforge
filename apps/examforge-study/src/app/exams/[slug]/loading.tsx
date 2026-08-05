@@ -1,6 +1,7 @@
 import { MainHeader } from "@/components/layout/header/header"
 import { Card, CardContent } from "@/components/shadcn/card"
 import { Skeleton } from "@/components/shadcn/skeleton"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export default function Loading() {
 	return <ExamDetailSkeleton />
@@ -30,7 +31,7 @@ function ExamDetailSkeleton() {
 					</div>
 					<Skeleton className="h-80 w-full" />
 				</div>
-				<p className="sr-only">Loading exam details…</p>
+				<p className="sr-only"><LocaleMessage messageId="accessibility.loadingExamDetails" /></p>
 			</main>
 		</div>
 	)

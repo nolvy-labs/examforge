@@ -1,4 +1,5 @@
 import { Brand } from "@/components/layout/brand"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 export function AuthLoading({ variant = "auth" }: { variant?: "auth" | "home" | "dashboard" }) {
 	if (variant === "dashboard") {
@@ -10,7 +11,7 @@ export function AuthLoading({ variant = "auth" }: { variant?: "auth" | "home" | 
 					</div>
 				</header>
 				<main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-					<p className="sr-only">Loading your dashboard</p>
+					<p className="sr-only"><LocaleMessage messageId="accessibility.loadingDashboard" /></p>
 					<div className="h-24 animate-pulse rounded-2xl bg-neutral-200 motion-reduce:animate-none" />
 					<div className="grid gap-4 sm:grid-cols-3">
 						{[0, 1, 2].map((item) => (
@@ -30,7 +31,7 @@ export function AuthLoading({ variant = "auth" }: { variant?: "auth" | "home" | 
 				</div>
 			</header>
 			<main className="mx-auto flex max-w-7xl items-center px-4 py-16 sm:min-h-[calc(100svh-4rem)] sm:px-6 lg:px-8">
-				<p className="sr-only">Loading ExamForge</p>
+				<p className="sr-only"><LocaleMessage messageId="accessibility.loadingApp" /></p>
 				<div className={`w-full animate-pulse rounded-2xl bg-neutral-200 motion-reduce:animate-none ${variant === "home" ? "h-80" : "mx-auto h-96 max-w-md"}`} />
 			</main>
 		</div>

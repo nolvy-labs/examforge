@@ -9,19 +9,22 @@ import {
 import type { StudentExamSection } from "../../types/exam.types"
 import {
 	getSectionFacts,
-	getSectionKindLabel,
 } from "../model/exam-detail"
 import ContentRenderer from "@/components/common/content-renderer"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
 
 interface Props {
 	sections: StudentExamSection[]
 }
 
 export function ExamSectionList({ sections }: Props) {
+	const locale = useLocale()
+	const translate = useTranslations("exams")
 	return (
 		<section>
 			<h2 id="exam-sections-heading" className="text-xl font-semibold">
-				Sections summary
+				<LocaleMessage messageId="exams.sectionsSummary" />
 			</h2>
 			<div className="mt-4 space-y-3">
 				{sections.map((section, index) => (
@@ -39,17 +42,17 @@ export function ExamSectionList({ sections }: Props) {
 										<h3 className="wrap-break-word">{section.title}</h3>
 									</CardTitle>
 									<Badge variant="outline">
-										{getSectionKindLabel(section.kind)}
+										{translate(section.kind === "default" ? "general" : section.kind)}
 									</Badge>
 								</div>
 								<p className="mt-1 text-xs text-muted-foreground">
-									{getSectionFacts(section)}
+									{getSectionFacts(section, locale, translate)}
 								</p>
 							</div>
 						</CardHeader>
 						{section.instructions.trim() && (
 							<CardContent>
-								<h4 className="text-base font-semibold">Section Instructions</h4>
+								<h4 className="text-base font-semibold"><LocaleMessage messageId="exams.sectionInstructions" /></h4>
 								<div className="whitespace-pre-line wrap-break-word text-sm leading-6 text-muted-foreground">
 									<ContentRenderer content={section.instructions} />
 								</div>

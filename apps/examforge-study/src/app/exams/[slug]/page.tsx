@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 
 import {
 	getPublicExamDetail,
@@ -15,6 +16,7 @@ export async function generateMetadata({
 	params,
 }: ExamPageProps): Promise<Metadata> {
 	const { slug } = await params
+	const translate = await getTranslations("metadata")
 	try {
 		const detail = await getPublicExamDetail(slug)
 		return {
@@ -22,12 +24,12 @@ export async function generateMetadata({
 			description:
 				detail.exam.description.trim() ||
 				detail.publishedVersion.description.trim() ||
-				"Review this published ExamForge exam.",
+				translate("examsDescription"),
 		}
 	} catch {
 		return {
-			title: "Exam unavailable",
-			description: "This ExamForge exam is currently unavailable.",
+			title: translate("examUnavailable"),
+			description: translate("examUnavailableDescription"),
 		}
 	}
 }

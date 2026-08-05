@@ -1,4 +1,5 @@
 import { Button } from "@/components/shadcn/button"
+import { LocaleMessage } from "@/components/locale/locale-message"
 
 import { AttemptNavigator } from "./attempt-question"
 import type { AttemptSection } from "../../types/attempt.type"
@@ -24,7 +25,7 @@ export function AttemptWorkspaceSidebar({
 					className="mt-5 w-full text-red-700 hover:bg-red-50 hover:text-red-800"
 					onClick={onAbandon}
 				>
-					Abandon attempt
+					<LocaleMessage messageId="attempt.abandon" />
 				</Button>
 			</div>
 		</aside>

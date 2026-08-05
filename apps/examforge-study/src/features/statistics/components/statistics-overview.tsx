@@ -4,17 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/ca
 
 import type { StatisticsOverview } from "../types/statistics.type"
 import { formatPercentage } from "../utils/statistics.format"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
 
 export function StatisticsOverviewCards({ overview }: { overview: StatisticsOverview }) {
+	const locale = useLocale()
+	const translate = useTranslations("statistics")
+	const dashboard = useTranslations("dashboard")
 	const cards = [
-		{ label: "Completed attempts", value: String(overview.completedAttempts), icon: FileCheck2 },
-		{ label: "Average score", value: formatPercentage(overview.averageScorePercentage), icon: BarChart3 },
-		{ label: "Questions answered", value: String(overview.questionsAnswered), icon: ListChecks },
+		{ label: translate("completedAttempts"), value: new Intl.NumberFormat(locale).format(overview.completedAttempts), icon: FileCheck2 },
+		{ label: translate("averageScore"), value: formatPercentage(overview.averageScorePercentage, locale), icon: BarChart3 },
+		{ label: dashboard("questionsAnswered"), value: new Intl.NumberFormat(locale).format(overview.questionsAnswered), icon: ListChecks },
 	]
 
 	return (
 		<section aria-labelledby="statistics-overview-heading">
-			<h2 id="statistics-overview-heading" className="sr-only">Overview</h2>
+			<h2 id="statistics-overview-heading" className="sr-only"><LocaleMessage messageId="statistics.overview" /></h2>
 			<div className="grid gap-4 sm:grid-cols-3">
 				{cards.map(({ label, value, icon: Icon }) => (
 					<MetricCard key={label} label={label} value={value} icon={Icon} />

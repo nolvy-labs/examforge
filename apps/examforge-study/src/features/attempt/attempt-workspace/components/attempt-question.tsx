@@ -25,6 +25,8 @@ import { Fragment } from "react/jsx-runtime"
 import { Separator } from "@/components/shadcn/separator"
 import { Badge } from "@/components/shadcn/badge"
 import { RadioGroup, RadioGroupItem } from "@/components/shadcn/radio-group"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useLocale, useTranslations } from "next-intl"
 
 interface AttemptQuestionBlockProps {
 	question: AttemptQuestion
@@ -35,6 +37,8 @@ export function AttemptQuestionBlock({
 	question,
 	number,
 }: AttemptQuestionBlockProps) {
+	const locale = useLocale()
+	const translate = useTranslations("exams")
 	const type = getQuestionType(question.type)
 
 	return (
@@ -50,7 +54,7 @@ export function AttemptQuestionBlock({
 						</div>
 						{type !== "group" && (
 							<p className="mt-1 text-xs text-neutral-500">
-								{question.points} {question.points === 1 ? "point" : "points"}
+								{translate("points", { count: new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(question.points) })}
 							</p>
 						)}
 					</div>
@@ -110,7 +114,7 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 					className="ml-auto"
 					onClick={() => setText(question.id, null)}
 				>
-					Clear answer
+					<LocaleMessage messageId="attempt.clearAnswer" />
 				</Button>
 			</div>
 		)
@@ -143,7 +147,7 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 					className={"ml-auto"}
 					onClick={() => setOptions(question.id, [])}
 				>
-					Clear answer
+					<LocaleMessage messageId="attempt.clearAnswer" />
 				</Button>
 			</RadioGroup>
 		)
@@ -186,7 +190,7 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 				className={"ml-auto"}
 				onClick={() => setOptions(question.id, [])}
 			>
-				Clear answer
+				<LocaleMessage messageId="attempt.clearAnswer" />
 			</Button>
 		</FieldGroup>
 	)
@@ -201,6 +205,7 @@ export function AttemptNavigator({
 	sections,
 	onSelect,
 }: AttemptNavigatorProps) {
+	const translate = useTranslations("attempt")
 
 	const { selectedSectionId, selectedBlockId, displayMode } = useAttemptNavigation()
 	const { drafts, dirty } = useAttemptAnswers()
@@ -237,18 +242,14 @@ export function AttemptNavigator({
 							const failed =
 								ids.some((id) => dirty[id]) &&
 								(saveState === "failed" || saveState === "offline")
-							const answerState = answered
-								? "answered"
-								: incomplete
-									? "partially answered"
-									: "unanswered"
+							const answerState = translate(answered ? "answered" : incomplete ? "partiallyAnswered" : "unanswered")
 							return (
 								<Button
 									key={question.id}
 									type="button"
 									variant="outline"
 									size="icon"
-									aria-label={`Question ${questionIndex + 1}, ${answerState}`}
+									aria-label={translate("questionState", { number: questionIndex + 1, state: answerState })}
 									onClick={() => onSelect(section.id, question.id)}
 									className={cn(
 										"aspect-square h-auto w-full rounded-lg text-xs font-semibold",
@@ -270,17 +271,18 @@ export function AttemptNavigator({
 }
 
 export function SaveStatus() {
-	const { saveState: state, saveMessage: message } = useAttemptSaveStatus()
+	const translate = useTranslations("attempt")
+	const { saveState: state } = useAttemptSaveStatus()
 	const config = {
-		saved: { label: "Synchronized", icon: CheckCircle2 },
-		waiting: { label: "Saved locally", icon: Circle },
-		saving: { label: "Saving...", icon: LoaderCircle },
-		failed: { label: "Synchronization failed", icon: TriangleAlert },
-		offline: { label: "Offline - unsaved", icon: Save },
+		saved: { label: translate("synchronized"), icon: CheckCircle2 },
+		waiting: { label: translate("savedLocally"), icon: Circle },
+		saving: { label: translate("saving"), icon: LoaderCircle },
+		failed: { label: translate("synchronizationFailed"), icon: TriangleAlert },
+		offline: { label: translate("offlineUnsaved"), icon: Save },
 	}[state]
 	const Icon = config.icon
 	return (
-		<div title={message} className="flex items-center gap-1.5 text-xs text-neutral-600" role="status">
+		<div title={config.label} className="flex items-center gap-1.5 text-xs text-neutral-600" role="status">
 			<Icon className={cn("size-4", state === "saving" && "animate-spin")} />
 			<span>{config.label}</span>
 		</div>
@@ -293,10 +295,10 @@ export function SaveError({ onRetry }: { onRetry: () => void }) {
 	return (
 		<Alert variant="destructive">
 			<AlertDescription className="flex flex-wrap items-center justify-between gap-3">
-				<span>{message}</span>
+				<span><LocaleMessage messageId="attempt.saveFailed" /></span>
 				{saveState === "failed" && (
 					<Button type="button" size="sm" variant="outline" onClick={onRetry}>
-						Retry synchronization
+						<LocaleMessage messageId="attempt.retrySave" />
 					</Button>
 				)}
 			</AlertDescription>

@@ -6,7 +6,6 @@ import { AlertCircle, LoaderCircle } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn/select"
 import { Skeleton } from "@/components/shadcn/skeleton"
 
 import { ExamPerformanceSection } from "../components/exam-performance"
@@ -14,8 +13,9 @@ import { QuestionTypePerformanceSection } from "../components/question-type-perf
 import { ScoreTrendChart } from "../components/score-trend-chart"
 import { StatisticsOverviewCards } from "../components/statistics-overview"
 import { useStudentStatistics } from "../hooks/statistics.hook"
-import type { StatisticsMode, StatisticsPeriod } from "../types/statistics.type"
-import { getNormalizedStatisticsQuery, parseStatisticsFilters, serializeStatisticsFilters } from "../utils/statistics.filter"
+import { getNormalizedStatisticsQuery, parseStatisticsFilters } from "../utils/statistics.filter"
+import { LocaleMessage } from "@/components/locale/locale-message"
+import { useTranslations } from "next-intl"
 
 export function StatisticsPage() {
 	const pathname = usePathname()
@@ -34,13 +34,13 @@ export function StatisticsPage() {
 		<main className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Statistics</h1>
+					<h1 className="text-3xl font-bold tracking-tight"><LocaleMessage messageId="statistics.title" /></h1>
 				</div>
-				{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-neutral-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Updating statistics</span> : null}
+				{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-neutral-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" /><LocaleMessage messageId="statistics.updating" /></span> : null}
 			</div>
 
 			{query.isPending ? <StatisticsSkeleton /> : query.isError ? (
-				<Alert><AlertCircle /><AlertDescription><p>We couldn&apos;t load your statistics.</p><Button type="button" variant="outline" className="mt-3" onClick={() => void query.refetch()}>Try again</Button></AlertDescription></Alert>
+				<Alert><AlertCircle /><AlertDescription><p><LocaleMessage messageId="statistics.loadError" /></p><Button type="button" variant="outline" className="mt-3" onClick={() => void query.refetch()}><LocaleMessage messageId="common.retry" /></Button></AlertDescription></Alert>
 			) : query.data ? (
 				<Fragment>
 					<StatisticsOverviewCards overview={query.data.overview} />
@@ -54,5 +54,5 @@ export function StatisticsPage() {
 }
 
 function StatisticsSkeleton() {
-	return <div className="space-y-6" aria-label="Loading statistics"><div className="grid gap-4 sm:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-32" />)}</div><Skeleton className="h-80" /><Skeleton className="h-72" /></div>
+	return <div className="space-y-6" aria-label={useTranslations("accessibility")("loadingStatistics")}><div className="grid gap-4 sm:grid-cols-3">{Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-32" />)}</div><Skeleton className="h-80" /><Skeleton className="h-72" /></div>
 }

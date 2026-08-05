@@ -1,51 +1,36 @@
 import { z } from "zod"
 
-const emailSchema = z.email()
+type ValidationKey = "email" | "displayNameRequired" | "displayNameMax" | "passwordRequired" | "confirmPasswordRequired" | "passwordsMismatch"
+type ValidationTranslator = (key: ValidationKey) => string
 
-const displayNameSchema = z.string().trim().max(100, "Name must be 100 characters or fewer.").min(1, "Display name is required.")
-
-const passwordSchema = z.string().min(1, "Password is required.")
-
-const newPasswordFields = {
-	password: passwordSchema,
-	confirmPassword: z.string().min(1, "Confirm your password."),
-}
-
-function passwordsMatch(
-	values: { password: string; confirmPassword: string },
-	context: z.RefinementCtx
-) {
+function passwordsMatch(values: { password: string; confirmPassword: string }, context: z.RefinementCtx, translate: ValidationTranslator) {
 	if (values.password !== values.confirmPassword) {
-		context.addIssue({
-			code: "custom",
-			path: ["confirmPassword"],
-			message: "Passwords do not match.",
-		})
+		context.addIssue({ code: "custom", path: ["confirmPassword"], message: translate("passwordsMismatch") })
 	}
 }
 
-export const signinSchema = z.object({
-	email: emailSchema,
-	password: passwordSchema,
-})
+export function createAuthSchemas(translate: ValidationTranslator) {
+	const emailSchema = z.email(translate("email"))
+	const passwordSchema = z.string().min(1, translate("passwordRequired"))
+	const newPasswordFields = {
+		password: passwordSchema,
+		confirmPassword: z.string().min(1, translate("confirmPasswordRequired")),
+	}
 
-export const signupSchema = z
-	.object({
-		displayName: displayNameSchema,
-		email: emailSchema,
-		...newPasswordFields,
-	})
-	.superRefine(passwordsMatch)
+	return {
+		signin: z.object({ email: emailSchema, password: passwordSchema }),
+		signup: z.object({
+			displayName: z.string().trim().max(100, translate("displayNameMax")).min(1, translate("displayNameRequired")),
+			email: emailSchema,
+			...newPasswordFields,
+		}).superRefine((values, context) => passwordsMatch(values, context, translate)),
+		forgotPassword: z.object({ email: emailSchema }),
+		resetPassword: z.object(newPasswordFields).superRefine((values, context) => passwordsMatch(values, context, translate)),
+	}
+}
 
-export const forgotPasswordSchema = z.object({
-	email: emailSchema,
-})
-
-export const resetPasswordSchema = z
-	.object(newPasswordFields)
-	.superRefine(passwordsMatch)
-
-export type SigninFormValues = z.infer<typeof signinSchema>
-export type SignupFormValues = z.infer<typeof signupSchema>
-export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
-export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>
+type AuthSchemas = ReturnType<typeof createAuthSchemas>
+export type SigninFormValues = z.infer<AuthSchemas["signin"]>
+export type SignupFormValues = z.infer<AuthSchemas["signup"]>
+export type ForgotPasswordFormValues = z.infer<AuthSchemas["forgotPassword"]>
+export type ResetPasswordFormValues = z.infer<AuthSchemas["resetPassword"]>
