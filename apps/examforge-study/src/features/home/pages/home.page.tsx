@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, type ReactNode } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -9,11 +9,14 @@ import {
 	BookOpen,
 	CheckCircle2,
 	ClipboardCheck,
+	FileCheck2,
 	LineChart,
+	ListChecks,
 	MessageSquareText,
 	Target,
 } from "lucide-react"
 
+import { Brand } from "@/components/layout/brand"
 import { MainHeader } from "@/components/layout/header/header"
 import { buttonVariants } from "@/components/shadcn/button"
 import {
@@ -50,42 +53,48 @@ const steps = [
 ]
 
 function DashboardPreview() {
+	const metrics = [
+		{ label: "Completed attempts", value: "12", icon: FileCheck2 },
+		{ label: "Average score", value: "84%", icon: BarChart3 },
+		{ label: "Questions answered", value: "240", icon: ListChecks },
+	]
+
 	return (
-		<div className="relative mx-auto w-full max-w-xl rounded-3xl border border-primary/10 bg-background p-4 shadow-2xl shadow-primary/10 sm:p-6" >
-			<div className="mb-5 flex items-center justify-between border-b border-neutral-100 pb-4">
-				<div>
-					<div className="h-2.5 w-20 rounded-full bg-neutral-200" />
-					<div className="mt-2 h-4 w-36 rounded-full bg-foreground" />
-				</div>
-				<div className="size-9 rounded-full bg-primary/10" />
+		<div className="relative mx-auto w-full max-w-xl rounded-3xl border border-primary/15 bg-white p-4 shadow-2xl shadow-primary/10 sm:p-6">
+			<div className="mb-5">
+				<p className="text-lg font-semibold tracking-tight text-neutral-950 sm:text-xl">Welcome back, Student</p>
+				<p className="mt-1 text-xs leading-5 text-neutral-500 sm:text-sm">Keep building your understanding one session at a time.</p>
 			</div>
+			<p className="mb-3 text-sm font-semibold text-neutral-900">Progress overview</p>
 			<div className="grid grid-cols-3 gap-2 sm:gap-3">
-				{[
-					["Sessions", "—"],
-					["Average", "—"],
-					["Practice", "—"],
-				].map(([label, value]) => (
-					<div key={label} className="rounded-xl bg-neutral-100 p-3 sm:p-4">
-						<p className="text-[10px] text-neutral-500 sm:text-xs">{label}</p>
-						<p className="mt-2 text-lg font-semibold text-foreground sm:text-xl">{value}</p>
+				{metrics.map(({ label, value, icon: Icon }) => (
+					<div key={label} className="rounded-xl border border-neutral-200 bg-white p-3 shadow-xs sm:p-4">
+						<div className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="size-3.5" /></div>
+						<p className="mt-3 text-lg font-semibold tracking-tight text-neutral-950 sm:text-xl">{value}</p>
+						<p className="mt-0.5 text-[9px] leading-tight text-neutral-500 sm:text-[11px]">{label}</p>
 					</div>
 				))}
 			</div>
-			<div className="mt-4 rounded-2xl border border-neutral-100 p-4">
-				<div className="flex items-center gap-3">
+			<div className="mt-5 flex items-center justify-between">
+				<p className="text-sm font-semibold text-neutral-900">Continue practising</p>
+				<span className="text-[11px] font-medium text-primary">In progress</span>
+			</div>
+			<div className="mt-3 rounded-2xl border border-neutral-200 p-4">
+				<div className="flex items-start gap-3">
 					<div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
 						<BookOpen className="size-5" />
 					</div>
-					<div className="flex-1">
-						<div className="h-3 w-2/3 rounded-full bg-foreground" />
-						<div className="mt-2 h-2 w-1/2 rounded-full bg-neutral-100" />
+					<div className="min-w-0 flex-1">
+						<p className="truncate text-sm font-semibold text-neutral-950">Biology foundations</p>
+						<p className="mt-1 text-xs text-neutral-500">20 of 50 questions answered</p>
 					</div>
+					<span className="rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-white">Continue</span>
 				</div>
 				<div className="mt-4 h-2 overflow-hidden rounded-full bg-neutral-100">
 					<div className="h-full w-2/5 rounded-full bg-primary" />
 				</div>
 			</div>
-			<div className="pointer-events-none absolute -right-3 -top-3 grid size-12 place-items-center rounded-2xl bg-primary text-background shadow-lg sm:-right-5 sm:-top-5">
+			<div className="pointer-events-none absolute -right-3 -top-3 grid size-12 place-items-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/25 sm:-right-5 sm:-top-5">
 				<BarChart3 className="size-6" />
 			</div>
 		</div>
@@ -147,7 +156,7 @@ export function HomePage() {
 					</div>
 				</section>
 
-				<section className="border-y border-neutral-200 bg-white py-16 sm:py-20">
+				<section id="benefits" className="scroll-mt-20 border-y border-neutral-200 bg-white py-16 sm:py-20">
 					<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 						<div className="max-w-2xl">
 							<p className="text-sm font-semibold uppercase tracking-wider text-primary">Built for better practice</p>
@@ -171,7 +180,7 @@ export function HomePage() {
 					</div>
 				</section>
 
-				<section className="py-16 sm:py-24">
+				<section id="how-it-works" className="scroll-mt-20 py-16 sm:py-24">
 					<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 						<div className="text-center">
 							<p className="text-sm font-semibold uppercase tracking-wider text-primary">How it works</p>
@@ -215,14 +224,45 @@ export function HomePage() {
 				</section>
 			</main>
 			<footer className="border-t border-neutral-200 bg-white">
-				<div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-neutral-600 sm:flex-row sm:px-6 lg:px-8">
-					<p>© {new Date().getFullYear()} ExamForge</p>
-					<nav className="flex items-center gap-5">
-						<Link className="rounded-sm hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" href={AUTH_ROUTES.signin}>Sign in</Link>
-						<Link className="rounded-sm hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" href={AUTH_ROUTES.signup}>Create account</Link>
-					</nav>
+				<div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+					<div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
+						<div className="max-w-sm">
+							<Brand />
+							<p className="mt-4 text-sm leading-6 text-neutral-600">
+								Focused exam practice, useful feedback, and clear progress tracking for every study session.
+							</p>
+						</div>
+						<nav aria-label="Product links">
+							<p className="text-sm font-semibold text-neutral-950">Product</p>
+							<div className="mt-4 flex flex-col items-start gap-3 text-sm text-neutral-600">
+								<FooterLink href="#benefits">Benefits</FooterLink>
+								<FooterLink href="#how-it-works">How it works</FooterLink>
+							</div>
+						</nav>
+						<nav aria-label="Account links">
+							<p className="text-sm font-semibold text-neutral-950">Account</p>
+							<div className="mt-4 flex flex-col items-start gap-3 text-sm text-neutral-600">
+								<FooterLink href={AUTH_ROUTES.signin}>Sign in</FooterLink>
+								<FooterLink href={AUTH_ROUTES.signup}>Create account</FooterLink>
+							</div>
+						</nav>
+					</div>
+					<div className="mt-10 border-t border-neutral-200 pt-6 text-sm text-neutral-500">
+						<p>&copy; {new Date().getFullYear()} ExamForge. All rights reserved.</p>
+					</div>
 				</div>
 			</footer>
 		</div>
+	)
+}
+
+function FooterLink({ href, children }: { href: string; children: ReactNode }) {
+	return (
+		<Link
+			href={href}
+			className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+		>
+			{children}
+		</Link>
 	)
 }
