@@ -89,32 +89,67 @@ export function HistoryPage() {
 	}
 
 	return (
-		<div className="flex min-h-svh flex-col bg-slate-50">
+		<div className="flex min-h-svh flex-col bg-neutral-50">
 			<MainHeader />
 			<main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div>
 						<h1 className="text-3xl font-bold tracking-tight">Attempt history</h1>
 					</div>
-					{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-slate-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Refreshing</span> : null}
+					{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-neutral-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Refreshing</span> : null}
 				</div>
 
 				<nav aria-label="Attempt status" className="mt-8 flex gap-1 overflow-x-auto border-b">
 					{STATUS_FILTERS.map((filter) => {
 						const active = filter.status === state.status
-						return <Link key={filter.label} href={href(updateHistoryState(state, { status: filter.status }))} aria-current={active ? "page" : undefined} className={cn("shrink-0 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-slate-600 outline-none hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-ring", active && "border-indigo-600 text-indigo-700")}>{filter.label}</Link>
+						return (
+							<Link
+								key={filter.label}
+								href={href(updateHistoryState(state, { status: filter.status }))}
+								className={cn("shrink-0 border-b-2 border-transparent px-3 py-2 text-sm font-medium text-neutral-600 outline-none hover:background focus-visible:ring-2 focus-visible:ring-ring", active && "border-primary text-primary")}
+							>
+								{filter.label}
+							</Link>
+						)
 					})}
 				</nav>
 
 				<div className="mt-6">
 					{query.isPending ? <HistorySkeleton /> : query.isError ? (
-						<Alert><AlertCircle /><AlertDescription><p>We couldn&apos;t load your attempt history.</p><Button type="button" variant="outline" className="mt-3" onClick={() => void query.refetch()}>Try again</Button></AlertDescription></Alert>
+						<Alert>
+							<AlertCircle />
+							<AlertDescription>
+								<p>We couldn&apos;t load your attempt history.</p>
+								<Button type="button" variant="outline" className="mt-3" onClick={() => void query.refetch()}>
+									Try again
+								</Button>
+							</AlertDescription>
+						</Alert>
 					) : !query.data?.items.length ? (
-						<Card><CardContent className="p-10 text-center"><h2 className="font-semibold">No attempts on this page</h2><p className="mt-2 text-sm text-slate-600">Try another status or page.</p></CardContent></Card>
+						<Card>
+							<CardContent className="p-10 text-center">
+								<h2 className="font-semibold">No attempts on this page</h2>
+								<p className="mt-2 text-sm text-neutral-600">Try another status or page.</p>
+							</CardContent>
+						</Card>
 					) : (
 						<>
 							<Card className="hidden py-0 md:block">
-								<Table className="text-left text-sm"><TableHeader className="border-b bg-slate-100 text-xs text-slate-600"><TableRow><TableHead scope="col" className="h-auto px-4 py-3">Exam</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Status</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Created</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Last updated</TableHead><TableHead scope="col" className="h-auto px-4 py-3">Score / result</TableHead><TableHead scope="col" className="h-auto px-4 py-3 text-right">Action</TableHead></TableRow></TableHeader><TableBody className="divide-y">{query.data.items.map((attempt) => <HistoryAttemptItem key={attempt.attemptId} attempt={attempt} variant="table" />)}</TableBody></Table>
+								<Table className="text-left text-sm">
+									<TableHeader className="border-b bg-neutral-100 text-xs text-foreground">
+										<TableRow>
+											<TableHead scope="col" className="h-auto px-4 py-3">Exam</TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3">Status</TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3">Created</TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3">Last updated</TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3">Score / result</TableHead>
+											<TableHead scope="col" className="h-auto px-4 py-3 text-right">Action</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody className="divide-y">
+										{query.data.items.map((attempt) => <HistoryAttemptItem key={attempt.attemptId} attempt={attempt} variant="table" />)}
+									</TableBody>
+								</Table>
 							</Card>
 							<div className="space-y-3 md:hidden">{query.data.items.map((attempt) => <HistoryAttemptItem key={attempt.attemptId} attempt={attempt} variant="card" />)}</div>
 						</>
@@ -139,7 +174,7 @@ export function HistoryPage() {
 									/>
 								</PaginationItem>
 								<PaginationItem>
-									<span className="text-sm text-slate-600">
+									<span className="text-sm text-neutral-600">
 										Page {state.page}{query.data.meta.totalPages > 0 ? ` · ${query.data.meta.totalPages} total` : ""}
 									</span>
 								</PaginationItem>

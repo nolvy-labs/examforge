@@ -16,7 +16,7 @@ export function AttemptWorkspaceSidebar({
 }: AttemptWorkspaceSidebarProps) {
 	return (
 		<aside className="hidden lg:block">
-			<div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-4">
+			<div className="sticky top-24 rounded-2xl border border-neutral-200 bg-white p-4">
 				<AttemptNavigator sections={sections} onSelect={onSelect} />
 				<Button
 					type="button"

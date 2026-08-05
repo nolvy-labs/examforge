@@ -75,15 +75,15 @@ function AttemptQuestionResult({
 	const statusLabel = useCallback((status: GradingStatus | null) => {
 		switch (status) {
 			case "correct":
-				return <p className="text-green-500">Correct</p>
+				return <p className="text-success">Correct</p>
 			case "incorrect":
-				return <p className="text-red-500">Incorrect</p>
+				return <p className="text-destructive">Incorrect</p>
 			case "partially-correct":
-				return <p className="text-yellow-500">Partially correct</p>
+				return <p className="text-warning">Partially correct</p>
 			case "unanswered":
-				return <p className="text-gray-500">Unanswered</p>
+				return <p className="text-neutral-500">Unanswered</p>
 			default:
-				return <p className="text-slate-500">Ungraded</p>
+				return <p className="text-neutral-500">Ungraded</p>
 		}
 	}, [])
 
@@ -93,10 +93,10 @@ function AttemptQuestionResult({
 				<summary className="flex flex-row items-start w-full cursor-pointer list-none gap-3">
 					<QuestionBadge status={status} content={`${questionIndex}`} />
 					<div className="min-w-0">
-						<div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+						<div className="text-xs font-medium uppercase tracking-wide text-neutral-500">
 							{statusLabel(status)}
 						</div>
-						<div className="mt-1 truncate font-medium text-slate-900 whitespace-break-spaces">
+						<div className="mt-1 truncate font-medium text-neutral-900 whitespace-break-spaces">
 							<ContentRenderer content={question.prompt} />
 						</div>
 					</div>
@@ -114,7 +114,7 @@ function AttemptQuestionResult({
 								<div className="flex flex-row items-start justify-start w-full gap-3">
 									<QuestionBadge status={child.answer?.gradingStatus ?? null} content={`${questionIndex}.${index + 1}`} />
 									<div className="min-w-0">
-										<div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+										<div className="text-xs font-medium uppercase tracking-wide text-neutral-500">
 											<ContentRenderer content={label} />
 										</div>
 										<div className="text-sm font-medium whitespace-break-spaces">
@@ -146,13 +146,13 @@ interface QuestionBadgeProps {
 function QuestionBadge({ status, content }: QuestionBadgeProps) {
 	switch (status) {
 		case "correct":
-			return <Badge className="aspect-square size-8 bg-green-500">{content}</Badge>
+			return <Badge className="aspect-square size-8 bg-success">{content}</Badge>
 		case "incorrect":
-			return <Badge className="aspect-square size-8 bg-red-500">{content}</Badge>
+			return <Badge className="aspect-square size-8 bg-destructive">{content}</Badge>
 		case "partially-correct":
-			return <Badge className="aspect-square size-8 bg-yellow-500">{content}</Badge>
+			return <Badge className="aspect-square size-8 bg-warning">{content}</Badge>
 		case "unanswered":
-			return <Badge className="aspect-square size-8 bg-gray-500">{content}</Badge>
+			return <Badge className="aspect-square size-8 bg-neutral-500">{content}</Badge>
 		default:
 			return <Badge className="aspect-square size-8">{content}</Badge>
 	}

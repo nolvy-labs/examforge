@@ -9,7 +9,7 @@ import { formatPercentage } from "../utils/statistics.format"
 export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) {
 	return (
 		<Card>
-			<CardHeader><CardTitle>Performance by exam</CardTitle><p className="text-sm text-slate-600">Top 10 by completed attempts.</p></CardHeader>
+			<CardHeader><CardTitle>Performance by exam</CardTitle><p className="text-sm text-neutral-600">Top 10 by completed attempts.</p></CardHeader>
 			<CardContent>
 				{exams.length === 0 ? <Empty /> : (
 					<>
@@ -31,7 +31,7 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 												<Link
 													title={exam.examTitle}
 													href={`/exams/${encodeURIComponent(exam.examSlug)}`}
-													className="block truncate font-medium text-indigo-700 hover:underline"
+													className="block truncate font-medium text-primary hover:underline"
 												>
 													{exam.examTitle}
 												</Link>
@@ -49,11 +49,11 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 								<div key={exam.examId} className="rounded-lg border p-4">
 									<Link
 										href={`/exams/${encodeURIComponent(exam.examSlug)}`}
-										className="block truncate font-medium text-indigo-700"
+										className="block truncate font-medium text-primary"
 										title={exam.examTitle}>
 										{exam.examTitle}
 									</Link>
-									<p className="mt-1 text-sm text-slate-600">{exam.attemptCount} {exam.attemptCount === 1 ? "attempt" : "attempts"}</p>
+									<p className="mt-1 text-sm text-neutral-600">{exam.attemptCount} {exam.attemptCount === 1 ? "attempt" : "attempts"}</p>
 									<dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
 										<Score label="Latest" value={exam.latestScorePercentage} />
 										<Score label="Average" value={exam.averageScorePercentage} />
@@ -72,9 +72,9 @@ export function ExamPerformanceSection({ exams }: { exams: ExamPerformance[] }) 
 function Score({ label, value }: { label: string; value: number | null }) {
 	return (
 		<div>
-			<dt className="text-xs text-slate-500">{label}</dt>
+			<dt className="text-xs text-neutral-500">{label}</dt>
 			<dd className="mt-1 font-medium">{formatPercentage(value)}</dd>
 		</div>
 	)
 }
-function Empty() { return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-slate-600">No completed attempts match these filters yet.</div> }
+function Empty() { return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-neutral-600">No completed attempts match these filters yet.</div> }

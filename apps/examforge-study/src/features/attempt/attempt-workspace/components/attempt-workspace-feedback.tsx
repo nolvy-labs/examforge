@@ -12,12 +12,12 @@ export function AttemptFailure({ error, onRetry }: AttemptFailureProps) {
 	const missing = error instanceof ApiError && error.status === 404
 
 	return (
-		<main className="grid min-h-svh place-items-center bg-slate-50 p-4">
+		<main className="grid min-h-svh place-items-center bg-neutral-50 p-4">
 			<div className="max-w-md rounded-2xl border bg-white p-8 text-center shadow-sm">
 				<h1 className="text-xl font-semibold">
 					{missing ? "Attempt unavailable" : "Couldn't load this attempt"}
 				</h1>
-				<p className="mt-2 text-sm text-slate-600">
+				<p className="mt-2 text-sm text-neutral-600">
 					{missing
 						? "It may not exist or you may not have access."
 						: "Check your connection and try again."}
@@ -38,9 +38,9 @@ export function AttemptFailure({ error, onRetry }: AttemptFailureProps) {
 
 export function AttemptLoading() {
 	return (
-		<div className="min-h-svh bg-slate-50 p-4">
+		<div className="min-h-svh bg-neutral-50 p-4">
 			<div className="mx-auto max-w-5xl animate-pulse space-y-5">
-				<div className="h-16 rounded-xl bg-slate-200" />
+				<div className="h-16 rounded-xl bg-neutral-200" />
 				<div className="h-80 rounded-2xl bg-white" />
 			</div>
 			<p className="sr-only">Loading attempt&hellip;</p>

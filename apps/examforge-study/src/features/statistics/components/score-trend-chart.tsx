@@ -9,7 +9,7 @@ import type { ScoreTrendPoint } from "../types/statistics.type"
 import { formatPercentage } from "../utils/statistics.format"
 
 const chartConfig = {
-	scorePercentage: { label: "Score", color: "var(--color-indigo-600)" },
+	scorePercentage: { label: "Score", color: "var(--color-primary)" },
 } satisfies ChartConfig
 
 export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
@@ -21,7 +21,7 @@ export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
 		<Card>
 			<CardHeader>
 				<CardTitle>Score trend</CardTitle>
-				<p className="text-sm text-slate-600">Your latest 20 scored attempts, oldest to newest.</p>
+				<p className="text-sm text-neutral-600">Your latest 20 scored attempts, oldest to newest.</p>
 			</CardHeader>
 			<CardContent>
 				{data.length === 0 ? (
@@ -39,8 +39,8 @@ export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
 									return (
 										<div className="max-w-64 rounded-lg border bg-white p-3 text-sm shadow-md">
 											<p className="truncate font-medium" title={point.examTitle}>{point.examTitle}</p>
-											<p className="mt-1 text-slate-600">{formatLongDate(point.submittedAtUtc)} · {point.mode === "practice" ? "Practice" : "Exam"}</p>
-											<p className="mt-1 font-semibold text-indigo-700">{formatPercentage(point.scorePercentage)}</p>
+											<p className="mt-1 text-neutral-600">{formatLongDate(point.submittedAtUtc)} · {point.mode === "practice" ? "Practice" : "Exam"}</p>
+											<p className="mt-1 font-semibold text-primary">{formatPercentage(point.scorePercentage)}</p>
 										</div>
 									)
 								}} />
@@ -60,7 +60,7 @@ export function ScoreTrendChart({ points }: { points: ScoreTrendPoint[] }) {
 }
 
 function EmptyMessage({ children }: { children: React.ReactNode }) {
-	return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-slate-600">{children}</div>
+	return <div className="rounded-lg border border-dashed p-8 text-center text-sm text-neutral-600">{children}</div>
 }
 
 function formatShortDate(value: string) {

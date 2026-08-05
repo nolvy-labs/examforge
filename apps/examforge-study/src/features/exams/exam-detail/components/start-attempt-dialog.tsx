@@ -70,7 +70,7 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 					</DialogClose>
 				</div>
 
-				<dl className="grid grid-cols-2 gap-3 rounded-md bg-muted p-4 text-sm">
+				<dl className="grid grid-cols-2 gap-3 rounded-md bg-neutral-100 p-4 text-sm">
 					{facts.map((fact) => (
 						<div key={fact.label}>
 							<dt className="text-xs text-muted-foreground">{fact.label}</dt>
@@ -82,12 +82,8 @@ export function StartAttemptDialog({ detail, controller }: Props) {
 				<div className="flex items-start justify-between gap-4 rounded-md border p-4">
 					<div className="space-y-1">
 						<Label htmlFor="exam-mode">Exam mode</Label>
-						<p className="text-sm text-muted-foreground">
-							{detail.durationMinutes == null
-								? "Exam mode requires a time limit."
-								: dialog?.attemptMode === "exam"
-									? "Uses the server-enforced time limit."
-									: "No deadline; active time is tracked locally."}
+						<p className="text-sm text-warning">
+							Disabled for now
 						</p>
 					</div>
 					<Switch

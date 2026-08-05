@@ -23,8 +23,8 @@ export function AttemptAnswerReview({
 	return (
 		<div className="space-y-4 text-sm">
 			{(type === "multiple-choice-single" || type === "multiple-choice-multiple") && (
-				<div className="rounded-xl bg-slate-50 p-4">
-					<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+				<div className="rounded-xl bg-neutral-50 p-4">
+					<p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
 						Options
 					</p>
 					<ul className="mt-2 space-y-2">
@@ -37,7 +37,7 @@ export function AttemptAnswerReview({
 									{option.label && `${option.label}. `}
 									{option.text}
 									{solution?.explanation && (
-										<p className="mt-0.5 text-xs font-normal text-slate-600">
+										<p className="mt-0.5 text-xs font-normal text-neutral-600">
 											{solution.explanation}
 										</p>
 									)}
@@ -48,11 +48,11 @@ export function AttemptAnswerReview({
 				</div>
 			)}
 
-			<div className="rounded-xl bg-slate-50 p-4">
-				<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+			<div className="rounded-xl bg-neutral-50 p-4">
+				<p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
 					Your answer
 				</p>
-				<p className="mt-2 whitespace-pre-line text-slate-900">
+				<p className="mt-2 whitespace-pre-line text-neutral-900">
 					{getAnswerText(question)}
 				</p>
 			</div>
@@ -61,7 +61,7 @@ export function AttemptAnswerReview({
 					<div className="flex flex-wrap items-center gap-2">
 						{status && <GradingBadge status={status} />}
 						{answer?.awardedScore != null && answer.maximumScore != null && (
-							<span className="text-xs font-medium text-slate-600">
+							<span className="text-xs font-medium text-neutral-600">
 								{formatAttemptNumber(answer.awardedScore)} /{" "}
 								{formatAttemptNumber(answer.maximumScore)} points
 							</span>
@@ -73,7 +73,7 @@ export function AttemptAnswerReview({
 								Correct solution
 							</p>
 							{type === "fill-blank" ? (
-								<ul className="mt-2 list-inside list-disc text-slate-800">
+								<ul className="mt-2 list-inside list-disc text-neutral-800">
 									{question.solution.acceptedAnswers.map((item, index) => (
 										<li key={`${item.blankKey}-${index}`}>
 											{item.acceptedAnswer}
@@ -95,7 +95,7 @@ export function AttemptAnswerReview({
 												{option.label && `${option.label}. `}
 												{option.text}
 												{solution?.explanation && (
-													<p className="mt-0.5 text-xs font-normal text-slate-600">
+													<p className="mt-0.5 text-xs font-normal text-neutral-600">
 														{solution.explanation}
 													</p>
 												)}
@@ -106,8 +106,8 @@ export function AttemptAnswerReview({
 							)}
 							{question.solution.explanation && (
 								<div className="mt-3 border-t border-emerald-200 pt-3">
-									<p className="font-medium text-slate-800">Explanation</p>
-									<p className="mt-1 whitespace-pre-line leading-6 text-slate-700">
+									<p className="font-medium text-neutral-800">Explanation</p>
+									<p className="mt-1 whitespace-pre-line leading-6 text-neutral-700">
 										{question.solution.explanation}
 									</p>
 								</div>

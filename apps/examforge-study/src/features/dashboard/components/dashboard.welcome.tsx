@@ -12,10 +12,10 @@ export function DashboardWelcome() {
 
 	return (
 		<section>
-			<h1 id="welcome-heading" className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+			<h1 id="welcome-heading" className="mt-2 text-3xl font-semibold tracking-tight text-neutral-950 sm:text-4xl">
 				Welcome back, {displayName}
 			</h1>
-			<p className="mt-3 max-w-2xl text-slate-600">
+			<p className="mt-3 max-w-2xl text-neutral-600">
 				When you are ready, choose a practice exam and keep building your understanding one session at a time.
 			</p>
 		</section>

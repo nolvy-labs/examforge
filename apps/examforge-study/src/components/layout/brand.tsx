@@ -11,7 +11,7 @@ export function Brand({ className }: { className?: string }) {
 				className
 			)}
 		>
-			<span className="grid p-2 place-items-center rounded-lg bg-indigo-600 text-white shadow-sm">
+			<span className="grid p-2 place-items-center rounded-lg bg-primary text-white shadow-sm">
 				<Image src="/icon.svg" alt="examforge-icon" width={28} height={28}/>
 			</span>
 			<span>ExamForge</span>

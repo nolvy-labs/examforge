@@ -75,12 +75,12 @@ export function DashboardAttemptList({
 	if (!attempts.length) {
 		return (
 			<Card className="items-center border-dashed p-6 text-center">
-				<span className="grid size-11 place-items-center rounded-lg bg-slate-100 text-slate-600">
+				<span className="grid size-11 place-items-center rounded-lg bg-neutral-100 text-neutral-600">
 					<BookOpen className="size-5" />
 				</span>
 				<div>
-					<h3 className="font-semibold text-slate-900">{emptyTitle}</h3>
-					<p className="mt-1 text-sm text-slate-600">{emptyDescription}</p>
+					<h3 className="font-semibold text-neutral-900">{emptyTitle}</h3>
+					<p className="mt-1 text-sm text-neutral-600">{emptyDescription}</p>
 				</div>
 			</Card>
 		)
@@ -90,7 +90,7 @@ export function DashboardAttemptList({
 		<div className="space-y-3">
 			<Card className="hidden py-0 md:block">
 				<Table className="min-w-3xl text-left text-sm">
-					<TableHeader className="border-b bg-slate-100 text-xs text-slate-600">
+					<TableHeader className="border-b bg-neutral-100 text-xs text-neutral-600">
 						<TableRow>
 							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Exam</TableHead>
 							<TableHead scope="col" className="h-auto px-4 py-3 font-medium">Status</TableHead>
@@ -136,7 +136,7 @@ export function DashboardAttemptList({
 					</Button>
 				</div>
 			) : (
-				<p className="text-center text-xs text-slate-500">You&apos;re all caught up.</p>
+				<p className="text-center text-xs text-neutral-500">You&apos;re all caught up.</p>
 			)}
 		</div>
 	)
@@ -186,16 +186,16 @@ function DashboardAttemptTableRow({ attempt }: { attempt: StudentExamAttempt }) 
 	const presentation = getAttemptPresentation(attempt)
 	return (
 		<TableRow>
-			<TableCell className="max-w-72 whitespace-normal px-4 py-4 font-medium text-slate-950">
+			<TableCell className="max-w-72 whitespace-normal px-4 py-4 font-medium text-neutral-950">
 				<span className="line-clamp-2" title={attempt.examTitle || "Untitled exam"}>
 					{attempt.examTitle || "Untitled exam"}
 				</span>
 			</TableCell>
 			<TableCell className="px-4 py-4"><AttemptStatusBadge attempt={attempt} /></TableCell>
-			<TableCell className="whitespace-nowrap px-4 py-4 text-slate-600">
+			<TableCell className="whitespace-nowrap px-4 py-4 text-neutral-600">
 				{formatAttemptSummaryDate(attempt.createdAtUtc)}
 			</TableCell>
-			<TableCell className="whitespace-nowrap px-4 py-4 text-slate-600">
+			<TableCell className="whitespace-nowrap px-4 py-4 text-neutral-600">
 				{formatAttemptSummaryDate(presentation.updatedAt)}
 			</TableCell>
 			{presentation.submitted && (
@@ -215,30 +215,30 @@ function DashboardAttemptCard({ attempt }: { attempt: StudentExamAttempt }) {
 			<CardContent className="space-y-4">
 				<div className="flex items-start justify-between gap-3">
 					<h3
-						className="min-w-0 truncate font-semibold text-slate-950"
+						className="min-w-0 truncate font-semibold text-neutral-950"
 						title={attempt.examTitle || "Untitled exam"}
 					>
 						{attempt.examTitle || "Untitled exam"}
 					</h3>
 					<AttemptStatusBadge attempt={attempt} />
 				</div>
-				<dl className="grid grid-cols-2 gap-3 text-xs text-slate-600">
+				<dl className="grid grid-cols-2 gap-3 text-xs text-neutral-600">
 					<div>
 						<dt>Created</dt>
-						<dd className="mt-1 font-medium text-slate-900">
+						<dd className="mt-1 font-medium text-neutral-900">
 							{formatAttemptSummaryDate(attempt.createdAtUtc)}
 						</dd>
 					</div>
 					<div>
 						<dt>{presentation.submitted ? "Submitted / updated" : "Last updated"}</dt>
-						<dd className="mt-1 font-medium text-slate-900">
+						<dd className="mt-1 font-medium text-neutral-900">
 							{formatAttemptSummaryDate(presentation.updatedAt)}
 						</dd>
 					</div>
 					{presentation.submitted && (
 						<div className="col-span-2">
 							<dt>Score</dt>
-							<dd className="mt-1 font-medium text-slate-900">
+							<dd className="mt-1 font-medium text-neutral-900">
 								{formatAttemptSummaryScore(attempt) ?? "Not available"}
 							</dd>
 						</div>

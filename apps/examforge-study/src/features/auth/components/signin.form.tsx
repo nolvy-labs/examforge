@@ -126,13 +126,14 @@ export function SigninForm({ callbackUrl }: { callbackUrl?: string }) {
 						errors={[form.formState.errors.password]}
 					/>
 				</Field>
-				<div className="flex justify-end">
-					<Link
-						href={AUTH_ROUTES.forgotPassword}
+				<div className="flex justify-end -mt-6">
+					<Button
+						disabled
+						variant={"link"}
 						className="rounded-sm text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						Forgot password?
-					</Link>
+					</Button>
 				</div>
 			</FieldGroup>
 

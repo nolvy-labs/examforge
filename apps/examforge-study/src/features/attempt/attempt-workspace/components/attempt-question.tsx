@@ -45,11 +45,11 @@ export function AttemptQuestionBlock({
 						{number}
 					</Badge>
 					<div className="min-w-0 flex-1">
-						<div className="whitespace-pre-line wrap-break-word text-base font-medium leading-7 text-slate-950">
+						<div className="whitespace-pre-line wrap-break-word text-base font-medium leading-7 text-neutral-950">
 							<ContentRenderer content={question.prompt} />
 						</div>
 						{type !== "group" && (
-							<p className="mt-1 text-xs text-slate-500">
+							<p className="mt-1 text-xs text-neutral-500">
 								{question.points} {question.points === 1 ? "point" : "points"}
 							</p>
 						)}
@@ -252,10 +252,10 @@ export function AttemptNavigator({
 									onClick={() => onSelect(section.id, question.id)}
 									className={cn(
 										"aspect-square h-auto w-full rounded-lg text-xs font-semibold",
-										answered && "bg-blue-100 text-blue-800 hover:bg-blue-200",
-										incomplete && "bg-yellow-100 text-yellow-900 hover:bg-yellow-200",
-										displayMode === "one" && selectedBlockId === question.id && "ring-2 ring-indigo-600 ring-offset-1",
-										failed && "outline-2 outline-dashed outline-slate-400"
+										answered && "bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary",
+										incomplete && "bg-warning/20 text-warning hover:bg-warning/30 hover:text-warning",
+										displayMode === "one" && selectedBlockId === question.id && "ring-2 ring-primary ring-offset-1",
+										failed && "outline-2 outline-dashed outline-neutral-20"
 									)}
 								>
 									{questionIndex + 1}
@@ -280,7 +280,7 @@ export function SaveStatus() {
 	}[state]
 	const Icon = config.icon
 	return (
-		<div title={message} className="flex items-center gap-1.5 text-xs text-slate-600" role="status">
+		<div title={message} className="flex items-center gap-1.5 text-xs text-neutral-600" role="status">
 			<Icon className={cn("size-4", state === "saving" && "animate-spin")} />
 			<span>{config.label}</span>
 		</div>

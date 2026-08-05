@@ -45,7 +45,7 @@ export function AttemptPage({ attemptId }: AttemptPageProps) {
 			}
 			onExpired={workspace.timer.onExpired}
 		>
-			<div className="min-h-svh bg-slate-50">
+			<div className="min-h-svh bg-neutral-50">
 				<AttemptWorkspaceHeader
 					title={workspace.detail.exam.title}
 					mode={workspace.detail.mode}

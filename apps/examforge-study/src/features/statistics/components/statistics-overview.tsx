@@ -19,8 +19,8 @@ export function StatisticsOverviewCards({ overview }: { overview: StatisticsOver
 				{cards.map(({ label, value, icon: Icon }) => (
 					<Card key={label} className="gap-0">
 						<CardHeader className="flex flex-row items-center justify-between">
-							<CardTitle className="text-sm font-medium text-slate-600">{label}</CardTitle>
-							<Icon className="size-4 text-indigo-600" aria-hidden="true" />
+							<CardTitle className="text-sm font-medium text-neutral-600">{label}</CardTitle>
+							<Icon className="size-4 text-primary" />
 						</CardHeader>
 						<CardContent><p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p></CardContent>
 					</Card>

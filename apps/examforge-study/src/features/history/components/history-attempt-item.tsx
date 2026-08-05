@@ -65,7 +65,7 @@ export function HistoryAttemptItem({
 					<h2 className="min-w-0 break-words font-semibold">{attempt.examTitle || "Untitled exam"}</h2>
 					{badge}
 				</div>
-				<dl className="mt-4 grid gap-3 text-xs text-slate-500 [&_dd]:mt-1 [&_dd]:text-sm [&_dd]:font-medium [&_dd]:text-slate-900 sm:grid-cols-3">
+				<dl className="mt-4 grid gap-3 text-xs text-neutral-500 [&_dd]:mt-1 [&_dd]:text-sm [&_dd]:font-medium [&_dd]:text-neutral-900 sm:grid-cols-3">
 					<AttemptValues attempt={attempt} />
 				</dl>
 				<div className="mt-4">{actionLink}</div>

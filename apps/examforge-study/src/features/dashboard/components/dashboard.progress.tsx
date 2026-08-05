@@ -14,7 +14,7 @@ export function DashboardProgress() {
 
 	return (
 		<section className="flex flex-col gap-4" aria-labelledby="progress-heading">
-			<h2 id="progress-heading" className="text-xl font-semibold tracking-tight text-slate-950">
+			<h2 id="progress-heading" className="text-xl font-semibold tracking-tight text-foreground">
 				Progress overview
 			</h2>
 			{query.isPending ? (
@@ -55,12 +55,12 @@ function MetricCard({
 		<Card className="flex flex-col gap-0">
 			<CardHeader className="flex flex-row items-center justify-between">
 				<CardTitle className="font-semibold">{label}</CardTitle>
-				<span className="grid size-9 place-items-center rounded-lg bg-indigo-50 text-indigo-600" aria-hidden="true">
+				<span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
 					<Icon className="size-4" />
 				</span>
 			</CardHeader>
 			<CardContent>
-				<p className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">{value}</p>
+				<p className="mt-4 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
 			</CardContent>
 		</Card>
 	)

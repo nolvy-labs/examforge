@@ -51,7 +51,7 @@ export function AttemptResultPage({ attemptId }: AttemptResultPageProps) {
 	}
 
 	return (
-		<div className="min-h-svh bg-slate-50">
+		<div className="min-h-svh bg-neutral-50">
 			<MainHeader />
 			<main className="mx-auto w-full max-w-5xl p-4 sm:p-6">
 				<div className="flex flex-col gap-4 items-start">

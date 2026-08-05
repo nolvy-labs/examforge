@@ -28,7 +28,7 @@ function AttemptTimeLeft() {
 
 	return (
 		<div>
-			<dt className="text-slate-500">Time left</dt>
+			<dt className="text-neutral-500">Time left</dt>
 			<dd className="font-semibold">
 				{formatRemaining(remaining)}
 			</dd>
@@ -57,7 +57,7 @@ export function EndAttemptDialog({
 			}}
 		>
 			<Dialog.Portal>
-				<Dialog.Backdrop className="fixed inset-0 z-40 bg-slate-950/50" />
+				<Dialog.Backdrop className="fixed inset-0 z-40 bg-neutral-950/50" />
 
 				<Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[min(calc(100vw-2rem),32rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl outline-none">
 					<div className="flex items-start justify-between gap-4">
@@ -70,7 +70,7 @@ export function EndAttemptDialog({
 										: "Abandon attempt?"}
 							</Dialog.Title>
 
-							<Dialog.Description className="mt-2 text-sm leading-6 text-slate-600">
+							<Dialog.Description className="mt-2 text-sm leading-6 text-neutral-600">
 								{expired
 									? "The attempt is locked. We will save pending answers before submitting it."
 									: mode === "submit"
@@ -91,14 +91,14 @@ export function EndAttemptDialog({
 						)}
 					</div>
 
-					<dl className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-sm">
+					<dl className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-neutral-50 p-4 text-sm">
 						<div>
-							<dt className="text-slate-500">Answered</dt>
+							<dt className="text-neutral-500">Answered</dt>
 							<dd className="font-semibold">{answered}</dd>
 						</div>
 
 						<div>
-							<dt className="text-slate-500">Unanswered</dt>
+							<dt className="text-neutral-500">Unanswered</dt>
 							<dd className="font-semibold">
 								{total - answered}
 							</dd>

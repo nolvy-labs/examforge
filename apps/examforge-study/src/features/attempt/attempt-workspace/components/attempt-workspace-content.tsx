@@ -57,11 +57,11 @@ export function AttemptWorkspaceContent({
 			</details>
 			<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h2 className="font-semibold text-slate-950">
+					<h2 className="font-semibold text-neutral-950">
 						{selectedSection?.title}
 					</h2>
 					{selectedSection?.instructions && (
-						<p className="mt-1 text-sm text-slate-600">
+						<p className="mt-1 text-sm text-neutral-600">
 							{selectedSection.instructions}
 						</p>
 					)}
@@ -151,7 +151,7 @@ function AttemptWorkspaceNavigation({
 	onNext,
 }: AttemptWorkspaceNavigationProps) {
 	return (
-		<div className="z-10 mt-5 flex items-center justify-between gap-3 bg-slate-50/95 py-3 backdrop-blur">
+		<div className="z-10 mt-5 flex items-center justify-between gap-3 bg-neutral-50/95 py-3 backdrop-blur">
 			<Button
 				type="button"
 				variant="outline"
@@ -160,7 +160,7 @@ function AttemptWorkspaceNavigation({
 			>
 				<ChevronLeft /> Previous
 			</Button>
-			<span className="text-xs text-slate-500">
+			<span className="text-xs text-neutral-500">
 				{answered} of {total} answered
 			</span>
 			<Button

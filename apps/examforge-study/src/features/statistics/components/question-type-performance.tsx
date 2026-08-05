@@ -11,7 +11,7 @@ export function QuestionTypePerformanceSection({ rows }: { rows: QuestionTypePer
 					Performance by question type
 				</h2>
 			</div>
-			{rows.length === 0 ? <Card><CardContent className="p-8 text-center text-sm text-slate-600">No question performance data matches these filters yet.</CardContent></Card> : (
+			{rows.length === 0 ? <Card><CardContent className="p-8 text-center text-sm text-neutral-600">No question performance data matches these filters yet.</CardContent></Card> : (
 				<div className="grid gap-4 lg:grid-cols-2">{rows.map((row) => (
 					<Card key={row.questionType}>
 						<CardHeader>
@@ -21,7 +21,7 @@ export function QuestionTypePerformanceSection({ rows }: { rows: QuestionTypePer
 						</CardHeader>
 						<CardContent>
 							<div className="flex items-baseline justify-between gap-3">
-								<p className="text-sm text-slate-600">{formatPoints(row.pointsEarned)} / {formatPoints(row.maximumPoints)} points</p>
+								<p className="text-sm text-neutral-600">{formatPoints(row.pointsEarned)} / {formatPoints(row.maximumPoints)} points</p>
 								<p className="font-semibold">{formatPercentage(row.pointsPercentage)}</p>
 							</div>
 							<dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
@@ -38,4 +38,4 @@ export function QuestionTypePerformanceSection({ rows }: { rows: QuestionTypePer
 	)
 }
 
-function Count({ label, value }: { label: string; value: number }) { return <div><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div> }
+function Count({ label, value }: { label: string; value: number }) { return <div><dt className="text-xs text-neutral-500">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div> }

@@ -34,7 +34,7 @@ export function AttemptResultSummary({
 	return (
 		<Card className="w-full overflow-hidden gap-0 p-0">
 			<CardHeader className="px-0">
-				<div className={cn("p-6 sm:p-8", submitted ? "bg-indigo-950 text-background" : "text-foreground bg-amber-200")} >
+				<div className={cn("p-6 sm:p-8", submitted ? "bg-primary text-background" : "text-background bg-warning")} >
 					<p className="text-sm font-medium opacity-80">
 						{submitted ? "Attempt submitted" : "Attempt abandoned"}
 					</p>
@@ -103,11 +103,11 @@ function ResultFact({
 }: ResultFactProps) {
 	return (
 		<div>
-			<dt className="flex items-center gap-1 text-xs text-slate-500">
+			<dt className="flex items-center gap-1 text-xs text-neutral-500">
 				{Icon && <Icon className="size-3.5" />}
 				{label}
 			</dt>
-			<dd className="mt-1 text-sm font-medium text-slate-900">{value}</dd>
+			<dd className="mt-1 text-sm font-medium text-neutral-900">{value}</dd>
 		</div>
 	)
 }

@@ -11,7 +11,7 @@ export default function HeaderAuthNavigation() {
                 href={AUTH_ROUTES.signin}
                 className={cn(
                     buttonVariants({ variant: "ghost" }),
-                    "px-3 text-slate-700"
+                    "px-3 text-neutral-700"
                 )}
             >
                 Sign in
@@ -20,7 +20,7 @@ export default function HeaderAuthNavigation() {
                 href={AUTH_ROUTES.signup}
                 className={cn(
                     buttonVariants(),
-                    "bg-indigo-600 px-3 text-white hover:bg-indigo-700 sm:px-4"
+                    "bg-primary px-3 text-white hover:primary sm:px-4"
                 )}
             >
                 Create account

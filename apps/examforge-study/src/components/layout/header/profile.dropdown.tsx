@@ -41,7 +41,7 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 		<Popover>
 			<PopoverTrigger render={
 				<Button variant="ghost" className="ml-auto max-w-44 gap-2 p-1.5 h-12 sm:max-w-xs sm:p-2">
-					<span className="grid size-8 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+					<span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
 						{getInitials(name)}
 					</span>
 					<span className="min-w-0 text-left">
@@ -49,9 +49,9 @@ export default function ProfileDropdown({ user }: { user: AuthUser }) {
 					</span>
 				</Button>
 			} />
-			<PopoverContent className="gap-1 p-3" align="start">
+			<PopoverContent className="gap-1 p-3" align="end">
 				<div className="flex flex-row items-center justify-start gap-2 px-1">
-					<span className="grid size-8 shrink-0 place-items-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700">
+					<span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
 						{getInitials(name)}
 					</span>
 					<div>

@@ -52,7 +52,7 @@ export function StatisticsPage() {
 				<div>
 					<h1 className="text-3xl font-bold tracking-tight">Statistics</h1>
 				</div>
-				{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-slate-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Updating statistics</span> : null}
+				{query.isFetching && query.data ? <span className="flex items-center gap-2 text-xs text-neutral-500" role="status"><LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" />Updating statistics</span> : null}
 			</div>
 
 			{/* <div className="flex flex-col gap-4 rounded-xl border bg-white p-4 sm:flex-row sm:items-end">

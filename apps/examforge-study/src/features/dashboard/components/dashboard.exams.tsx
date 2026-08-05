@@ -11,7 +11,7 @@ export function DashboardExams() {
 		<section className="flex flex-col gap-4">
 			<div>
 				<div className="flex justify-between">
-					<h2 id="exams-heading" className="text-xl font-semibold tracking-tight text-slate-950">
+					<h2 id="exams-heading" className="text-xl font-semibold tracking-tight text-neutral-950">
 						Recommended exams
 					</h2>
 					<Link
