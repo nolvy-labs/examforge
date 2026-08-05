@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, type ReactNode } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -16,7 +16,6 @@ import {
 	Target,
 } from "lucide-react"
 
-import { Brand } from "@/components/layout/brand"
 import { MainHeader } from "@/components/layout/header/header"
 import { buttonVariants } from "@/components/shadcn/button"
 import {
@@ -27,6 +26,7 @@ import { AuthLoading } from "@/features/auth/components/auth.loading"
 import { useAuthSession } from "@/features/auth/stores/auth.store"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/shadcn/card"
+import { PublicFooter } from "@/components/layout/public-footer"
 
 const benefits = [
 	{
@@ -223,46 +223,7 @@ export function HomePage() {
 					</div>
 				</section>
 			</main>
-			<footer className="border-t border-neutral-200 bg-white">
-				<div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-					<div className="grid gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
-						<div className="max-w-sm">
-							<Brand />
-							<p className="mt-4 text-sm leading-6 text-neutral-600">
-								Focused exam practice, useful feedback, and clear progress tracking for every study session.
-							</p>
-						</div>
-						<nav aria-label="Product links">
-							<p className="text-sm font-semibold text-neutral-950">Product</p>
-							<div className="mt-4 flex flex-col items-start gap-3 text-sm text-neutral-600">
-								<FooterLink href="#benefits">Benefits</FooterLink>
-								<FooterLink href="#how-it-works">How it works</FooterLink>
-							</div>
-						</nav>
-						<nav aria-label="Account links">
-							<p className="text-sm font-semibold text-neutral-950">Account</p>
-							<div className="mt-4 flex flex-col items-start gap-3 text-sm text-neutral-600">
-								<FooterLink href={AUTH_ROUTES.signin}>Sign in</FooterLink>
-								<FooterLink href={AUTH_ROUTES.signup}>Create account</FooterLink>
-							</div>
-						</nav>
-					</div>
-					<div className="mt-10 border-t border-neutral-200 pt-6 text-sm text-neutral-500">
-						<p>&copy; {new Date().getFullYear()} ExamForge. All rights reserved.</p>
-					</div>
-				</div>
-			</footer>
+			<PublicFooter />
 		</div>
-	)
-}
-
-function FooterLink({ href, children }: { href: string; children: ReactNode }) {
-	return (
-		<Link
-			href={href}
-			className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-		>
-			{children}
-		</Link>
 	)
 }
