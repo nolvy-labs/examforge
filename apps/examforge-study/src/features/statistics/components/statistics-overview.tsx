@@ -17,15 +17,33 @@ export function StatisticsOverviewCards({ overview }: { overview: StatisticsOver
 			<h2 id="statistics-overview-heading" className="sr-only">Overview</h2>
 			<div className="grid gap-4 sm:grid-cols-3">
 				{cards.map(({ label, value, icon: Icon }) => (
-					<Card key={label} className="gap-0">
-						<CardHeader className="flex flex-row items-center justify-between">
-							<CardTitle className="text-sm font-medium text-neutral-600">{label}</CardTitle>
-							<Icon className="size-4 text-primary" />
-						</CardHeader>
-						<CardContent><p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p></CardContent>
-					</Card>
+					<MetricCard key={label} label={label} value={value} icon={Icon} />
 				))}
 			</div>
 		</section>
+	)
+}
+
+export function MetricCard({
+	label,
+	value,
+	icon: Icon,
+}: {
+	label: string
+	value: string
+	icon: typeof FileCheck2
+}) {
+	return (
+		<Card className="flex flex-col gap-0">
+			<CardHeader className="flex flex-row items-center justify-between">
+				<CardTitle className="font-semibold">{label}</CardTitle>
+				<span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
+					<Icon className="size-4" />
+				</span>
+			</CardHeader>
+			<CardContent>
+				<p className="mt-4 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
+			</CardContent>
+		</Card>
 	)
 }

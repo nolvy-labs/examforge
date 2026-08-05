@@ -4,10 +4,10 @@ import { AlertCircle, BarChart3, FileCheck2, ListChecks } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert"
 import { Button } from "@/components/shadcn/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card"
 import { Skeleton } from "@/components/shadcn/skeleton"
 import { useDashboardStatistics } from "@/features/statistics/hooks/statistics.hook"
 import { formatPercentage } from "@/features/statistics/utils/statistics.format"
+import { MetricCard } from "@/features/statistics/components/statistics-overview"
 
 export function DashboardProgress() {
 	const query = useDashboardStatistics()
@@ -39,29 +39,5 @@ export function DashboardProgress() {
 				</div>
 			)}
 		</section>
-	)
-}
-
-function MetricCard({
-	label,
-	value,
-	icon: Icon,
-}: {
-	label: string
-	value: string
-	icon: typeof FileCheck2
-}) {
-	return (
-		<Card className="flex flex-col gap-0">
-			<CardHeader className="flex flex-row items-center justify-between">
-				<CardTitle className="font-semibold">{label}</CardTitle>
-				<span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
-					<Icon className="size-4" />
-				</span>
-			</CardHeader>
-			<CardContent>
-				<p className="mt-4 text-3xl font-semibold tracking-tight text-foreground">{value}</p>
-			</CardContent>
-		</Card>
 	)
 }
