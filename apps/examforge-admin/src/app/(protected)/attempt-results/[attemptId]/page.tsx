@@ -1,16 +1,12 @@
-import type { Metadata } from "next"
-
-export const metadata: Metadata = { title: "Exam Attempt" }
-
+import { notFound } from "next/navigation";
+import { z } from "zod";
+import { AttemptDetailPage } from "@/features/admin-management/pages/attempt-detail.page";
 export default async function Page({
-    params,
+  params,
 }: {
-    params: Promise<{ attemptId: string }>
+  params: Promise<{ attemptId: string }>;
 }) {
-    const { attemptId } = await params
-    return (
-        <main>
-            <h1>Attempt: {attemptId}</h1>
-        </main>
-    )
+  const { attemptId } = await params;
+  if (!z.uuid().safeParse(attemptId).success) notFound();
+  return <AttemptDetailPage attemptId={attemptId} />;
 }

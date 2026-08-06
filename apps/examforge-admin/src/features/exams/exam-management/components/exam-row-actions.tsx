@@ -1,9 +1,11 @@
 "use client"
 
 import { useRef, useState } from "react"
+import Link from "next/link"
 import {
 	ArchiveBoxIcon,
 	ArrowCounterClockwiseIcon,
+	ChartBarIcon,
 	DotsThreeIcon,
 	SpinnerGapIcon,
 } from "@phosphor-icons/react"
@@ -109,6 +111,10 @@ export function ExamRowActions({
 					<DropdownMenuLabel>{exam.title}</DropdownMenuLabel>
 					<DropdownMenuItem onClick={() => onOpenDetails(exam)}>Details</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => onOpenVersions(exam)}>Version Control</DropdownMenuItem>
+					<DropdownMenuItem render={<Link href={`/exams/${exam.id}/attempts`} />}>
+						<ChartBarIcon />
+						Attempt results
+					</DropdownMenuItem>
 					{exam.isArchived ? (
 						<DropdownMenuItem disabled={isRestoring} onClick={() => void restoreExam()}>
 							{isRestoring ? <SpinnerGapIcon className="animate-spin" /> : <ArrowCounterClockwiseIcon />}

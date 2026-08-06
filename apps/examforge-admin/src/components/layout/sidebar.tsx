@@ -55,11 +55,6 @@ const navigation = [
                 href: "/classifications",
                 icon: TagIcon,
             },
-            {
-                title: "Attempt results",
-                href: "/attempt-results",
-                icon: ChartBarIcon,
-            },
         ],
     },
 ]
