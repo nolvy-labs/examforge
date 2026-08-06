@@ -11,5 +11,5 @@ namespace ExamForge.Api.Controllers.Admin;
 [Authorize(Roles = nameof(UserRole.Admin))]
 public abstract class AdminBaseController : ControllerBase
 {
-    
+
 }

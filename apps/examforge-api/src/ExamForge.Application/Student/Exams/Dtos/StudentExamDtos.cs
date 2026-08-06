@@ -73,4 +73,3 @@ public sealed record StudentExamSectionSummaryResponse(
     int QuestionCount,
     decimal TotalPoints,
     System.Text.Json.JsonElement? Metadata);
-    

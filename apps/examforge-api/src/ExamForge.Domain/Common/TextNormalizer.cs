@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 
 namespace ExamForge.Domain.Common;
+
 public static class TextNormalizer
 {
     public static string NormalizeName(string name)

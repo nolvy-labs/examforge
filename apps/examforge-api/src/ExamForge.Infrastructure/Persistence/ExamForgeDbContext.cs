@@ -1,7 +1,7 @@
-﻿using ExamForge.Domain.Users;
+﻿using ExamForge.Domain.ExamAttempts;
 using ExamForge.Domain.ExamClassifications;
 using ExamForge.Domain.Exams;
-using ExamForge.Domain.ExamAttempts;
+using ExamForge.Domain.Users;
 
 using Microsoft.EntityFrameworkCore;
 

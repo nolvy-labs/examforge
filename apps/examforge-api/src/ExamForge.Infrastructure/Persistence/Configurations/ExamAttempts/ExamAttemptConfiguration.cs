@@ -57,6 +57,27 @@ public sealed class ExamAttemptConfiguration : IEntityTypeConfiguration<ExamAtte
             attempt.Id
         })
             .HasDatabaseName("ix_exam_attempts_student_status_history");
+        builder.HasIndex(attempt => new
+        {
+            attempt.StudentId,
+            attempt.CreatedAtUtc,
+            attempt.Id
+        })
+            .HasDatabaseName("ix_exam_attempts_student_created_at_id");
+        builder.HasIndex(attempt => new
+        {
+            attempt.ExamId,
+            attempt.CreatedAtUtc,
+            attempt.Id
+        })
+            .HasDatabaseName("ix_exam_attempts_exam_created_at_id");
+        builder.HasIndex(attempt => new
+        {
+            attempt.Status,
+            attempt.ExpiresAtUtc,
+            attempt.Id
+        })
+            .HasDatabaseName("ix_exam_attempts_status_expires_at_id");
 
         builder.HasOne(attempt => attempt.Student)
             .WithMany()

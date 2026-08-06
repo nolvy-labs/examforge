@@ -380,12 +380,12 @@ public sealed class ExamAttemptServiceTests
             [Replace($"/answers/{fill.Id:D}/textAnswer", " Answer ")]);
         var submitted = await service.SubmitAsync(attempt.Id, patched.Value!.Revision);
 
-		Assert.True(submitted.IsSuccess);
+        Assert.True(submitted.IsSuccess);
         Assert.Equal(ExamAttemptStatus.Submitted, attempt.Status);
         Assert.Equal("Answer", attempt.Answers.Single().TextAnswer);
         Assert.Equal(2m, attempt.Score);
-		Assert.Equal(3, attempt.Revision);
-		Assert.Equal(2, repository.SaveCount);
+        Assert.Equal(3, attempt.Revision);
+        Assert.Equal(2, repository.SaveCount);
     }
 
     [Fact]

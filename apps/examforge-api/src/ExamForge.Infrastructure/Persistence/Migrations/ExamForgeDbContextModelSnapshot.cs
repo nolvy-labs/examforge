@@ -80,14 +80,21 @@ namespace ExamForge.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExamId");
-
                     b.HasIndex("ExamVersionId");
 
                     b.HasIndex("StudentId", "ExamVersionId")
                         .IsUnique()
                         .HasDatabaseName("ux_exam_attempts_one_in_progress")
                         .HasFilter("\"Status\" = 'InProgress'");
+
+                    b.HasIndex("ExamId", "CreatedAtUtc", "Id")
+                        .HasDatabaseName("ix_exam_attempts_exam_created_at_id");
+
+                    b.HasIndex("Status", "ExpiresAtUtc", "Id")
+                        .HasDatabaseName("ix_exam_attempts_status_expires_at_id");
+
+                    b.HasIndex("StudentId", "CreatedAtUtc", "Id")
+                        .HasDatabaseName("ix_exam_attempts_student_created_at_id");
 
                     b.HasIndex("StudentId", "Status", "UpdatedAtUtc", "Id")
                         .HasDatabaseName("ix_exam_attempts_student_status_history");
@@ -715,6 +722,9 @@ namespace ExamForge.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("NormalizedEmail")
                         .IsUnique();
+
+                    b.HasIndex("CreatedAtUtc", "Id")
+                        .HasDatabaseName("ix_users_created_at_id");
 
                     b.ToTable("users", "examforge");
                 });

@@ -40,5 +40,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(user => user.CreatedAtUtc)
             .IsRequired();
-    }   
+
+        builder.HasIndex(user => new { user.CreatedAtUtc, user.Id })
+            .HasDatabaseName("ix_users_created_at_id");
+    }
 }

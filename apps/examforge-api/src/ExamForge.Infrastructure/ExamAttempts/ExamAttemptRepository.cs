@@ -212,6 +212,7 @@ public sealed class ExamAttemptRepository : IExamAttemptRepository
     private IQueryable<ExamAttempt> AttemptGraph() =>
         _dbContext.ExamAttempts
             .AsSplitQuery()
+            .Include(attempt => attempt.Student)
             .Include(attempt => attempt.Exam)
             .Include(attempt => attempt.ExamVersion)
                 .ThenInclude(version => version.Sections)

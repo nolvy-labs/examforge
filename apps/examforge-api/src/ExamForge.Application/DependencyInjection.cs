@@ -1,6 +1,8 @@
+using ExamForge.Application.Admin.ExamAttempts.Services;
 using ExamForge.Application.Admin.ExamClassifications.Services;
 using ExamForge.Application.Admin.Exams.Services;
 using ExamForge.Application.Admin.Exams.Utils;
+using ExamForge.Application.Admin.Users.Services;
 using ExamForge.Application.Auth;
 using ExamForge.Application.Student.ExamAttempts.Scoring;
 using ExamForge.Application.Student.ExamAttempts.Services;
@@ -18,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<AdminExamTagService>();
         services.AddScoped<AdminExamCategoryService>();
+        services.AddScoped<AdminUserService>();
+        services.AddScoped<AdminAttemptService>();
         services.AddScoped<StudentExamDiscoveryService>();
         services.AddScoped<StudentExamService>();
 
