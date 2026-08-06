@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using ExamForge.Api.Common;
+using ExamForge.Api.Common.Logging;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 
 namespace ExamForge.Api.Middleware;
 
@@ -21,6 +25,13 @@ public sealed class ApiExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            if (!context.Response.HasStarted)
+            {
+                context.Response.StatusCode = 499;
+            }
+        }
         catch (Exception exception)
         {
             await HandleExceptionAsync(context, exception);
@@ -29,24 +40,21 @@ public sealed class ApiExceptionHandlingMiddleware
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        var problem = exception switch
-        {
-            _ => CreateProblem(
-                context,
-                StatusCodes.Status500InternalServerError,
-                "Internal Server Error",
-                "An unexpected error occurred."
-            )
-        };
+        var problem = CreateProblem(
+            context,
+            StatusCodes.Status500InternalServerError,
+            "Internal Server Error",
+            "An unexpected error occurred.");
 
-        if (problem.Status == StatusCodes.Status500InternalServerError)
-        {
-            _logger.LogError(exception, "Unhandled exception occurred.");
-        }
-        else
-        {
-            _logger.LogWarning(exception, "Handled application exception occurred.");
-        }
+        _logger.LogError(
+            LogEvents.UnexpectedException,
+            exception,
+            "Unexpected exception while processing {HttpMethod} {RouteTemplate}; correlation {CorrelationId}; trace {TraceId}; user {UserId}",
+            context.Request.Method,
+            GetRouteTemplate(context),
+            CorrelationIdContext.Get(context),
+            ProblemDetailsRequestMetadata.GetTraceId(context),
+            RequestLoggingMiddleware.GetAuthenticatedUserId(context));
 
         context.Response.StatusCode = problem.Status ?? StatusCodes.Status500InternalServerError;
         context.Response.ContentType = "application/problem+json";
@@ -60,12 +68,20 @@ public sealed class ApiExceptionHandlingMiddleware
         string title,
         string detail)
     {
-        return new ProblemDetails
+        var problem = new ProblemDetails
         {
             Status = statusCode,
             Title = title,
             Detail = detail,
             Instance = context.Request.Path
         };
+
+        ProblemDetailsRequestMetadata.AddTo(problem, context);
+        return problem;
     }
+
+    private static string GetRouteTemplate(HttpContext context) =>
+        context.GetEndpoint() is RouteEndpoint routeEndpoint
+            ? routeEndpoint.RoutePattern.RawText ?? "unmatched"
+            : "unmatched";
 }

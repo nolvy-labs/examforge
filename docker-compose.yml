@@ -25,6 +25,11 @@ services:
       dockerfile: Dockerfile
       target: final
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     environment: *api-environment
     ports:
       - "${API_PORT:-5001}:5001"

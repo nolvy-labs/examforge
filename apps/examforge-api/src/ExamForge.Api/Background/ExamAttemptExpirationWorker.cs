@@ -1,3 +1,4 @@
+using ExamForge.Api.Common.Logging;
 using ExamForge.Application.Student.ExamAttempts.Services;
 
 namespace ExamForge.Api.Background;
@@ -34,9 +35,18 @@ public sealed class ExamAttemptExpirationWorker : BackgroundService
             var processor = scope.ServiceProvider
                 .GetRequiredService<ExamAttemptExpirationBatchProcessor>();
             var result = await processor.ProcessBatchAsync(cancellationToken);
+            if (result.FinalizedCount > 0)
+            {
+                _logger.LogInformation(
+                    LogEvents.ExamAttemptsExpired,
+                    "Finalized {FinalizedAttemptCount} expired exam attempts",
+                    result.FinalizedCount);
+            }
+
             foreach (var failure in result.Failures)
             {
                 _logger.LogWarning(
+                    LogEvents.ExamAttemptExpirationFailed,
                     "Could not finalize expired attempt {AttemptId}: {Error}",
                     failure.AttemptId,
                     failure.Error);
@@ -48,6 +58,7 @@ public sealed class ExamAttemptExpirationWorker : BackgroundService
         catch (Exception exception)
         {
             _logger.LogError(
+                LogEvents.ExamAttemptExpirationBatchFailed,
                 exception,
                 "Expired exam-attempt batch processing failed; the worker will retry.");
         }
