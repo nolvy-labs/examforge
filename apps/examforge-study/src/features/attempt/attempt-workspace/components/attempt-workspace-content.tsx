@@ -12,6 +12,7 @@ import {
 import type { DisplayMode } from "../stores/attempt.store"
 import type { AttemptQuestion, AttemptSection } from "../../types/attempt.type"
 import { ButtonGroup } from "@/components/shadcn/button-group"
+import { RichTextRenderer } from "@/components/common/rich-text-renderer"
 
 interface AttemptWorkspaceContentProps {
 	sections: AttemptSection[]
@@ -61,11 +62,10 @@ export function AttemptWorkspaceContent({
 					<h2 className="font-semibold text-neutral-950">
 						{selectedSection?.title}
 					</h2>
-					{selectedSection?.instructions && (
-						<p className="mt-1 text-sm text-neutral-600">
-							{selectedSection.instructions}
-						</p>
-					)}
+					<RichTextRenderer
+						content={selectedSection?.instructions}
+						className="mt-1 text-sm text-neutral-600 dark:text-neutral-300"
+					/>
 				</div>
 				<DisplayModeToggle
 					value={displayMode}
@@ -73,6 +73,10 @@ export function AttemptWorkspaceContent({
 				/>
 			</div>
 			<SaveError onRetry={onRetrySynchronization} />
+			<RichTextRenderer
+				content={selectedSection?.stimulusText}
+				className="mb-5 rounded-xl border bg-white p-4 dark:bg-neutral-950"
+			/>
 			{locked && (
 				<Alert className="mb-4">
 					<AlertDescription><LocaleMessage messageId="attempt.answersLocked" /></AlertDescription>

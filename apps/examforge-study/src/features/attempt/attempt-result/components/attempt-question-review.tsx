@@ -5,7 +5,7 @@ import { getQuestionType } from "../../types/attempt.type"
 import { AttemptAnswerReview } from "./attempt-answer-review"
 import { LocaleMessage } from "@/components/locale/locale-message"
 import { Card, CardContent, CardHeader } from "@/components/shadcn/card"
-import ContentRenderer from "@/components/common/content-renderer"
+import { RichTextRenderer } from "@/components/common/rich-text-renderer"
 import { Separator } from "@/components/shadcn/separator"
 import { Badge } from "@/components/shadcn/badge"
 import { useCallback, useMemo, useState } from "react"
@@ -25,17 +25,22 @@ export function AttemptQuestionReview({
 			<h2 id="review-heading" className="text-xl font-semibold">
 				<LocaleMessage messageId="attempt.questionReview" />
 			</h2>
-			{sections.flatMap((section) =>
-				section.questions.map((question, index) => (
-					<AttemptQuestionResult
-						key={question.id}
-						question={question}
-						label={`${section.title}`}
-						questionIndex={index + 1}
-						showGrading={showGrading}
-					/>
-				))
-			)}
+			{sections.map((section) => (
+				<section key={section.id} className="space-y-4">
+					<h3 className="text-lg font-semibold">{section.title}</h3>
+					<RichTextRenderer content={section.instructions} className="text-sm text-muted-foreground" />
+					<RichTextRenderer content={section.stimulusText} className="rounded-xl border bg-background p-4" />
+					{section.questions.map((question, index) => (
+						<AttemptQuestionResult
+							key={question.id}
+							question={question}
+							label={section.title}
+							questionIndex={index + 1}
+							showGrading={showGrading}
+						/>
+					))}
+				</section>
+			))}
 		</section>
 	)
 }
@@ -97,9 +102,7 @@ function AttemptQuestionResult({
 						<div className="text-xs font-medium uppercase tracking-wide text-neutral-500">
 							{statusLabel(status)}
 						</div>
-						<div className="mt-1 truncate font-medium text-neutral-900 whitespace-break-spaces">
-							<ContentRenderer content={question.prompt} />
-						</div>
+						<RichTextRenderer content={question.prompt} className="mt-1 line-clamp-2 font-medium text-neutral-900 dark:text-neutral-100" />
 					</div>
 					<Button variant="ghost" size="icon-sm" className="ml-auto">
 						{isOpen ? <ChevronDown className="transition-transform group-open:rotate-180 rotate-180" /> : <ChevronDown className="size-5 shrink-0 transition-transform group-open:rotate-180" />}
@@ -115,12 +118,8 @@ function AttemptQuestionResult({
 								<div className="flex flex-row items-start justify-start w-full gap-3">
 									<QuestionBadge status={child.answer?.gradingStatus ?? null} content={`${questionIndex}.${index + 1}`} />
 									<div className="min-w-0">
-										<div className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-											<ContentRenderer content={label} />
-										</div>
-										<div className="text-sm font-medium whitespace-break-spaces">
-											<ContentRenderer content={child.prompt} />
-										</div>
+										<div className="text-xs font-medium uppercase tracking-wide text-neutral-500">{label}</div>
+										<RichTextRenderer content={child.prompt} className="text-sm font-medium" />
 									</div>
 								</div>
 								<Separator />

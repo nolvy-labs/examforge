@@ -8,6 +8,7 @@ import { getGradingStatus, getQuestionType } from "../../types/attempt.type"
 import { formatAttemptNumber, getAnswerText } from "../model/attempt-result"
 import { Fragment } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { RichTextRenderer } from "@/components/common/rich-text-renderer"
 
 interface AttemptAnswerReviewProps {
 	question: AttemptQuestion
@@ -24,6 +25,7 @@ export function AttemptAnswerReview({
 	const type = getQuestionType(question.type)
 	const answer = question.answer
 	const status = getGradingStatus(answer?.gradingStatus)
+	const selectedOptionIds = new Set(answer?.selectedOptionIds ?? [])
 
 	return (
 		<div className="space-y-4 text-sm">
@@ -38,14 +40,14 @@ export function AttemptAnswerReview({
 								(item) => item.optionId === option.id
 							)
 							return (
-								<li key={option.id}>
-									{option.label && `${option.label}. `}
-									{option.text}
+								<li key={option.id} className="flex min-w-0 items-start gap-2">
+									{option.label && <span className="font-medium">{option.label}.</span>}
+									<div className="min-w-0 flex-1">
+										<RichTextRenderer content={option.text} />
 									{solution?.explanation && (
-										<p className="mt-0.5 text-xs font-normal text-neutral-600">
-											{solution.explanation}
-										</p>
+										<RichTextRenderer content={solution.explanation} className="mt-0.5 text-xs font-normal text-neutral-600" />
 									)}
+									</div>
 								</li>
 							)
 						})}
@@ -57,9 +59,22 @@ export function AttemptAnswerReview({
 				<p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
 					<LocaleMessage messageId="attempt.yourAnswer" />
 				</p>
-				<p className="mt-2 whitespace-pre-line text-neutral-900">
-					{getAnswerText(question, translate("unanswered"))}
-				</p>
+				{type === "fill-blank" ? (
+					<p className="mt-2 whitespace-pre-line text-neutral-900">
+						{getAnswerText(question, translate("unanswered"))}
+					</p>
+				) : selectedOptionIds.size ? (
+					<ul className="mt-2 space-y-2 text-neutral-900">
+						{question.options.filter((option) => selectedOptionIds.has(option.id)).map((option) => (
+							<li key={option.id} className="flex min-w-0 items-start gap-2">
+								{option.label && <span className="font-medium">{option.label}.</span>}
+								<RichTextRenderer content={option.text} className="min-w-0 flex-1" />
+							</li>
+						))}
+					</ul>
+				) : (
+					<p className="mt-2 text-neutral-900">{translate("unanswered")}</p>
+				)}
 			</div>
 			{showGrading && (
 				<Fragment>
@@ -96,12 +111,10 @@ export function AttemptAnswerReview({
 												key={option.id}
 												className="font-medium text-emerald-800"
 											>
-												{option.label && `${option.label}. `}
-												{option.text}
-												{solution?.explanation && (
-													<p className="mt-0.5 text-xs font-normal text-neutral-600">
-														{solution.explanation}
-													</p>
+											{option.label && <span className="mr-2">{option.label}.</span>}
+											<RichTextRenderer content={option.text} className="inline-block min-w-0 align-top" />
+											{solution?.explanation && (
+												<RichTextRenderer content={solution.explanation} className="mt-0.5 text-xs font-normal text-neutral-600" />
 												)}
 											</li>
 										)
@@ -111,9 +124,7 @@ export function AttemptAnswerReview({
 							{question.solution.explanation && (
 								<div className="mt-3 border-t border-emerald-200 pt-3">
 									<p className="font-medium text-neutral-800"><LocaleMessage messageId="attempt.explanation" /></p>
-									<p className="mt-1 whitespace-pre-line leading-6 text-neutral-700">
-										{question.solution.explanation}
-									</p>
+									<RichTextRenderer content={question.solution.explanation} className="mt-1 text-neutral-700" />
 								</div>
 							)}
 						</div>
