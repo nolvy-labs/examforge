@@ -4,8 +4,7 @@ import {
 } from "./builder.constants"
 import type { RichTextValue } from "./builder.types"
 
-const MATH_NODE_PATTERN =
-	/<(?:span|div)\b[^>]*data-type=["'](?:inline-math|block-math)["'][^>]*data-latex=["']([^"']+)["'][^>]*>/i
+const MATH_NODE_PATTERN = /<(?:span|div)\b[^>]*data-type=["'](?:inline-math|block-math)["'][^>]*data-latex=["']([^"']+)["'][^>]*>/i
 
 function escapeHtml(value: string) {
 	return value
@@ -87,4 +86,9 @@ export function isRichTextEmpty(value: RichTextValue) {
 
 export function cloneRichText(value: RichTextValue): RichTextValue {
 	return { format: value.format, html: value.html }
+}
+
+export function editorHtmlToRichText(html: string): RichTextValue {
+	const value = { format: RICH_TEXT_FORMAT, html } satisfies RichTextValue
+	return isRichTextEmpty(value) ? { format: RICH_TEXT_FORMAT, html: "" } : value
 }

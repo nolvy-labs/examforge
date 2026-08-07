@@ -130,11 +130,114 @@
 	}
 }
 
-.exam-rich-text .ProseMirror { min-height: inherit; outline: none; }
-.exam-rich-text .ProseMirror > * + * { margin-top: .65rem; }
-.exam-rich-text .ProseMirror ul { list-style: disc; padding-left: 1.5rem; }
-.exam-rich-text .ProseMirror ol { list-style: decimal; padding-left: 1.5rem; }
-.exam-rich-text .ProseMirror h2 { font-size: 1.25rem; font-weight: 600; }
-.exam-rich-text .ProseMirror a { color: var(--primary); text-decoration: underline; }
-.exam-rich-text .ProseMirror pre { overflow-x: auto; background: var(--muted); padding: .75rem; }
-.exam-rich-text .ProseMirror code { font-family: var(--font-mono); }
+.exam-rich-text .ProseMirror {
+	min-height: inherit;
+	max-width: 100%;
+	outline: none;
+	overflow-wrap: anywhere;
+}
+.exam-rich-text .ProseMirror > * + * {
+	margin-top: 0.65rem;
+}
+.exam-rich-text .ProseMirror p.is-editor-empty:first-child::before {
+	color: var(--muted-foreground);
+	content: attr(data-placeholder);
+	float: left;
+	height: 0;
+	pointer-events: none;
+}
+.exam-rich-text .ProseMirror h2 {
+	font-size: 1.25rem;
+	font-weight: 650;
+	line-height: 1.35;
+}
+.exam-rich-text .ProseMirror h3 {
+	font-size: 1.05rem;
+	font-weight: 650;
+	line-height: 1.4;
+}
+.exam-rich-text .ProseMirror ul {
+	list-style: disc;
+	padding-left: 1.5rem;
+}
+.exam-rich-text .ProseMirror ol {
+	list-style: decimal;
+	padding-left: 1.5rem;
+}
+.exam-rich-text .ProseMirror li > ul,
+.exam-rich-text .ProseMirror li > ol {
+	margin-top: 0.25rem;
+}
+.exam-rich-text .ProseMirror blockquote {
+	border-left: 3px solid var(--border);
+	color: var(--muted-foreground);
+	padding-left: 0.75rem;
+}
+.exam-rich-text .ProseMirror a {
+	color: var(--primary);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+.exam-rich-text .ProseMirror code {
+	border-radius: 0.2rem;
+	background: var(--muted);
+	font-family: var(--font-mono);
+	padding: 0.1rem 0.25rem;
+}
+.exam-rich-text .ProseMirror pre {
+	max-width: 100%;
+	overflow-x: auto;
+	background: var(--muted);
+	padding: 0.75rem;
+}
+.exam-rich-text .ProseMirror pre code {
+	background: transparent;
+	padding: 0;
+	white-space: pre;
+}
+.exam-rich-text .ProseMirror .tiptap-mathematics-render {
+	max-width: 100%;
+	cursor: pointer;
+}
+.exam-rich-text .ProseMirror .tiptap-mathematics-render--editable:hover,
+.exam-rich-text .ProseMirror .tiptap-mathematics-render.ProseMirror-selectednode {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+.exam-rich-text .ProseMirror [data-type="block-math"] {
+	overflow-x: auto;
+	padding: 0.75rem;
+	text-align: center;
+}
+.exam-rich-text .ProseMirror .block-math-error,
+.exam-rich-text .ProseMirror .inline-math-error {
+	color: var(--destructive);
+}
+.exam-rich-text .ProseMirror .tableWrapper {
+	max-width: 100%;
+	overflow-x: auto;
+}
+.exam-rich-text .ProseMirror table {
+	border-collapse: collapse;
+	table-layout: fixed;
+	width: 100%;
+	min-width: 28rem;
+}
+.exam-rich-text .ProseMirror th,
+.exam-rich-text .ProseMirror td {
+	border: 1px solid var(--border);
+	min-width: 5rem;
+	padding: 0.4rem 0.5rem;
+	vertical-align: top;
+}
+.exam-rich-text .ProseMirror th {
+	background: var(--muted);
+	font-weight: 600;
+}
+.exam-rich-text .ProseMirror .selectedCell::after {
+	background: color-mix(in oklab, var(--primary) 12%, transparent);
+	content: "";
+	inset: 0;
+	pointer-events: none;
+	position: absolute;
+}
