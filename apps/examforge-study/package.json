@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "legal:validate": "node scripts/validate-legal-content.mjs",
     "prebuild": "node scripts/validate-legal-content.mjs",
     "build": "next build",
+    "build:ci": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",

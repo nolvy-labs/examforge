@@ -3,70 +3,119 @@ title: "Cookie and Client Storage Policy"
 document: "cookies"
 locale: "en"
 version: "1.0"
-effectiveDate: "2026-08-05"
-lastUpdated: "2026-08-05"
----
+effectiveDate: "2026-08-10"
+lastUpdated: "2026-08-10"
+-------------------------
 
 # ExamForge Cookie and Client Storage Policy
 
-**Version:** 1.0  
-**Effective date:** August 5, 2026  
-**Last updated:** August 5, 2026
+- **Version:** 1.0
+- **Effective date:** August 10, 2026
+- **Last updated:** August 10, 2026
 
-> **Complete before publication:** inspect actual cookies and browser storage in DevTools and the backend, then replace every `[CONFIRM]` value. Do not publish a cookie name, lifetime, or scope that does not match the deployed configuration.
+## 1. Scope
 
-## 1. What this Policy covers
+This Policy explains the HTTP cookies and browser-side storage currently used by ExamForge.
 
-This Policy explains how ExamForge uses HTTP cookies and browser-side technologies such as `localStorage` and `sessionStorage`. The Privacy Policy more broadly explains how we process personal data.
+The [Privacy Policy](/legal/privacy) explains how personal data is processed more generally.
 
-A cookie is a small item stored by a browser or sent with a request. `localStorage` and `sessionStorage` are not cookies, but they may also store information on a device, so they are disclosed here.
+`localStorage` is not an HTTP cookie, but it stores information in the browser, so it is documented here for transparency.
 
 ## 2. Categories
 
-- **Essential:** needed for authentication, security, load balancing, or a feature you request. ExamForge cannot disable it through preference controls if you still want to use the relevant feature.
-- **Functional:** remembers choices such as language or appearance. It may be disabled, but choices may no longer persist.
-- **Analytics:** measures how the Service is used to improve the product. It is enabled only after an appropriate choice where legally required.
-- **Marketing:** supports advertising, campaign measurement, or cross-service tracking. The ExamForge MVP does not currently use this category.
+ExamForge currently uses:
 
-## 3. Expected cookies
+* **Essential storage** for authentication and operation of requested functionality; and
+* **Functional storage** for preferences such as the selected language.
 
-The inventory below must be reconciled with actual deployed names before publication:
+ExamForge does not currently intentionally use analytics or marketing cookies.
 
-| Name | Provider | Purpose | Category | Duration | Optional? |
-|---|---|---|---|---|---|
-| `[REFRESH_COOKIE_NAME]` | ExamForge | Maintain the signed-in session and securely obtain a new access token | Essential; `HttpOnly`; `Secure` in production; `SameSite=[CONFIRM]` | `[MATCH REFRESH TOKEN LIFETIME]` | No, if persistent sign-in is requested |
-| `[CSRF_COOKIE_NAME, IF ANY]` | ExamForge | Prevent forged requests when cookie authentication is used | Essential | `[CONFIRM]` | No |
-| `[HOST/LOAD-BALANCER COOKIE, IF ANY]` | Hosting provider | Route and protect the Service | Essential | `[CONFIRM]` | No |
+## 3. Authentication cookies
 
-Access and refresh tokens should not be stored in `localStorage`. If the actual configuration differs, the system should be corrected or this Policy updated after a risk review.
+| Name                         | Purpose                                                 | Type      | Security                                                                    | Lifetime                 |
+| ---------------------------- | ------------------------------------------------------- | --------- | --------------------------------------------------------------------------- | ------------------------ |
+| `__Secure-examforge_access`  | Authenticates requests to ExamForge                     | Essential | `HttpOnly`, `Secure`, `SameSite=Lax`                                        | Approximately 15 minutes |
+| `__Secure-examforge_refresh` | Allows a signed-in session to obtain a new access token | Essential | `HttpOnly`, `Secure`, `SameSite=Lax`, restricted to authentication requests | Approximately 7 days     |
 
-## 4. Expected localStorage and sessionStorage
+These cookies cannot be read by normal client-side JavaScript because they are configured as `HttpOnly`.
 
-| Key or key family | Purpose | Category | Duration | Can it be removed/declined? |
-|---|---|---|---|---|
-| `[LANGUAGE_KEY]` | Remember Vietnamese/English | Functional | Until removed or changed | Yes |
-| `[THEME_KEY]` | Remember light/dark/system appearance | Functional | Until removed or changed | Yes |
-| `[PROFILE_CACHE_KEY]` | Quickly display basic profile details | Functional | Removed at sign-out; `[TTL IF ANY]` | Yes; the next load may be slower |
-| `[ATTEMPT_DRAFT_KEYS]` | Recover answers/progress not yet synchronized | User-requested functional storage | Until synchronized, submitted, abandoned, or `[TTL]` expires | Yes; removal may discard unsynchronized changes |
-| `[CONSENT_KEY, IF ANY]` | Store the policy version and category choices | Essential to remember the choice | Until `[TTL]` expires or the policy version changes | Yes, but the prompt will reappear |
+Blocking or deleting them may sign you out or prevent authenticated features from working.
 
-Data stored on a device may be visible to another person who shares the same operating-system account or browser profile. Sign out when using a shared device.
+Authentication tokens are not intentionally stored in ExamForge's browser `localStorage`.
 
-## 5. Analytics and marketing
+## 4. Language preference
 
-The current MVP is expected not to initialize non-essential analytics, session replay, or marketing cookies. If ExamForge adds PostHog, Google Analytics, or a similar tool, we will update this inventory and block the SDK until a valid choice is obtained where consent is required.
+ExamForge uses the following language preference storage:
 
-## 6. Managing choices
+| Name                     | Storage        | Purpose                                                       | Type       | Lifetime                 |
+| ------------------------ | -------------- | ------------------------------------------------------------- | ---------- | ------------------------ |
+| `examforge-study-locale` | Cookie         | Makes the selected locale available to the server             | Functional | Up to 1 year             |
+| `examforge-study-locale` | `localStorage` | Synchronizes and remembers the selected locale in the browser | Functional | Until changed or removed |
 
-You may remove cookies and browser storage through browser settings. Blocking essential cookies may prevent authentication, session persistence, or security features from working.
+The locale cookie uses `SameSite=Lax` and is marked `Secure` in production.
 
-Where ExamForge uses only essential technologies and functional storage requested by the user, the site may not show a consent banner. If non-essential technology is introduced, we will provide “Essential only”, “Accept all”, and “Customize” choices, leave non-essential categories off by default, and allow later changes through **Cookie settings**.
+It is intentionally readable by application code because it stores only the selected locale.
 
-## 7. Policy changes
+## 5. Attempt recovery data
 
-When technologies, providers, or purposes change, we will update this Policy, its version, and effective date. A material change may cause the preference control to appear again.
+While an examination or practice attempt is in progress, ExamForge may store a local recovery copy using keys in the following form:
 
-## 8. Contact
+`examforge:attempt-draft:v1:<studentId>:<attemptId>`
 
-For questions, contact **[PRIVACY EMAIL]**. See also the [Privacy Policy](/legal/privacy).
+The stored information may contain:
 
+* attempt and exam-version identifiers;
+* student identifier;
+* attempt mode;
+* locally saved answers;
+* synchronization state;
+* practice elapsed time;
+* update timestamps.
+
+This storage is used to reduce the risk of losing unsynchronized work.
+
+The application removes recovery data when it is no longer required by the relevant attempt flow. Users may also remove it by clearing browser storage, although doing so while an attempt contains unsynchronized changes may cause those local changes to be lost.
+
+## 6. sessionStorage
+
+ExamForge does not currently intentionally rely on `sessionStorage` for the Study application features documented by this Policy.
+
+This section will be updated if that changes.
+
+## 7. Analytics and marketing
+
+ExamForge does not currently intentionally initialize:
+
+* advertising cookies;
+* marketing trackers;
+* cross-site advertising identifiers;
+* behavioral analytics cookies; or
+* session-replay technologies.
+
+If non-essential analytics or marketing technologies are introduced, this Policy and the applicable preference mechanism will be updated before such technologies are enabled where consent is required.
+
+## 8. Managing storage
+
+You can delete or block cookies and local storage through your browser.
+
+Deleting essential authentication cookies may sign you out.
+
+Deleting attempt-recovery storage may remove locally saved changes that have not yet synchronized with the server.
+
+Deleting language-preference storage may cause ExamForge to select the language again on a later visit.
+
+## 9. Cookie consent
+
+Because the current implementation uses authentication technologies required for requested functionality and functional locale storage, ExamForge does not treat analytics or marketing tracking as implicitly accepted.
+
+If non-essential tracking technologies are introduced in the future, they must not be enabled merely because a user continues browsing where applicable law requires a separate choice.
+
+## 10. Changes
+
+This Policy will be updated when browser-storage technologies, purposes or relevant configuration materially change.
+
+## 11. Contact
+
+For questions about cookies or browser storage, contact **vy.tranngoclam@gmail.com**.
+
+See also the [Privacy Policy](/legal/privacy).

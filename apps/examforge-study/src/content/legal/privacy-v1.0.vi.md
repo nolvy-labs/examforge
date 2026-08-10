@@ -3,115 +3,227 @@ title: "Chính sách quyền riêng tư"
 document: "privacy"
 locale: "vi"
 version: "1.0"
-effectiveDate: "2026-08-05"
-lastUpdated: "2026-08-05"
----
+effectiveDate: "2026-08-10"
+lastUpdated: "2026-08-10"
+-------------------------
 
 # Chính sách quyền riêng tư ExamForge
 
-**Phiên bản:** 1.0  
-**Ngày hiệu lực:** 05/08/2026  
-**Cập nhật lần cuối:** 05/08/2026
+- **Phiên bản:** 1.0
+- **Ngày hiệu lực:** 10/08/2026
+- **Cập nhật lần cuối:** 10/08/2026
 
-> **Cần hoàn thiện trước khi phát hành:** đối chiếu tài liệu này với hệ thống thật và thay các trường `[TÊN CHỦ THỂ VẬN HÀNH]`, `[ĐỊA CHỈ]`, `[EMAIL QUYỀN RIÊNG TƯ]`, cùng các lựa chọn được đánh dấu “xác nhận”.
+## 1. Chủ thể vận hành ExamForge
 
-## 1. Chủ thể xử lý dữ liệu
+ExamForge do **Trần Ngọc Lâm Vỹ** vận hành.
 
-**[TÊN CHỦ THỂ VẬN HÀNH]**, địa chỉ **[ĐỊA CHỈ]**, vận hành ExamForge và chịu trách nhiệm đối với việc xử lý dữ liệu cá nhân được mô tả trong Chính sách này. Bạn có thể liên hệ về quyền riêng tư tại **[EMAIL QUYỀN RIÊNG TƯ]**.
+ExamForge xác định mục đích và phương thức xử lý dữ liệu cá nhân được mô tả trong Chính sách này và chịu trách nhiệm đối với hoạt động xử lý đó trong phạm vi pháp luật Việt Nam áp dụng.
+
+Yêu cầu liên quan đến quyền riêng tư có thể được gửi tới **vy.tranngoclam@gmail.com**.
 
 ## 2. Phạm vi áp dụng
 
-Chính sách này áp dụng khi bạn truy cập website, tạo hoặc sử dụng tài khoản, làm bài, xem kết quả, liên hệ hỗ trợ hoặc tương tác với ExamForge. Chính sách không điều chỉnh website hoặc dịch vụ độc lập của bên thứ ba mà bạn tự truy cập qua liên kết ngoài.
+Chính sách này áp dụng khi bạn:
 
-## 3. Dữ liệu chúng tôi xử lý
+* truy cập ExamForge;
+* sử dụng tài khoản ExamForge;
+* thực hiện hoặc xem lại bài thi/lượt luyện tập;
+* xem thống kê học tập;
+* liên hệ với ExamForge; hoặc
+* sử dụng Dịch vụ theo cách khác.
 
-Tùy cách bạn sử dụng Dịch vụ, chúng tôi có thể xử lý:
+Website hoặc dịch vụ độc lập của bên thứ ba được truy cập từ liên kết trên ExamForge có chính sách quyền riêng tư riêng.
 
-- **Tài khoản:** email, tên hiển thị, mã định danh tài khoản, trạng thái xác minh và thông tin xác nhận độ tuổi;
-- **Xác thực và phiên:** mật khẩu đã băm, refresh token hoặc mã định danh phiên, thời điểm đăng nhập và đăng xuất;
-- **Hoạt động học tập:** bài thi đã mở, chế độ làm bài, câu trả lời, lựa chọn, trạng thái chấm, điểm, thời lượng, tiến độ và lịch sử lượt làm;
-- **Hỗ trợ:** nội dung, tệp và thông tin liên hệ bạn chủ động gửi;
-- **Kỹ thuật và bảo mật:** địa chỉ IP, user agent, loại thiết bị/trình duyệt, thời điểm yêu cầu, log lỗi và sự kiện bảo mật;
-- **Lưu trữ phía trình duyệt:** cookie cần thiết, lựa chọn ngôn ngữ/giao diện, dữ liệu hồ sơ được cache và dữ liệu nháp lượt làm nếu tính năng này được bật.
+## 3. Dữ liệu cá nhân chúng tôi xử lý
 
-ExamForge không yêu cầu dữ liệu thanh toán trong MVP hiện tại. Nếu thanh toán được triển khai, Chính sách này và danh sách nhà cung cấp sẽ được cập nhật trước khi thu thập dữ liệu liên quan.
+Tùy cách bạn sử dụng Dịch vụ, ExamForge có thể xử lý các nhóm dữ liệu sau.
 
-## 4. Mục đích và căn cứ xử lý
+### Dữ liệu tài khoản
 
-Chúng tôi xử lý dữ liệu để:
+* địa chỉ email;
+* tên hiển thị;
+* mã định danh người dùng nội bộ;
+* vai trò và trạng thái tài khoản.
 
-| Mục đích | Nhóm dữ liệu chính | Căn cứ áp dụng |
-|---|---|---|
-| Tạo tài khoản, đăng nhập và duy trì phiên | Tài khoản, xác thực | Thực hiện thỏa thuận cung cấp Dịch vụ; sự đồng ý khi pháp luật yêu cầu |
-| Lưu bài làm, chấm điểm và hiển thị tiến độ | Hoạt động học tập | Thực hiện thỏa thuận cung cấp Dịch vụ |
-| Bảo vệ tài khoản, chống lạm dụng và khắc phục lỗi | Xác thực, log kỹ thuật | Bảo mật Dịch vụ, bảo vệ quyền hợp pháp và nghĩa vụ pháp lý áp dụng |
-| Trả lời yêu cầu hỗ trợ và quyền dữ liệu | Tài khoản, nội dung hỗ trợ | Thực hiện yêu cầu của bạn và nghĩa vụ pháp lý |
-| Cải thiện tính năng bằng dữ liệu tổng hợp | Hoạt động đã tổng hợp/giảm định danh | Lợi ích hợp pháp khi được pháp luật cho phép; sự đồng ý nếu hoạt động cụ thể yêu cầu |
+ExamForge hiện không yêu cầu ngày sinh hoặc khai báo độ tuổi trong dữ liệu tài khoản tiêu chuẩn.
 
-Chúng tôi không sử dụng dữ liệu của bạn cho quảng cáo được cá nhân hóa trong MVP hiện tại. Chúng tôi sẽ xin lựa chọn phù hợp trước khi kích hoạt analytics, session replay hoặc marketing không thiết yếu.
+### Dữ liệu xác thực
 
-## 5. Nguồn dữ liệu
+* mật khẩu dưới dạng đã băm;
+* thông tin phiên access/refresh;
+* thông tin hết hạn hoặc thu hồi token;
+* thời điểm và sự kiện liên quan đến xác thực.
 
-Phần lớn dữ liệu do bạn cung cấp hoặc tạo ra khi sử dụng ExamForge. Dữ liệu kỹ thuật được hệ thống và nhà cung cấp hạ tầng ghi nhận tự động. Chúng tôi không mua hồ sơ người dùng từ nhà môi giới dữ liệu.
+### Dữ liệu học tập và làm bài
 
-## 6. Chia sẻ và nhà cung cấp dịch vụ
+* bài thi và phiên bản được truy cập;
+* mã lượt làm bài và chế độ làm bài;
+* câu trả lời và lựa chọn;
+* tiến độ và câu trả lời đã lưu;
+* thông tin thời gian làm bài khi áp dụng;
+* thông tin chấm điểm;
+* điểm số;
+* trạng thái và lịch sử lượt làm;
+* thống kê được tính từ các lượt làm.
 
-Chúng tôi không bán dữ liệu cá nhân. Dữ liệu chỉ được chia sẻ trong phạm vi cần thiết với nhân sự được phân quyền, cơ quan nhà nước có thẩm quyền khi có yêu cầu hợp pháp, hoặc nhà cung cấp xử lý dữ liệu theo chỉ dẫn của chúng tôi.
+### Dữ liệu kỹ thuật và bảo mật
 
-Danh sách dự kiến phải được xác nhận trước khi phát hành:
+Các hệ thống dùng để cung cấp ExamForge có thể xử lý thông tin như:
 
-| Nhà cung cấp | Vai trò dự kiến | Dữ liệu có thể xử lý |
-|---|---|---|
-| Neon | Cơ sở dữ liệu | Tài khoản, phiên và dữ liệu học tập |
-| Vercel | Phân phối/hosting frontend | Dữ liệu request và log kỹ thuật |
-| [AWS/VPS PROVIDER — XÁC NHẬN] | Hosting backend | Request API, dữ liệu xử lý tạm thời và log |
-| [EMAIL PROVIDER — XÁC NHẬN] | Email xác minh/hỗ trợ | Email, mã xác minh và nội dung gửi |
+* địa chỉ IP;
+* thông tin HTTP request;
+* thông tin trình duyệt hoặc user agent;
+* thời điểm request;
+* log ứng dụng và máy chủ;
+* thông tin lỗi; và
+* sự kiện liên quan đến bảo mật.
 
-Các nhà cung cấp có nghĩa vụ bảo mật theo hợp đồng và chỉ được xử lý dữ liệu cho mục đích cung cấp dịch vụ tương ứng.
+### Dữ liệu lưu trên trình duyệt
+
+ExamForge hiện sử dụng lưu trữ phía trình duyệt để:
+
+* ghi nhớ lựa chọn ngôn ngữ; và
+* phục hồi dữ liệu lượt làm bài chưa được đồng bộ.
+
+Chi tiết được nêu trong Chính sách cookie và lưu trữ phía client.
+
+### Nội dung liên hệ
+
+Nếu bạn liên hệ ExamForge, chúng tôi có thể xử lý thông tin mà bạn cung cấp trong nội dung trao đổi.
+
+## 4. Những mục đích hiện không được sử dụng
+
+Phiên bản ExamForge hiện tại không chủ động sử dụng dữ liệu cá nhân cho:
+
+* quảng cáo cá nhân hóa;
+* bán dữ liệu cá nhân;
+* quảng cáo dựa trên hành vi;
+* xây dựng hồ sơ quảng cáo; hoặc
+* theo dõi phục vụ marketing.
+
+Dịch vụ hiện không yêu cầu thông tin thẻ thanh toán.
+
+Nếu điều này thay đổi, Chính sách sẽ được cập nhật trước khi triển khai hoạt động xử lý liên quan khi pháp luật yêu cầu.
+
+## 5. Mục đích xử lý dữ liệu
+
+Dữ liệu cá nhân có thể được xử lý để:
+
+* tạo và quản lý tài khoản;
+* xác thực người dùng và duy trì phiên;
+* lưu lượt làm bài và câu trả lời;
+* chấm lượt làm đã nộp;
+* hiển thị kết quả và thống kê học tập;
+* phục hồi dữ liệu bài làm chưa đồng bộ;
+* bảo vệ tài khoản và Dịch vụ;
+* ngăn ngừa lạm dụng;
+* điều tra lỗi và sự cố;
+* hỗ trợ người dùng;
+* thực hiện yêu cầu pháp lý; và
+* duy trì, cải thiện độ ổn định của Dịch vụ.
+
+Tùy hoạt động cụ thể, dữ liệu được xử lý dựa trên sự đồng ý hoặc căn cứ khác được pháp luật Việt Nam cho phép.
+
+Việc rút lại sự đồng ý không làm mất tính hợp pháp của hoạt động xử lý đã được thực hiện hợp pháp trước thời điểm rút lại.
+
+## 6. Nhà cung cấp dịch vụ và việc chia sẻ
+
+ExamForge có thể sử dụng nhà cung cấp công nghệ và hạ tầng để vận hành Dịch vụ, bao gồm nhà cung cấp:
+
+* hosting và phân phối frontend;
+* hosting máy chủ/backend;
+* cơ sở dữ liệu;
+* email giao dịch;
+* mạng và bảo mật; và
+* backup hoặc dịch vụ hạ tầng khi được cấu hình.
+
+Các nhà cung cấp chỉ nên xử lý thông tin cần thiết hợp lý để cung cấp dịch vụ cho ExamForge.
+
+ExamForge không bán dữ liệu cá nhân.
+
+Dữ liệu cũng có thể được cung cấp khi cần thiết hợp lý để:
+
+* thực hiện yêu cầu hợp pháp của cơ quan có thẩm quyền;
+* bảo vệ an toàn hoặc tính toàn vẹn của Dịch vụ;
+* điều tra gian lận, lạm dụng hoặc hành vi trái pháp luật; hoặc
+* bảo vệ quyền hợp pháp.
 
 ## 7. Xử lý dữ liệu ngoài Việt Nam
 
-Một số nhà cung cấp hạ tầng có thể lưu trữ hoặc xử lý dữ liệu tại quốc gia khác. Khi có chuyển dữ liệu cá nhân ra nước ngoài, chúng tôi áp dụng các yêu cầu và biện pháp bảo vệ theo pháp luật Việt Nam, bao gồm nghĩa vụ đánh giá, hồ sơ hoặc thông báo khi áp dụng. **[XÁC NHẬN khu vực triển khai thực tế của Neon, Vercel, backend và email trước khi phát hành.]**
+Một số nhà cung cấp công nghệ có thể vận hành hạ tầng ngoài Việt Nam.
+
+Khi dữ liệu cá nhân được xử lý hoặc chuyển qua biên giới, ExamForge sẽ thực hiện việc xử lý theo các yêu cầu áp dụng của pháp luật Việt Nam về bảo vệ dữ liệu cá nhân và xử lý xuyên biên giới.
+
+Nhà cung cấp và khu vực triển khai có thể thay đổi khi hạ tầng thay đổi.
 
 ## 8. Thời hạn lưu trữ
 
-Chúng tôi chỉ giữ dữ liệu trong thời gian cần thiết cho mục đích đã nêu:
+ExamForge chỉ giữ dữ liệu cá nhân trong thời gian cần thiết hợp lý cho mục đích xử lý hoặc theo yêu cầu của pháp luật.
 
-- dữ liệu tài khoản và lượt làm: trong thời gian tài khoản hoạt động, sau đó xóa hoặc ẩn danh hóa theo quy trình xóa;
-- refresh token và mã xác minh/đặt lại: đến khi hết hạn hoặc bị thu hồi, sau đó xóa theo lịch dọn dẹp;
-- log bảo mật và vận hành: dự kiến **30–90 ngày**, trừ khi cần giữ lâu hơn để điều tra sự cố hoặc theo luật;
-- yêu cầu hỗ trợ và quyền dữ liệu: dự kiến **[THỜI HẠN CẦN XÁC NHẬN]**;
-- bản sao lưu: tồn tại đến hết vòng đời backup, dự kiến **[THỜI HẠN BACKUP]**, rồi bị ghi đè hoặc xóa an toàn.
+Thông thường:
 
-Khi bạn yêu cầu xóa tài khoản, chúng tôi có thể áp dụng thời gian chờ **[7–30 NGÀY — CHỌN MỘT]** để ngăn xóa nhầm. Một số bản ghi tối thiểu có thể được giữ khi pháp luật yêu cầu hoặc cần thiết để xử lý tranh chấp, chống gian lận và bảo vệ hệ thống.
+* thông tin tài khoản và lịch sử học tập có thể được lưu khi tài khoản còn hoạt động;
+* dữ liệu lượt làm có thể được lưu để cung cấp lịch sử, kết quả và thống kê;
+* phiên access token hiện có thời hạn ngắn;
+* phiên refresh token hết hạn hoặc có thể bị thu hồi;
+* dữ liệu vận hành và bảo mật chỉ được giữ phục vụ vận hành, bảo mật, khắc phục lỗi hoặc nghĩa vụ pháp lý;
+* nội dung liên hệ có thể được lưu trong thời gian xử lý yêu cầu hoặc tranh chấp; và
+* bản backup hạ tầng, nếu được sử dụng, có thể giữ dữ liệu đã xóa cho đến khi backup tương ứng bị ghi đè hoặc hết vòng đời.
+
+Yêu cầu xóa dữ liệu không nhất thiết dẫn đến việc mọi bản ghi được xóa ngay lập tức nếu pháp luật cho phép hoặc yêu cầu tiếp tục lưu giữ vì mục đích pháp lý, bảo mật, chống gian lận, giải quyết tranh chấp hoặc backup.
 
 ## 9. Quyền của bạn
 
-Theo điều kiện và giới hạn của pháp luật áp dụng, bạn có thể yêu cầu được biết và truy cập dữ liệu, chỉnh sửa, rút lại sự đồng ý, phản đối hoặc hạn chế xử lý, nhận dữ liệu khi áp dụng, và xóa dữ liệu. Bạn cũng có quyền khiếu nại, tố cáo hoặc yêu cầu bồi thường theo pháp luật.
+Theo pháp luật Việt Nam và các điều kiện áp dụng, bạn có thể có các quyền liên quan đến dữ liệu cá nhân, bao gồm quyền:
 
-Rút lại sự đồng ý không ảnh hưởng tính hợp pháp của hoạt động xử lý đã diễn ra trước đó và có thể không dừng hoạt động xử lý dựa trên căn cứ pháp lý khác.
+* được biết về hoạt động xử lý;
+* truy cập dữ liệu;
+* chỉnh sửa thông tin không chính xác;
+* yêu cầu xóa;
+* rút lại sự đồng ý khi xử lý dựa trên sự đồng ý;
+* phản đối hoặc hạn chế một số hoạt động xử lý khi áp dụng;
+* yêu cầu thông tin về việc xử lý; và
+* khiếu nại hoặc thực hiện các quyền khác theo pháp luật.
 
-Gửi yêu cầu tới **[EMAIL QUYỀN RIÊNG TƯ]**. Chúng tôi có thể xác minh danh tính để bảo vệ tài khoản và sẽ phản hồi trong thời hạn luật định hoặc thông báo nếu cần thêm thông tin.
+Yêu cầu có thể được gửi tới **[LEGAL_EMAIL]**.
 
-## 10. Trẻ em
+ExamForge có thể yêu cầu thông tin cần thiết hợp lý để xác minh yêu cầu liên quan đúng đến cá nhân hoặc tài khoản tương ứng.
 
-MVP ExamForge không chủ động cung cấp tài khoản cho người dưới 16 tuổi. Nếu phát hiện đã xử lý dữ liệu của trẻ em không có sự đồng ý hợp lệ cần thiết, chúng tôi sẽ hạn chế hoặc xóa dữ liệu theo pháp luật. Cha mẹ hoặc người giám hộ có thể liên hệ **[EMAIL QUYỀN RIÊNG TƯ]**.
+## 10. Người dùng dưới 16 tuổi
+
+ExamForge hiện không lưu ngày sinh trong dữ liệu tài khoản tiêu chuẩn.
+
+Nếu ExamForge biết rằng dữ liệu của người dùng dưới 16 tuổi đang được xử lý trong trường hợp pháp luật yêu cầu sự chấp thuận của cha, mẹ hoặc người giám hộ, ExamForge có thể hạn chế tài khoản hoặc hoạt động xử lý liên quan trong khi hoàn thiện các yêu cầu áp dụng.
+
+Cha, mẹ hoặc người giám hộ có thể liên hệ **[LEGAL_EMAIL]** về vấn đề dữ liệu cá nhân liên quan.
 
 ## 11. Bảo mật
 
-Chúng tôi sử dụng các biện pháp phù hợp như HTTPS, kiểm soát truy cập, băm mật khẩu, giới hạn truy cập bí mật và cơ chế quản lý phiên. Không phương thức truyền hoặc lưu trữ nào an toàn tuyệt đối. Nếu xảy ra sự cố ảnh hưởng đến dữ liệu cá nhân, chúng tôi sẽ xử lý và thông báo theo nghĩa vụ pháp luật áp dụng.
+ExamForge áp dụng các biện pháp kỹ thuật và tổ chức phù hợp với tính chất của Dịch vụ.
 
-## 12. Cookie và lưu trữ phía client
+Không có dịch vụ kết nối Internet nào có thể bảo đảm an toàn tuyệt đối.
 
-Chi tiết về cookie, `localStorage`, `sessionStorage` và cách quản lý lựa chọn được nêu tại [Chính sách cookie](/legal/cookies).
+Nếu xảy ra sự cố bảo mật ảnh hưởng đến dữ liệu cá nhân, ExamForge sẽ điều tra và thực hiện các biện pháp cần thiết theo pháp luật áp dụng.
+
+## 12. Cookie và lưu trữ trình duyệt
+
+ExamForge sử dụng cookie xác thực, cookie lựa chọn ngôn ngữ và local storage của trình duyệt như mô tả trong [Chính sách cookie và lưu trữ phía client](/legal/cookies).
 
 ## 13. Thay đổi Chính sách
 
-Chúng tôi có thể cập nhật Chính sách này. Phiên bản và ngày hiệu lực sẽ được hiển thị trên trang. Với thay đổi quan trọng về mục đích, loại dữ liệu, bên nhận hoặc quyền của bạn, chúng tôi sẽ thông báo và xin lại sự đồng ý khi pháp luật yêu cầu. Phiên bản cũ được lưu để đối chiếu.
+Chính sách có thể được cập nhật khi:
+
+* tính năng thay đổi;
+* hoạt động xử lý dữ liệu thay đổi;
+* hạ tầng thay đổi; hoặc
+* yêu cầu pháp lý thay đổi.
+
+Phiên bản hiện hành và ngày hiệu lực sẽ được hiển thị trên trang.
+
+Thay đổi quan trọng sẽ được thông báo khi phù hợp hoặc khi pháp luật yêu cầu.
 
 ## 14. Liên hệ
 
-**Chủ thể vận hành:** [TÊN CHỦ THỂ VẬN HÀNH]  
-**Địa chỉ:** [ĐỊA CHỈ]  
-**Email quyền riêng tư:** [EMAIL QUYỀN RIÊNG TƯ]
-
+- **Chủ thể vận hành:** Trần Ngọc Lâm Vỹ
+- **Địa chỉ:** Thành Phố Hồ Chí Minh, Việt Nam
+- **Email quyền riêng tư/pháp lý:** vy.tranngoclam@gmail.com
