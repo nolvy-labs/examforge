@@ -171,11 +171,11 @@ public sealed class RequestLoggingMiddlewareTests
     public async Task SuccessfulHealthRequest_IsSuppressedButFailureIsLogged()
     {
         var logger = new CapturingLogger<RequestLoggingMiddleware>();
-        var healthy = CreateContext("/health");
+        var healthy = CreateContext("/health/live");
         await CreateMiddleware(_ => Task.CompletedTask, logger, 60_000).InvokeAsync(healthy);
         Assert.Empty(logger.Entries);
 
-        var unhealthy = CreateContext("/health");
+        var unhealthy = CreateContext("/health/ready");
         unhealthy.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
         await CreateMiddleware(_ => Task.CompletedTask, logger, 60_000).InvokeAsync(unhealthy);
         Assert.Single(logger.Entries);

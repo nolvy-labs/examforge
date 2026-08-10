@@ -48,33 +48,18 @@ builder.Services.AddProblemDetails(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ExamForge.Application.Abstractions.ICurrentUserContext, CurrentUserContext>();
 builder.Services.AddRequestLogging(builder.Configuration);
+builder.Services.AddApiHosting(builder.Configuration, builder.Environment);
+builder.Services.AddApiRateLimiting(builder.Configuration);
+builder.Services.AddApiHealthChecks(builder.Configuration);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration);
 builder.Services.AddHostedService<ExamAttemptExpirationWorker>();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("Frontend", policy =>
-    {
-        var allowedOrigins = builder.Configuration
-            .GetSection("Cors:AllowedOrigins")
-            .Get<string[]>() ?? [];
-
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .WithExposedHeaders("ETag", CorrelationIdContext.HeaderName)
-            .AllowCredentials();
-    });
-});
-
-builder.Services.AddHealthChecks();
-
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -93,12 +78,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("Frontend");
+if (app.Environment.IsProduction())
+{
+    app.UseMiddleware<SecurityHeadersMiddleware>();
+}
+
+app.UseRouting();
+app.UseCors(HostingExtensions.FrontendCorsPolicy);
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health");
+app.MapApiHealthChecks();
 
 app.MapControllers();
 

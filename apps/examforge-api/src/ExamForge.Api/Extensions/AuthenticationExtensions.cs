@@ -1,6 +1,7 @@
 ﻿using System.Text;
 
 using ExamForge.Api.Common.Constants;
+using ExamForge.Api.Configuration;
 using ExamForge.Infrastructure.Auth;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,14 +15,22 @@ public static class AuthenticationExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services
+            .AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(
+                ProductionConfigurationValidation.HasValidJwt,
+                "JWT issuer, audience, secret, and token lifetimes are invalid. The secret must contain at least 32 bytes of UTF-8 material and must not be a placeholder.")
+            .ValidateOnStart();
+
         var jwtOptions = configuration
             .GetSection(JwtOptions.SectionName)
-            .Get<JwtOptions>()
-            ?? throw new InvalidOperationException("JWT configuration is missing.");
+            .Get<JwtOptions>() ?? new JwtOptions();
 
-        if (string.IsNullOrWhiteSpace(jwtOptions.Secret))
+        if (!ProductionConfigurationValidation.HasValidJwt(jwtOptions))
         {
-            throw new InvalidOperationException("JWT secret is missing.");
+            throw new InvalidOperationException(
+                "JWT configuration is invalid. Configure a non-placeholder secret with at least 32 bytes of UTF-8 material.");
         }
 
         services

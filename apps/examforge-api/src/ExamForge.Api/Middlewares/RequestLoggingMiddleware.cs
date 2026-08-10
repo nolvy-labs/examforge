@@ -33,7 +33,8 @@ public sealed class RequestLoggingMiddleware
 
         var statusCode = context.Response.StatusCode;
         var routeTemplate = GetRouteTemplate(context);
-        if (routeTemplate == "/health" && statusCode is >= 200 and < 400)
+        if (routeTemplate is "/health/live" or "/health/ready" &&
+            statusCode is >= 200 and < 400)
         {
             return;
         }

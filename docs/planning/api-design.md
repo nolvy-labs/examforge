@@ -777,18 +777,19 @@ Request:
 }
 ```
 
-## 16. Health Endpoint
+## 16. Health Endpoints
 
 ```http
-GET /health
+GET /health/live
+GET /health/ready
 ```
 
-Response:
+Liveness reports only whether the API process is responding. Readiness also checks
+PostgreSQL connectivity. Both return a minimal aggregate response:
 
 ```json
 {
-  "status": "Healthy",
-  "timestamp": "2026-07-01T09:00:00Z"
+  "status": "Healthy"
 }
 ```
 

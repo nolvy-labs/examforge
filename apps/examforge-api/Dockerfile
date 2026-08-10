@@ -32,7 +32,7 @@ ENV ASPNETCORE_HTTP_PORTS=5001
 EXPOSE 5001
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends libgssapi-krb5-2 \
+    && apt-get install --yes --no-install-recommends curl libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=publish /app/publish .
