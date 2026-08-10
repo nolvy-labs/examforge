@@ -1,5 +1,6 @@
 using ExamForge.Application;
 using ExamForge.Application.Abstractions;
+using ExamForge.Api.Configuration;
 using ExamForge.Infrastructure;
 
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ public sealed class DependencyInjectionTests
         var services = new ServiceCollection();
 
         services.AddLogging();
+        services.AddOptions<AuthHostingSettings>();
         services.AddScoped<ICurrentUserContext, TestCurrentUserContext>();
         services.AddApplication();
         services.AddInfrastructure(configuration);

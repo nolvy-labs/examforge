@@ -2,12 +2,16 @@
 using System.Security.Claims;
 
 using ExamForge.Api.Common.Constants;
+using ExamForge.Api.Configuration;
+using ExamForge.Api.Extensions;
 using ExamForge.Application.Abstractions;
 using ExamForge.Application.Auth;
 using ExamForge.Domain.Users;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 namespace ExamForge.Api.Controllers;
 
@@ -16,17 +20,33 @@ namespace ExamForge.Api.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
+    private readonly AuthHostingSettings _hostingSettings;
 
-    public AuthController(AuthService authService)
+    public AuthController(
+        AuthService authService,
+        IOptions<AuthHostingSettings> hostingSettings)
     {
         _authService = authService;
+        _hostingSettings = hostingSettings.Value;
     }
 
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticationPolicy)]
     [HttpPost("register")]
     public async Task<ActionResult<UserProfileResponse>> Register(
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
+        if (!_hostingSettings.AllowPublicRegistration)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested resource was not found.",
+                Instance = HttpContext.Request.Path
+            });
+        }
+
         var result = await _authService.RegisterAsync(request, cancellationToken);
 
         if (result.Error == AuthError.EmailAlreadyExists)
@@ -47,6 +67,7 @@ public sealed class AuthController : ControllerBase
         return Ok(response.User);
     }
 
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticationPolicy)]
     [HttpPost("login")]
     public async Task<ActionResult<UserProfileResponse>> Login(
         LoginRequest request,
@@ -77,6 +98,7 @@ public sealed class AuthController : ControllerBase
         return Ok(response.User);
     }
 
+    [EnableRateLimiting(RateLimitingExtensions.RefreshPolicy)]
     [HttpPost("refresh")]
     public async Task<ActionResult<UserProfileResponse>> Refresh(CancellationToken cancellationToken)
     {
