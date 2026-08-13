@@ -171,6 +171,11 @@ export function usePracticeAttemptTimer(
 	const [displayMs, setDisplayMs] = useState(persistedElapsedMs)
 	const accumulatedRef = useRef(persistedElapsedMs)
 	const segmentStartedRef = useRef<number | null>(null)
+	const activeTimerKeyRef = useRef(timerKey)
+	const persistedElapsedRef = useRef(persistedElapsedMs)
+	useEffect(() => {
+		persistedElapsedRef.current = persistedElapsedMs
+	}, [persistedElapsedMs])
 	const checkpointRef = useRef(onCheckpoint)
 	useEffect(() => {
 		checkpointRef.current = onCheckpoint
@@ -189,6 +194,12 @@ export function usePracticeAttemptTimer(
 	}, [currentElapsed])
 
 	useEffect(() => {
+		if (activeTimerKeyRef.current !== timerKey) {
+			activeTimerKeyRef.current = timerKey
+			accumulatedRef.current = persistedElapsedRef.current
+			segmentStartedRef.current = null
+			setDisplayMs(persistedElapsedRef.current)
+		}
 		const canRun = () => active && document.visibilityState === "visible" && document.hasFocus()
 		const updateActivity = () => {
 			if (canRun()) {
