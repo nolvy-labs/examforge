@@ -60,18 +60,6 @@ public sealed class AdminExamVersionRepository : IAdminExamVersionRepository
         return Project(query).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public Task<ExamVersionData?> GetCurrentPublishedAsync(
-        Guid examId,
-        CancellationToken cancellationToken = default)
-    {
-        var query = _dbContext.ExamVersions
-            .AsNoTracking()
-            .Where(version => version.ExamId == examId &&
-                version.Status == ExamVersionStatus.Published);
-
-        return Project(query).FirstOrDefaultAsync(cancellationToken);
-    }
-
     public Task<ExamVersion?> GetTrackedAsync(
         Guid examId,
         Guid versionId,

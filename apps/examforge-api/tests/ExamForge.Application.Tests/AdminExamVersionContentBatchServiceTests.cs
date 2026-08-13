@@ -462,7 +462,6 @@ public sealed class AdminExamVersionContentBatchServiceTests
         public FakeVersionRepository(TestContext context) => _context = context;
         public Task<ExamVersionRepositoryPage> GetPageAsync(Guid examId, ExamVersionPageQuery query, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<ExamVersionData?> GetDetailAsync(Guid examId, Guid versionId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<ExamVersionData?> GetCurrentPublishedAsync(Guid examId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<ExamVersion?> GetTrackedAsync(Guid examId, Guid versionId, CancellationToken cancellationToken = default) =>
             Task.FromResult(examId == _context.Exam.Id && versionId == _context.Version.Id ? _context.Version : null);
         public Task<ExamVersion?> GetTrackedCurrentPublishedAsync(Guid examId, Guid excludedVersionId, CancellationToken cancellationToken = default) => throw new NotSupportedException();

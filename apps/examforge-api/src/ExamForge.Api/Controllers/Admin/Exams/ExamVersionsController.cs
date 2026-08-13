@@ -34,18 +34,6 @@ public sealed class ExamVersionsController : AdminBaseController
         return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
     }
 
-    [HttpGet("published")]
-    public async Task<ActionResult<ExamVersionDetailResponse>> GetPublished(
-        Guid examId,
-        CancellationToken cancellationToken)
-    {
-        var result = await _examVersionService.GetCurrentPublishedAsync(examId, cancellationToken);
-        if (!result.IsSuccess)
-            return ToActionResult(result.Error);
-        SetEtag(result.Value!.ContentRevision);
-        return Ok(result.Value);
-    }
-
     [HttpGet("{versionId:guid}")]
     public async Task<ActionResult<ExamVersionDetailResponse>> GetById(
         Guid examId,
@@ -188,10 +176,6 @@ public sealed class ExamVersionsController : AdminBaseController
                 StatusCodes.Status404NotFound,
                 "Not Found",
                 "Source exam version was not found for this exam."),
-            ExamVersionError.PublishedVersionNotFound => CreateProblem(
-                StatusCodes.Status404NotFound,
-                "Not Found",
-                "This exam has no published version."),
             ExamVersionError.ExamArchived => CreateConflict("Archived exams cannot be modified."),
             ExamVersionError.VersionNotEditable => CreateConflict("Only Draft versions can be edited."),
             ExamVersionError.InvalidStatusTransition => CreateConflict("The requested status transition is not allowed."),

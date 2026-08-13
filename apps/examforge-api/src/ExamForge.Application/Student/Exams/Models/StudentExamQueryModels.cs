@@ -33,12 +33,3 @@ public sealed record StudentPublishedExamModel(
 public sealed record StudentSectionModel(
     Guid Id, ExamSectionKind Kind, string Title, string Instructions, string? StimulusText,
     string? MediaUrl, int DisplayOrder, int QuestionCount, decimal TotalPoints, string? MetadataJson);
-public sealed record StudentSectionIdentifierModel(Guid Id, int DisplayOrder);
-public sealed record StudentQuestionModel(
-    Guid Id, Guid ExamSectionId, Guid? ParentQuestionId, QuestionType Type, string Prompt,
-    string? Explanation, decimal Points, int DisplayOrder, string? MetadataJson);
-public sealed record StudentOptionModel(
-    Guid Id, Guid QuestionId, string? Label, string Text, int DisplayOrder);
-public sealed record StudentOptionSolutionModel(Guid OptionId, bool IsCorrect, string? Explanation);
-public sealed record StudentFillAnswerModel(
-    Guid QuestionId, string BlankKey, string AcceptedAnswer, bool IsCaseSensitive, int DisplayOrder, Guid Id);

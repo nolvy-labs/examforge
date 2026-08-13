@@ -624,11 +624,6 @@ public sealed class ExamSectionServiceTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(ToData(Find(examId, versionId)));
 
-        public Task<ExamVersionData?> GetCurrentPublishedAsync(
-            Guid examId,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
         public Task<ExamVersion?> GetTrackedAsync(
             Guid examId,
             Guid versionId,

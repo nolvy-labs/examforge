@@ -65,35 +65,6 @@ public sealed class StudentExamDiscoveryQuery : IStudentExamDiscoveryQuery
         return await AddTagsAsync(categories, counts, cancellationToken);
     }
 
-    public async Task<StudentExamCategoryModel?> GetCategoryBySlugAsync(
-        string slug,
-        CancellationToken cancellationToken = default)
-    {
-        var category = await _dbContext.ValidCategoryRules()
-            .Where(item => item.Slug == slug)
-            .Select(item => new StudentExamCategoryCore(
-                item.Id,
-                item.Name,
-                item.Slug,
-                item.Description,
-                item.IsFeatured,
-                item.DisplayOrder))
-            .SingleOrDefaultAsync(cancellationToken);
-        if (category is null)
-        {
-            return null;
-        }
-
-        var counts = await GetCategoryExamCountsAsync(
-            [category.Id],
-            cancellationToken);
-
-        return (await AddTagsAsync(
-            [category],
-            counts,
-            cancellationToken)).Single();
-    }
-
     public async Task<StudentExamCategoryRuleModel?> GetCategoryRuleBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default)

@@ -76,11 +76,6 @@ public sealed class ExamAttempt
         AdvanceRevision(updatedAtUtc);
     }
 
-    public void ReplaceAnswersForSubmission(
-        IReadOnlyCollection<ExamAttemptAnswerUpdate> updates,
-        DateTimeOffset updatedAtUtc) =>
-        ApplyAnswerValues(updates, updatedAtUtc);
-
     private void ApplyAnswerValues(
         IReadOnlyCollection<ExamAttemptAnswerUpdate> updates,
         DateTimeOffset updatedAtUtc)

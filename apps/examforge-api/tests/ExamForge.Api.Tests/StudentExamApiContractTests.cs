@@ -17,7 +17,7 @@ namespace ExamForge.Api.Tests;
 public sealed class StudentExamApiContractTests
 {
     [Fact]
-    public void StudentExamEndpoints_ArePublicAndUseRequiredRoutes()
+    public void StudentExamEndpoints_ArePublicAndUseRetainedRoutes()
     {
         var controller = typeof(ExamsController);
         Assert.Empty(controller.GetCustomAttributes<AuthorizeAttribute>(true));
@@ -30,20 +30,11 @@ public sealed class StudentExamApiContractTests
         Assert.Contains(null, templates);
         Assert.Contains("filters", templates);
         Assert.Contains("{idOrSlug}", templates);
-        Assert.Contains("{idOrSlug}/full-test", templates);
-        Assert.Contains("{idOrSlug}/first-section", templates);
-        Assert.Contains("{idOrSlug}/sections/{sectionId:guid}", templates);
-
-        foreach (var actionName in new[] { "GetFullTest", "GetFirstSection", "GetSection" })
-        {
-            var parameter = actions.Single(action => action.Name == actionName)
-                .GetParameters().Single(item => item.Name == "includeSolutions");
-            Assert.Equal("include-solutions", parameter.GetCustomAttribute<FromQueryAttribute>()!.Name);
-        }
+        Assert.Equal(3, templates.Count);
     }
 
     [Fact]
-    public void StudentCategoryEndpoints_ArePublicAndExposeSlugOnlyDetail()
+    public void StudentCategoryEndpoints_ArePublicAndExposeListOnly()
     {
         var controller = typeof(ExamCategoriesController);
         Assert.Empty(controller.GetCustomAttributes<AuthorizeAttribute>(true));
@@ -58,8 +49,7 @@ public sealed class StudentExamApiContractTests
             .Select(attribute => attribute.Template)
             .ToList();
         Assert.Contains(null, templates);
-        Assert.Contains("{slug}", templates);
-        Assert.DoesNotContain("{id:guid}", templates);
+        Assert.Single(templates);
 
         var featuredOnly = actions.Single(action => action.Name == "GetList")
             .GetParameters()

@@ -25,23 +25,4 @@ public sealed class ExamCategoriesController : StudentBaseController
         return Ok(categories);
     }
 
-    [HttpGet("{slug}")]
-    public async Task<ActionResult<StudentExamCategoryResponse>> GetBySlug(
-        string slug,
-        CancellationToken cancellationToken)
-    {
-        var result = await _service.GetCategoryAsync(slug, cancellationToken);
-        if (result.IsSuccess)
-        {
-            return Ok(result.Value);
-        }
-
-        return NotFound(new ProblemDetails
-        {
-            Status = StatusCodes.Status404NotFound,
-            Title = "Not Found",
-            Detail = "Exam category was not found.",
-            Instance = HttpContext.Request.Path
-        });
-    }
 }

@@ -114,21 +114,6 @@ public sealed class AdminExamVersionService
             : Success(ToDetailResponse(version));
     }
 
-    public async Task<Result<ExamVersionDetailResponse, ExamVersionError>> GetCurrentPublishedAsync(
-        Guid examId,
-        CancellationToken cancellationToken = default)
-    {
-        if (!await _versions.ExamExistsAsync(examId, cancellationToken))
-        {
-            return Failure(ExamVersionError.ExamNotFound);
-        }
-
-        var version = await _versions.GetCurrentPublishedAsync(examId, cancellationToken);
-        return version is null
-            ? Failure(ExamVersionError.PublishedVersionNotFound)
-            : Success(ToDetailResponse(version));
-    }
-
     public async Task<Result<ExamVersionDetailResponse, ExamVersionError>> CreateAsync(
         Guid examId,
         CreateExamVersionRequest? request,

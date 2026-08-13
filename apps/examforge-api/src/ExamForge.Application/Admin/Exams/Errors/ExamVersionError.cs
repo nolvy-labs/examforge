@@ -5,7 +5,6 @@ public enum ExamVersionError
     None = 0,
     ExamNotFound = 1,
     VersionNotFound = 2,
-    PublishedVersionNotFound = 3,
     InvalidRequest = 4,
     InvalidPagination = 5,
     InvalidTitle = 6,

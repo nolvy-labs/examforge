@@ -19,26 +19,6 @@ public sealed class QuestionOptionsController : AdminBaseController
         _options = options;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<QuestionOptionResponse>>> GetList(
-        Guid examId, Guid versionId, Guid sectionId, Guid questionId,
-        CancellationToken cancellationToken)
-    {
-        var result = await _options.GetListAsync(
-            examId, versionId, sectionId, questionId, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
-    [HttpGet("{optionId:guid}")]
-    public async Task<ActionResult<QuestionOptionResponse>> GetById(
-        Guid examId, Guid versionId, Guid sectionId, Guid questionId, Guid optionId,
-        CancellationToken cancellationToken)
-    {
-        var result = await _options.GetByIdAsync(
-            examId, versionId, sectionId, questionId, optionId, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
     [HttpPost]
     public async Task<ActionResult<QuestionOptionResponse>> Create(
         Guid examId, Guid versionId, Guid sectionId, Guid questionId,
@@ -53,10 +33,7 @@ public sealed class QuestionOptionsController : AdminBaseController
             return ToActionResult(result.Error);
         }
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { examId, versionId, sectionId, questionId, optionId = result.Value!.Id },
-            result.Value);
+        return StatusCode(StatusCodes.Status201Created, result.Value);
     }
 
     [HttpPatch("{optionId:guid}")]

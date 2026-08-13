@@ -32,66 +32,6 @@ public sealed class AdminFillAnswerKeyService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<IReadOnlyList<FillAnswerKeyResponse>, FillAnswerKeyError>> GetListAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        CancellationToken cancellationToken = default)
-    {
-        var error = await ValidateReadOwnershipAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-
-        if (error != FillAnswerKeyError.None)
-        {
-            return ListFailure(error);
-        }
-
-        var keys = await _answerKeys.GetListAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-        return ListSuccess(keys.Select(ToResponse).ToList());
-    }
-
-    public async Task<Result<FillAnswerKeyResponse, FillAnswerKeyError>> GetByIdAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        Guid answerKeyId,
-        CancellationToken cancellationToken = default)
-    {
-        var error = await ValidateReadOwnershipAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-
-        if (error != FillAnswerKeyError.None)
-        {
-            return Failure(error);
-        }
-
-        var key = await _answerKeys.GetDetailAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            answerKeyId,
-            cancellationToken);
-        return key is null
-            ? Failure(FillAnswerKeyError.AnswerKeyNotFound)
-            : Success(ToResponse(key));
-    }
-
     public async Task<Result<FillAnswerKeyResponse, FillAnswerKeyError>> CreateAsync(
         Guid examId,
         Guid versionId,
@@ -287,45 +227,6 @@ public sealed class AdminFillAnswerKeyService
         }, FillAnswerKeyError.ConcurrencyConflict, cancellationToken);
     }
 
-    private async Task<FillAnswerKeyError> ValidateReadOwnershipAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        CancellationToken cancellationToken)
-    {
-        if (!await _versions.ExamExistsAsync(examId, cancellationToken))
-        {
-            return FillAnswerKeyError.ExamNotFound;
-        }
-
-        if (await _versions.GetDetailAsync(examId, versionId, cancellationToken) is null)
-        {
-            return FillAnswerKeyError.VersionNotFound;
-        }
-
-        if (await _sections.GetDetailAsync(examId, versionId, sectionId, cancellationToken) is null)
-        {
-            return FillAnswerKeyError.SectionNotFound;
-        }
-
-        var question = await _questions.GetDetailAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-
-        if (question is null)
-        {
-            return FillAnswerKeyError.QuestionNotFound;
-        }
-
-        return question.Question.Type == QuestionType.FillBlank
-            ? FillAnswerKeyError.None
-            : FillAnswerKeyError.QuestionDoesNotSupportAnswerKeys;
-    }
-
     private async Task<(ExamVersion? Version, Question? Question, FillAnswerKeyError Error)> LoadMutableQuestionAsync(
         Guid examId,
         Guid versionId,
@@ -426,11 +327,4 @@ public sealed class AdminFillAnswerKeyService
         object? additionalData) =>
         Result<FillAnswerKeyResponse, FillAnswerKeyError>.Failure(error, additionalData);
 
-    private static Result<IReadOnlyList<FillAnswerKeyResponse>, FillAnswerKeyError> ListSuccess(
-        IReadOnlyList<FillAnswerKeyResponse> value) =>
-        Result<IReadOnlyList<FillAnswerKeyResponse>, FillAnswerKeyError>.Success(value);
-
-    private static Result<IReadOnlyList<FillAnswerKeyResponse>, FillAnswerKeyError> ListFailure(
-        FillAnswerKeyError error) =>
-        Result<IReadOnlyList<FillAnswerKeyResponse>, FillAnswerKeyError>.Failure(error);
 }

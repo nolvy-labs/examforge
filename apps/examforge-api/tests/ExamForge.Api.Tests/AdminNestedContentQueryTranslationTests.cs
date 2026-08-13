@@ -23,18 +23,13 @@ public sealed class AdminNestedContentQueryTranslationTests
         AssertTranslates(repository, methodName, argumentCount, expectedSql);
     }
 
-    [Theory]
-    [InlineData("ListQuery", 4, "ORDER BY")]
-    [InlineData("DetailQuery", 5, "WHERE")]
-    public void FillAnswerKeyQueries_TranslateForPostgres(
-        string methodName,
-        int argumentCount,
-        string expectedSql)
+    [Fact]
+    public void FillAnswerKeyDetailQuery_TranslatesForPostgres()
     {
         using var db = CreateContext();
         var repository = new AdminFillAnswerKeyRepository(db);
 
-        AssertTranslates(repository, methodName, argumentCount, expectedSql);
+        AssertTranslates(repository, "DetailQuery", 5, "WHERE");
     }
 
     private static ExamForgeDbContext CreateContext()

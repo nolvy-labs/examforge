@@ -1,9 +1,6 @@
-using ExamForge.Application.Common;
 using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.ExamClassifications.Dtos;
-using ExamForge.Application.Student.ExamClassifications.Errors;
 using ExamForge.Application.Student.ExamClassifications.Models;
-using ExamForge.Domain.Common;
 
 namespace ExamForge.Application.Student.ExamClassifications.Services;
 
@@ -45,27 +42,6 @@ public sealed class StudentExamDiscoveryService
             featuredOnly,
             cancellationToken);
         return categories.Select(ToResponse).ToList();
-    }
-
-    public async Task<Result<StudentExamCategoryResponse, StudentExamDiscoveryError>>
-        GetCategoryAsync(
-            string slug,
-            CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(slug))
-        {
-            return Result<StudentExamCategoryResponse, StudentExamDiscoveryError>.Failure(
-                StudentExamDiscoveryError.CategoryNotFound);
-        }
-
-        var category = await _query.GetCategoryBySlugAsync(
-            TextNormalizer.NormalizeSlug(slug),
-            cancellationToken);
-        return category is null
-            ? Result<StudentExamCategoryResponse, StudentExamDiscoveryError>.Failure(
-                StudentExamDiscoveryError.CategoryNotFound)
-            : Result<StudentExamCategoryResponse, StudentExamDiscoveryError>.Success(
-                ToResponse(category));
     }
 
     private static StudentExamCategoryResponse ToResponse(

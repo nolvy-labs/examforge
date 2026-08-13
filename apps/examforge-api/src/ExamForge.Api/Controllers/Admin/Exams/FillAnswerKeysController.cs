@@ -19,26 +19,6 @@ public sealed class FillAnswerKeysController : AdminBaseController
         _answerKeys = answerKeys;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<FillAnswerKeyResponse>>> GetList(
-        Guid examId, Guid versionId, Guid sectionId, Guid questionId,
-        CancellationToken cancellationToken)
-    {
-        var result = await _answerKeys.GetListAsync(
-            examId, versionId, sectionId, questionId, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
-    [HttpGet("{answerKeyId:guid}")]
-    public async Task<ActionResult<FillAnswerKeyResponse>> GetById(
-        Guid examId, Guid versionId, Guid sectionId, Guid questionId, Guid answerKeyId,
-        CancellationToken cancellationToken)
-    {
-        var result = await _answerKeys.GetByIdAsync(
-            examId, versionId, sectionId, questionId, answerKeyId, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
     [HttpPost]
     public async Task<ActionResult<FillAnswerKeyResponse>> Create(
         Guid examId, Guid versionId, Guid sectionId, Guid questionId,
@@ -53,10 +33,7 @@ public sealed class FillAnswerKeysController : AdminBaseController
             return ToActionResult(result.Error);
         }
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { examId, versionId, sectionId, questionId, answerKeyId = result.Value!.Id },
-            result.Value);
+        return StatusCode(StatusCodes.Status201Created, result.Value);
     }
 
     [HttpPatch("{answerKeyId:guid}")]

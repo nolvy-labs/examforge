@@ -15,10 +15,6 @@ public interface IAdminExamVersionRepository
         Guid versionId,
         CancellationToken cancellationToken = default);
 
-    Task<ExamVersionData?> GetCurrentPublishedAsync(
-        Guid examId,
-        CancellationToken cancellationToken = default);
-
     Task<ExamVersion?> GetTrackedAsync(
         Guid examId,
         Guid versionId,

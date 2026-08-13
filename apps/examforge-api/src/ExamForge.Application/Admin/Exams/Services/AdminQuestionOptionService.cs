@@ -32,66 +32,6 @@ public sealed class AdminQuestionOptionService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<IReadOnlyList<QuestionOptionResponse>, QuestionOptionError>> GetListAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        CancellationToken cancellationToken = default)
-    {
-        var error = await ValidateReadOwnershipAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-
-        if (error != QuestionOptionError.None)
-        {
-            return ListFailure(error);
-        }
-
-        var options = await _options.GetListAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-        return ListSuccess(options.Select(ToResponse).ToList());
-    }
-
-    public async Task<Result<QuestionOptionResponse, QuestionOptionError>> GetByIdAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        Guid optionId,
-        CancellationToken cancellationToken = default)
-    {
-        var error = await ValidateReadOwnershipAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-
-        if (error != QuestionOptionError.None)
-        {
-            return Failure(error);
-        }
-
-        var option = await _options.GetDetailAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            optionId,
-            cancellationToken);
-        return option is null
-            ? Failure(QuestionOptionError.OptionNotFound)
-            : Success(ToResponse(option));
-    }
-
     public async Task<Result<QuestionOptionResponse, QuestionOptionError>> CreateAsync(
         Guid examId,
         Guid versionId,
@@ -380,45 +320,6 @@ public sealed class AdminQuestionOptionService
 
             return QuestionOptionError.None;
         }, QuestionOptionError.ConcurrencyConflict, cancellationToken);
-    }
-
-    private async Task<QuestionOptionError> ValidateReadOwnershipAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        CancellationToken cancellationToken)
-    {
-        if (!await _versions.ExamExistsAsync(examId, cancellationToken))
-        {
-            return QuestionOptionError.ExamNotFound;
-        }
-
-        if (await _versions.GetDetailAsync(examId, versionId, cancellationToken) is null)
-        {
-            return QuestionOptionError.VersionNotFound;
-        }
-
-        if (await _sections.GetDetailAsync(examId, versionId, sectionId, cancellationToken) is null)
-        {
-            return QuestionOptionError.SectionNotFound;
-        }
-
-        var question = await _questions.GetDetailAsync(
-            examId,
-            versionId,
-            sectionId,
-            questionId,
-            cancellationToken);
-
-        if (question is null)
-        {
-            return QuestionOptionError.QuestionNotFound;
-        }
-
-        return SupportsOptions(question.Question.Type)
-            ? QuestionOptionError.None
-            : QuestionOptionError.QuestionDoesNotSupportOptions;
     }
 
     private async Task<(ExamVersion? Version, Question? Question, QuestionOptionError Error)> LoadMutableQuestionAsync(

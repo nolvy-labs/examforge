@@ -144,21 +144,6 @@ public sealed class StudentExamQueryTests
         Assert.Equal(new[] { first.Exam.Id, second.Exam.Id }.OrderBy(id => id), oldest.Items.Select(item => item.Id));
     }
 
-    [Fact]
-    public async Task GetSection_RejectsSectionOutsideRequestedPublishedVersion()
-    {
-        await using var db = CreateContext();
-        var published = CreateExamWithVersion(ExamVersionStatus.Published, "Published");
-        var draft = CreateExamWithVersion(ExamVersionStatus.Draft, "Draft");
-        var draftSection = new ExamSection(draft.Version.Id, ExamSectionKind.Default, "Draft", null, null, null, 1);
-        db.AddRange(published.Exam, published.Version, draft.Exam, draft.Version, draftSection);
-        await db.SaveChangesAsync();
-
-        var result = await new StudentExamQuery(db).GetSectionAsync(published.Version.Id, draftSection.Id);
-
-        Assert.Null(result);
-    }
-
     [Theory]
     [InlineData("100%", "100\\%")]
     [InlineData("under_score", "under\\_score")]

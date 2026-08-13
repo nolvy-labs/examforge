@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using ExamForge.Application.Student.ExamClassifications.Abstractions;
 using ExamForge.Application.Student.ExamClassifications.Models;
 using ExamForge.Application.Student.Exams.Abstractions;
@@ -173,74 +171,6 @@ public sealed class StudentExamServiceTests
         Assert.Equal(StudentExamError.PublishedExamNotFound, result.Error);
     }
 
-    [Fact]
-    public async Task FullTest_NestsChildren_HandlesInvalidMetadata_AndDoesNotLoadSolutionsByDefault()
-    {
-        var fixture = FakeQuery.WithPublishedContent();
-        var result = await CreateService(fixture).GetFullTestAsync("Sample Exam", false);
-
-        Assert.True(result.IsSuccess);
-        var response = result.Value!;
-        Assert.False(response.SolutionsIncluded);
-        Assert.Null(response.Sections[0].Metadata);
-        Assert.Single(response.Sections[0].Questions);
-        Assert.Single(response.Sections[0].Questions[0].ChildQuestions);
-        Assert.Null(response.Sections[0].Questions[0].ChildQuestions[0].Metadata);
-        Assert.Equal(0, fixture.OptionSolutionCalls);
-        Assert.Equal(0, fixture.FillAnswerCalls);
-        Assert.False(fixture.LastIncludeSolutions);
-
-        var json = JsonSerializer.Serialize(response, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-        Assert.DoesNotContain("\"solution\"", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("isCorrect", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("acceptedAnswer", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("explanation", json, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task FullTest_IncludesRecursiveOptionAndFillSolutionsWhenRequested()
-    {
-        var fixture = FakeQuery.WithPublishedContent();
-        var result = await CreateService(fixture).GetFullTestAsync(fixture.Exam!.ExamId.ToString(), true);
-
-        Assert.True(result.IsSuccess);
-        var child = result.Value!.Sections[0].Questions[0].ChildQuestions[0];
-        Assert.True(result.Value.SolutionsIncluded);
-        Assert.Equal("Child explanation", child.Solution!.Explanation);
-        Assert.True(child.Solution.Options[0].IsCorrect);
-        Assert.Equal("Because A", child.Solution.Options[0].Explanation);
-        Assert.Equal("answer", child.Solution.AcceptedAnswers[0].AcceptedAnswer);
-        Assert.Equal(1, fixture.OptionSolutionCalls);
-        Assert.Equal(1, fixture.FillAnswerCalls);
-    }
-
-    [Fact]
-    public async Task Section_UsesDeterministicNavigationAndLoadsOnlySelectedContent()
-    {
-        var fixture = FakeQuery.WithPublishedContent();
-        var first = fixture.Sections[0];
-        var second = first with { Id = Guid.NewGuid(), DisplayOrder = 2, Title = "Second" };
-        var third = first with { Id = Guid.NewGuid(), DisplayOrder = 3, Title = "Third" };
-        fixture.Sections = [first, second, third];
-        var result = await CreateService(fixture).GetSectionAsync("sample-exam", second.Id, false);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(2, result.Value!.Navigation.Position);
-        Assert.Equal(3, result.Value.Navigation.TotalSections);
-        Assert.Equal(first.Id, result.Value.Navigation.PreviousSectionId);
-        Assert.Equal(third.Id, result.Value.Navigation.NextSectionId);
-        Assert.Equal([second.Id], fixture.LastQuestionSectionIds);
-    }
-
-    [Fact]
-    public async Task FirstSection_ReturnsNotFoundWhenPublishedVersionHasNoSections()
-    {
-        var fixture = FakeQuery.WithPublishedContent();
-        fixture.Sections = [];
-        var result = await CreateService(fixture).GetFirstSectionAsync("sample-exam", false);
-        Assert.Equal(StudentExamError.SectionNotFound, result.Error);
-    }
-
     private static StudentExamService CreateService(
         FakeQuery query,
         FakeDiscoveryQuery? discovery = null) =>
@@ -261,11 +191,6 @@ public sealed class StudentExamServiceTests
             bool featuredOnly,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<StudentExamCategoryModel>>([]);
-
-        public Task<StudentExamCategoryModel?> GetCategoryBySlugAsync(
-            string slug,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<StudentExamCategoryModel?>(null);
 
         public Task<StudentExamCategoryRuleModel?> GetCategoryRuleBySlugAsync(
             string slug,
@@ -290,14 +215,6 @@ public sealed class StudentExamServiceTests
         public StudentExamPageQuery? PageRequest { get; private set; }
         public StudentPublishedExamModel? Exam { get; set; }
         public List<StudentSectionModel> Sections { get; set; } = [];
-        public List<StudentQuestionModel> Questions { get; set; } = [];
-        public List<StudentOptionModel> Options { get; set; } = [];
-        public List<StudentOptionSolutionModel> OptionSolutions { get; set; } = [];
-        public List<StudentFillAnswerModel> Answers { get; set; } = [];
-        public int OptionSolutionCalls { get; private set; }
-        public int FillAnswerCalls { get; private set; }
-        public bool LastIncludeSolutions { get; private set; }
-        public IReadOnlyCollection<Guid> LastQuestionSectionIds { get; private set; } = [];
         public string? LastLookup { get; private set; }
 
         public Task<StudentExamPageModel> GetPageAsync(StudentExamPageQuery request, CancellationToken cancellationToken = default)
@@ -306,33 +223,14 @@ public sealed class StudentExamServiceTests
         { LastLookup = idOrSlug; return Task.FromResult(Exam); }
         public Task<IReadOnlyList<StudentExamTagModel>> GetActiveTagsAsync(Guid examId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentExamTagModel>>([]);
         public Task<IReadOnlyList<StudentSectionModel>> GetSectionsAsync(Guid versionId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentSectionModel>>(Sections);
-        public Task<IReadOnlyList<StudentSectionIdentifierModel>> GetSectionIdentifiersAsync(Guid versionId, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentSectionIdentifierModel>>(Sections.Select(section => new StudentSectionIdentifierModel(section.Id, section.DisplayOrder)).ToList());
-        public Task<StudentSectionModel?> GetSectionAsync(Guid versionId, Guid sectionId, CancellationToken cancellationToken = default) => Task.FromResult(Sections.SingleOrDefault(section => section.Id == sectionId));
-        public Task<IReadOnlyList<StudentQuestionModel>> GetQuestionsAsync(IReadOnlyCollection<Guid> sectionIds, bool includeSolutions, CancellationToken cancellationToken = default)
-        { LastQuestionSectionIds = sectionIds; LastIncludeSolutions = includeSolutions; return Task.FromResult<IReadOnlyList<StudentQuestionModel>>(Questions.Where(question => sectionIds.Contains(question.ExamSectionId)).ToList()); }
-        public Task<IReadOnlyList<StudentOptionModel>> GetOptionsAsync(IReadOnlyCollection<Guid> questionIds, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<StudentOptionModel>>(Options.Where(option => questionIds.Contains(option.QuestionId)).ToList());
-        public Task<IReadOnlyList<StudentOptionSolutionModel>> GetOptionSolutionsAsync(IReadOnlyCollection<Guid> questionIds, CancellationToken cancellationToken = default)
-        { OptionSolutionCalls++; return Task.FromResult<IReadOnlyList<StudentOptionSolutionModel>>(OptionSolutions.Where(item => questionIds.Contains(Options.Single(option => option.Id == item.OptionId).QuestionId)).ToList()); }
-        public Task<IReadOnlyList<StudentFillAnswerModel>> GetFillAnswersAsync(IReadOnlyCollection<Guid> questionIds, CancellationToken cancellationToken = default)
-        { FillAnswerCalls++; return Task.FromResult<IReadOnlyList<StudentFillAnswerModel>>(Answers.Where(item => questionIds.Contains(item.QuestionId)).ToList()); }
-
         public static FakeQuery WithPublishedContent()
         {
             var examId = Guid.NewGuid(); var versionId = Guid.NewGuid(); var sectionId = Guid.NewGuid();
-            var groupId = Guid.NewGuid(); var childId = Guid.NewGuid(); var optionId = Guid.NewGuid();
             return new FakeQuery
             {
                 Exam = new StudentPublishedExamModel(examId, "Sample Exam", "sample-exam", "Description", ExamType.Simple,
                     DateTimeOffset.UtcNow, null, versionId, 1, "Published", "Description", "Instructions", 60, 10, 3, DateTimeOffset.UtcNow),
-                Sections = [new StudentSectionModel(sectionId, ExamSectionKind.Reading, "Section", "", null, null, 1, 1, 10, "not-json")],
-                Questions =
-                [
-                    new StudentQuestionModel(groupId, sectionId, null, QuestionType.Group, "Group", "Group explanation", 0, 1, "{}"),
-                    new StudentQuestionModel(childId, sectionId, groupId, QuestionType.MultipleChoiceSingle, "Child", "Child explanation", 10, 1, "invalid")
-                ],
-                Options = [new StudentOptionModel(optionId, childId, "A", "Option A", 1)],
-                OptionSolutions = [new StudentOptionSolutionModel(optionId, true, "Because A")],
-                Answers = [new StudentFillAnswerModel(childId, "blank", "answer", false, 1, Guid.NewGuid())]
+                Sections = [new StudentSectionModel(sectionId, ExamSectionKind.Reading, "Section", "", null, null, 1, 1, 10, "not-json")]
             };
         }
     }

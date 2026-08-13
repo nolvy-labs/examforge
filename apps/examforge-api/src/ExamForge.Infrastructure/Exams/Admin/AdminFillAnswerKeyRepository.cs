@@ -21,17 +21,6 @@ public sealed class AdminFillAnswerKeyRepository : IAdminFillAnswerKeyRepository
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<FillAnswerKeyData>> GetListAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        CancellationToken cancellationToken = default)
-    {
-        return await ListQuery(examId, versionId, sectionId, questionId)
-            .ToListAsync(cancellationToken);
-    }
-
     public Task<FillAnswerKeyData?> GetDetailAsync(
         Guid examId,
         Guid versionId,
@@ -75,19 +64,6 @@ public sealed class AdminFillAnswerKeyRepository : IAdminFillAnswerKeyRepository
             key.Question.ExamSectionId == sectionId &&
             key.Question.ExamSection.ExamVersionId == versionId &&
             key.Question.ExamSection.ExamVersion.ExamId == examId);
-
-    private IQueryable<FillAnswerKeyData> ListQuery(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId)
-    {
-        var query = Scoped(examId, versionId, sectionId, questionId)
-            .OrderBy(key => key.DisplayOrder)
-            .ThenBy(key => key.Id);
-
-        return Project(query);
-    }
 
     private IQueryable<FillAnswerKeyData> DetailQuery(
         Guid examId,

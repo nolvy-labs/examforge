@@ -11,10 +11,6 @@ public interface IStudentExamDiscoveryQuery
         bool featuredOnly,
         CancellationToken cancellationToken = default);
 
-    Task<StudentExamCategoryModel?> GetCategoryBySlugAsync(
-        string slug,
-        CancellationToken cancellationToken = default);
-
     Task<StudentExamCategoryRuleModel?> GetCategoryRuleBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default);

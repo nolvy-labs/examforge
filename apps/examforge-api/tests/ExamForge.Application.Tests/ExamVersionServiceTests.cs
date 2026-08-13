@@ -205,30 +205,6 @@ public sealed class ExamVersionServiceTests
     }
 
     [Fact]
-    public async Task Current_published_returns_published_version()
-    {
-        var context = new TestContext();
-        var exam = context.AddExam();
-        var published = context.AddVersion(exam, status: ExamVersionStatus.Published);
-
-        var result = await context.Service.GetCurrentPublishedAsync(exam.Id);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(published.Id, result.Value!.Id);
-    }
-
-    [Fact]
-    public async Task Missing_published_version_returns_specific_error()
-    {
-        var context = new TestContext();
-        var exam = context.AddExam();
-
-        var result = await context.Service.GetCurrentPublishedAsync(exam.Id);
-
-        Assert.Equal(ExamVersionError.PublishedVersionNotFound, result.Error);
-    }
-
-    [Fact]
     public async Task Detail_rejects_version_belonging_to_another_exam()
     {
         var context = new TestContext();
@@ -673,14 +649,6 @@ public sealed class ExamVersionServiceTests
             CancellationToken cancellationToken = default)
         {
             return Task.FromResult(ToDataOrNull(Find(examId, versionId)));
-        }
-
-        public Task<ExamVersionData?> GetCurrentPublishedAsync(
-            Guid examId,
-            CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(ToDataOrNull(Versions.SingleOrDefault(version =>
-                version.ExamId == examId && version.Status == ExamVersionStatus.Published)));
         }
 
         public Task<ExamVersion?> GetTrackedAsync(

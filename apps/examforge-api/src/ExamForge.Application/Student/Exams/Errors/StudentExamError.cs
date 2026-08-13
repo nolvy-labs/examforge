@@ -9,6 +9,5 @@ public enum StudentExamError
     InvalidTagIds,
     InvalidCategorySelector,
     CategoryNotFound,
-    PublishedExamNotFound,
-    SectionNotFound
+    PublishedExamNotFound
 }

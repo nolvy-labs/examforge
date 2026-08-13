@@ -49,20 +49,16 @@ public sealed class StudentExamClassificationQueryTests
     }
 
     [Fact]
-    public async Task CategoryDetailAndRule_AllowZeroMatchesButRejectInvalidConfiguration()
+    public async Task CategoryRule_AllowsZeroMatchesButRejectsInvalidConfiguration()
     {
         await using var fixture = await DiscoveryFixture.CreateAsync();
 
-        var detail = await fixture.Query.GetCategoryBySlugAsync("all");
         var rule = await fixture.Query.GetCategoryRuleBySlugAsync("all");
-        var archived = await fixture.Query.GetCategoryBySlugAsync("archived");
-        var empty = await fixture.Query.GetCategoryBySlugAsync("empty");
-        var broken = await fixture.Query.GetCategoryBySlugAsync("broken");
-        var noMatches = await fixture.Query.GetCategoryBySlugAsync("no-matches");
+        var archived = await fixture.Query.GetCategoryRuleBySlugAsync("archived");
+        var empty = await fixture.Query.GetCategoryRuleBySlugAsync("empty");
+        var broken = await fixture.Query.GetCategoryRuleBySlugAsync("broken");
         var noMatchRule = await fixture.Query.GetCategoryRuleBySlugAsync("no-matches");
 
-        Assert.Equal(fixture.AllCategory.Id, detail!.Id);
-        Assert.Equal(1, detail.ExamCount);
         Assert.Equal(ExamCategoryMatchMode.All, rule!.MatchMode);
         Assert.Equal(
             new[] { fixture.Subject.Id, fixture.Topic.Id }.OrderBy(id => id),
@@ -70,8 +66,6 @@ public sealed class StudentExamClassificationQueryTests
         Assert.Null(archived);
         Assert.Null(empty);
         Assert.Null(broken);
-        Assert.Equal(fixture.NoMatchesCategory.Id, noMatches!.Id);
-        Assert.Equal(0, noMatches.ExamCount);
         Assert.Equal(ExamCategoryMatchMode.Any, noMatchRule!.MatchMode);
         Assert.Equal(fixture.UnusedTag.Id, Assert.Single(noMatchRule.TagIds));
     }

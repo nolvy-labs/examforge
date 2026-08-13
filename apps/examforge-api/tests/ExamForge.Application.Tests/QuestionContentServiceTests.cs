@@ -629,20 +629,12 @@ public sealed class QuestionContentServiceTests
     {
         public List<FillAnswerKey> Keys { get; } = [];
 
-        public Task<IReadOnlyList<FillAnswerKeyData>> GetListAsync(
-            Guid examId, Guid versionId, Guid sectionId, Guid questionId,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<FillAnswerKeyData>>(Keys
-                .Where(key => key.QuestionId == questionId)
-                .OrderBy(key => key.DisplayOrder)
-                .Select(ToData)
-                .ToList());
-
-        public async Task<FillAnswerKeyData?> GetDetailAsync(
+        public Task<FillAnswerKeyData?> GetDetailAsync(
             Guid examId, Guid versionId, Guid sectionId, Guid questionId, Guid answerKeyId,
             CancellationToken cancellationToken = default) =>
-            (await GetListAsync(examId, versionId, sectionId, questionId, cancellationToken))
-                .SingleOrDefault(key => key.Id == answerKeyId);
+            Task.FromResult(Keys.Where(key => key.QuestionId == questionId && key.Id == answerKeyId)
+                .Select(ToData)
+                .SingleOrDefault());
 
         public Task<IReadOnlyList<FillAnswerKey>> GetTrackedListAsync(
             Guid questionId, CancellationToken cancellationToken = default) =>
@@ -718,8 +710,6 @@ public sealed class QuestionContentServiceTests
             Task.FromResult<ExamVersionData?>(examId == _context.Exam.Id && versionId == _context.Version.Id
                 ? ToData()
                 : null);
-        public Task<ExamVersionData?> GetCurrentPublishedAsync(
-            Guid examId, CancellationToken cancellationToken = default) => Task.FromResult<ExamVersionData?>(null);
         public Task<ExamVersion?> GetTrackedAsync(
             Guid examId, Guid versionId, CancellationToken cancellationToken = default) =>
             Task.FromResult(examId == _context.Exam.Id && versionId == _context.Version.Id

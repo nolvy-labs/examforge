@@ -49,43 +49,11 @@ public sealed class ExamsController : StudentBaseController
         return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
     }
 
-    [HttpGet("{idOrSlug}/full-test")]
-    public async Task<ActionResult<StudentFullTestResponse>> GetFullTest(
-        string idOrSlug,
-        [FromQuery(Name = "include-solutions")] bool includeSolutions = false,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _service.GetFullTestAsync(idOrSlug, includeSolutions, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
-    [HttpGet("{idOrSlug}/first-section")]
-    public async Task<ActionResult<StudentSingleSectionResponse>> GetFirstSection(
-        string idOrSlug,
-        [FromQuery(Name = "include-solutions")] bool includeSolutions = false,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _service.GetFirstSectionAsync(idOrSlug, includeSolutions, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
-    [HttpGet("{idOrSlug}/sections/{sectionId:guid}")]
-    public async Task<ActionResult<StudentSingleSectionResponse>> GetSection(
-        string idOrSlug,
-        Guid sectionId,
-        [FromQuery(Name = "include-solutions")] bool includeSolutions = false,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _service.GetSectionAsync(idOrSlug, sectionId, includeSolutions, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : ToActionResult(result.Error);
-    }
-
     private ActionResult ToActionResult(
         StudentExamError error,
         object? additionalData = null)
     {
         if (error is StudentExamError.PublishedExamNotFound or
-            StudentExamError.SectionNotFound or
             StudentExamError.CategoryNotFound)
         {
             return NotFound(new ProblemDetails
@@ -96,8 +64,6 @@ public sealed class ExamsController : StudentBaseController
                 {
                     StudentExamError.PublishedExamNotFound =>
                         "Published exam was not found.",
-                    StudentExamError.SectionNotFound =>
-                        "Exam section was not found.",
                     _ => "Exam category was not found."
                 },
                 Instance = HttpContext.Request.Path

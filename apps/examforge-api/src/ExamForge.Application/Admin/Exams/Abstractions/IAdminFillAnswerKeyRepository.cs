@@ -5,13 +5,6 @@ namespace ExamForge.Application.Admin.Exams.Abstractions;
 
 public interface IAdminFillAnswerKeyRepository
 {
-    Task<IReadOnlyList<FillAnswerKeyData>> GetListAsync(
-        Guid examId,
-        Guid versionId,
-        Guid sectionId,
-        Guid questionId,
-        CancellationToken cancellationToken = default);
-
     Task<FillAnswerKeyData?> GetDetailAsync(
         Guid examId,
         Guid versionId,

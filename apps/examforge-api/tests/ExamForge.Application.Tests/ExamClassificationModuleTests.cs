@@ -59,7 +59,7 @@ public sealed class ExamClassificationModuleTests
     }
 
     [Fact]
-    public async Task DiscoveryService_MapsOnlyStudentSafeCategoryFieldsAndNormalizesSlug()
+    public async Task DiscoveryService_MapsOnlyStudentSafeCategoryFields()
     {
         var tag = new StudentExamCategoryTagModel(
             Guid.NewGuid(), "Algorithms", "algorithms", ExamTagType.Topic);
@@ -67,20 +67,15 @@ public sealed class ExamClassificationModuleTests
             Guid.NewGuid(), "Backend", "backend", "Backend exams", true, 4, [tag]);
         var query = new RecordingDiscoveryQuery
         {
-            Categories = [category],
-            Category = category
+            Categories = [category]
         };
         var service = new StudentExamDiscoveryService(query);
 
         var categories = await service.GetCategoriesAsync(featuredOnly: true);
-        var detail = await service.GetCategoryAsync("  Back End  ");
-
         Assert.Single(categories);
         Assert.True(query.LastFeaturedOnly);
-        Assert.True(detail.IsSuccess);
-        Assert.Equal("back-end", query.LastCategorySlug);
-        Assert.Equal(category.Id, detail.Value!.Id);
-        Assert.Equal(tag.Id, detail.Value.Tags[0].Id);
+        Assert.Equal(category.Id, categories[0].Id);
+        Assert.Equal(tag.Id, categories[0].Tags[0].Id);
 
         var exposedNames = typeof(ExamForge.Application.Student.ExamClassifications.Dtos.StudentExamCategoryResponse)
             .GetProperties()
@@ -91,21 +86,6 @@ public sealed class ExamClassificationModuleTests
         Assert.DoesNotContain("CreatedAtUtc", exposedNames);
         Assert.DoesNotContain("UpdatedAtUtc", exposedNames);
         Assert.DoesNotContain("IsArchived", exposedNames);
-    }
-
-    [Fact]
-    public async Task DiscoveryService_ReturnsNotFoundForBlankOrMissingCategory()
-    {
-        var query = new RecordingDiscoveryQuery();
-        var service = new StudentExamDiscoveryService(query);
-
-        var blank = await service.GetCategoryAsync(" ");
-        var missing = await service.GetCategoryAsync("missing");
-
-        Assert.False(blank.IsSuccess);
-        Assert.False(missing.IsSuccess);
-        Assert.Equal(1, query.CategoryLookupCalls);
-        Assert.Equal("missing", query.LastCategorySlug);
     }
 
     [Theory]
@@ -138,10 +118,7 @@ public sealed class ExamClassificationModuleTests
     {
         public IReadOnlyList<StudentExamFilterTagModel> Filters { get; set; } = [];
         public IReadOnlyList<StudentExamCategoryModel> Categories { get; set; } = [];
-        public StudentExamCategoryModel? Category { get; set; }
         public bool LastFeaturedOnly { get; private set; }
-        public string? LastCategorySlug { get; private set; }
-        public int CategoryLookupCalls { get; private set; }
 
         public Task<IReadOnlyList<StudentExamFilterTagModel>> GetFilterTagsAsync(
             CancellationToken cancellationToken = default) =>
@@ -153,15 +130,6 @@ public sealed class ExamClassificationModuleTests
         {
             LastFeaturedOnly = featuredOnly;
             return Task.FromResult(Categories);
-        }
-
-        public Task<StudentExamCategoryModel?> GetCategoryBySlugAsync(
-            string slug,
-            CancellationToken cancellationToken = default)
-        {
-            CategoryLookupCalls++;
-            LastCategorySlug = slug;
-            return Task.FromResult(Category);
         }
 
         public Task<StudentExamCategoryRuleModel?> GetCategoryRuleBySlugAsync(
