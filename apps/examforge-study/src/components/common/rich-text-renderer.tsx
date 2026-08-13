@@ -146,7 +146,7 @@ export function richTextToPlainText(content?: string | null) {
 	return decodeHtmlEntities(
 		sanitizeAdminHtml(content.trim())
 			.replace(/<(?:span|div) data-type="(?:inline-math|block-math)" data-latex="([^"]*)"><\/(?:span|div)>/gi, " $1 ")
-			.replace(/<(?:br|\/p|\/div|\/li|\/h[23])\s*\/?>/gi, " ")
+			.replace(/<(?:br|\/p|\/div|\/li|\/h[23]|\/blockquote|\/pre|\/th|\/td|\/tr)\s*\/?>/gi, " ")
 			.replace(/<[^>]*>/g, "")
 	)
 		.replace(/[\s\u200B\u200C\u200D\uFEFF]+/g, " ")
