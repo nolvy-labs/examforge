@@ -127,14 +127,26 @@ jobs:
         
       - name: Configure SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY_B64 }}
+          SSH_PRIVATE_KEY_B64: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY_B64 }}
           SSH_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_SSH_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+
+          if [[ -z "$SSH_PRIVATE_KEY_B64" ]]; then
+            echo "LIGHTSAIL_SSH_PRIVATE_KEY_B64 is missing or empty." >&2
+            exit 1
+          fi
+
+          printf '%s' "$SSH_PRIVATE_KEY_B64" \
+            | base64 --decode \
+            > ~/.ssh/examforge_deploy
+
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/id_ed25519
+
+          chmod 600 ~/.ssh/examforge_deploy
           chmod 600 ~/.ssh/known_hosts
+
+          ssh-keygen -y -f ~/.ssh/examforge_deploy >/dev/null
         
       - name: Upload deployment files
         env:
@@ -143,16 +155,22 @@ jobs:
         run: |
           chmod +x apps/examforge-api/scripts/deploy-production.sh
           chmod +x apps/examforge-api/scripts/verify-production-readiness.sh
-        
+
           scp \
+            -i ~/.ssh/examforge_deploy \
+            -o IdentitiesOnly=yes \
             docker-compose.production.yml \
             "$SSH_USER@$SSH_HOST:/opt/examforge/docker-compose.production.yml"
-        
+
           scp \
+            -i ~/.ssh/examforge_deploy \
+            -o IdentitiesOnly=yes \
             apps/examforge-api/scripts/deploy-production.sh \
             "$SSH_USER@$SSH_HOST:/opt/examforge/deploy-production.sh"
-        
+
           scp \
+            -i ~/.ssh/examforge_deploy \
+            -o IdentitiesOnly=yes \
             apps/examforge-api/scripts/verify-production-readiness.sh \
             "$SSH_USER@$SSH_HOST:/opt/examforge/verify-production-readiness.sh"
         
@@ -162,5 +180,8 @@ jobs:
           SSH_USER: ${{ secrets.LIGHTSAIL_USER }}
           RELEASE_SHA: ${{ github.sha }}
         run: |
-          ssh "$SSH_USER@$SSH_HOST" \
-          "/opt/examforge/deploy-production.sh '$RELEASE_SHA'"
+          ssh \
+            -i ~/.ssh/examforge_deploy \
+            -o IdentitiesOnly=yes \
+            "$SSH_USER@$SSH_HOST" \
+            "/opt/examforge/deploy-production.sh '$RELEASE_SHA'"
