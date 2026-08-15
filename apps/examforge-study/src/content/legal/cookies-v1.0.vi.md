@@ -3,70 +3,119 @@ title: "Chính sách cookie và lưu trữ phía client"
 document: "cookies"
 locale: "vi"
 version: "1.0"
-effectiveDate: "2026-08-05"
-lastUpdated: "2026-08-05"
----
+effectiveDate: "2026-08-10"
+lastUpdated: "2026-08-10"
+-------------------------
 
 # Chính sách cookie và lưu trữ phía client của ExamForge
 
-**Phiên bản:** 1.0  
-**Ngày hiệu lực:** 05/08/2026  
-**Cập nhật lần cuối:** 05/08/2026
+- **Phiên bản:** 1.0
+- **Ngày hiệu lực:** 10/08/2026
+- **Cập nhật lần cuối:** 10/08/2026
 
-> **Cần hoàn thiện trước khi phát hành:** kiểm tra cookie và browser storage thực tế trong DevTools và backend; thay các giá trị `[XÁC NHẬN]`. Không công bố tên, thời hạn hoặc phạm vi cookie nếu chưa khớp với cấu hình thật.
+## 1. Phạm vi
 
-## 1. Chính sách này nói về điều gì?
+Chính sách này giải thích các HTTP cookie và cơ chế lưu trữ phía trình duyệt hiện được ExamForge sử dụng.
 
-Chính sách này giải thích cách ExamForge sử dụng HTTP cookie và công nghệ lưu trữ phía trình duyệt như `localStorage` và `sessionStorage`. Chính sách quyền riêng tư giải thích rộng hơn về cách chúng tôi xử lý dữ liệu cá nhân.
+[Chính sách quyền riêng tư](/legal/privacy) giải thích rộng hơn về hoạt động xử lý dữ liệu cá nhân.
 
-Cookie là tệp nhỏ được trình duyệt lưu hoặc gửi cùng request. `localStorage` và `sessionStorage` không phải cookie nhưng cũng có thể lưu thông tin trên thiết bị, vì vậy được công khai trong cùng tài liệu này.
+`localStorage` không phải HTTP cookie nhưng vẫn lưu thông tin trong trình duyệt, vì vậy được công khai trong tài liệu này.
 
 ## 2. Phân loại
 
-- **Thiết yếu:** cần cho đăng nhập, bảo mật, cân bằng tải hoặc chức năng bạn yêu cầu. Không thể tắt bằng công cụ tùy chọn của ExamForge nếu bạn vẫn muốn dùng chức năng liên quan.
-- **Chức năng:** ghi nhớ lựa chọn như ngôn ngữ hoặc giao diện. Có thể tắt, nhưng một số lựa chọn sẽ không được ghi nhớ.
-- **Phân tích:** đo lường cách Dịch vụ được sử dụng để cải thiện sản phẩm. Chỉ được kích hoạt sau lựa chọn phù hợp khi pháp luật yêu cầu.
-- **Tiếp thị:** dùng cho quảng cáo, đo lường chiến dịch hoặc theo dõi giữa các dịch vụ. ExamForge MVP hiện không sử dụng nhóm này.
+ExamForge hiện sử dụng:
 
-## 3. Cookie dự kiến
+* **lưu trữ thiết yếu** cho xác thực và các chức năng mà người dùng yêu cầu; và
+* **lưu trữ chức năng** cho lựa chọn như ngôn ngữ.
 
-Danh mục dưới đây phải được kiểm tra với tên thật trước khi phát hành:
+ExamForge hiện không chủ động sử dụng cookie phân tích hoặc marketing.
 
-| Tên | Nhà cung cấp | Mục đích | Loại | Thời hạn | Có thể từ chối? |
-|---|---|---|---|---|---|
-| `[REFRESH_COOKIE_NAME]` | ExamForge | Duy trì phiên đăng nhập và cấp lại access token an toàn | Thiết yếu, `HttpOnly`, `Secure` trong production, `SameSite=[XÁC NHẬN]` | `[KHỚP REFRESH TOKEN LIFETIME]` | Không, nếu muốn duy trì đăng nhập |
-| `[CSRF_COOKIE_NAME, NẾU CÓ]` | ExamForge | Chống giả mạo request khi dùng cookie authentication | Thiết yếu | `[XÁC NHẬN]` | Không |
-| `[HOST/LOAD-BALANCER COOKIE, NẾU CÓ]` | Nhà cung cấp hosting | Định tuyến và bảo vệ Dịch vụ | Thiết yếu | `[XÁC NHẬN]` | Không |
+## 3. Cookie xác thực
 
-Access token và refresh token không nên được lưu trong `localStorage`. Nếu cấu hình thực tế khác, cần sửa hệ thống hoặc cập nhật chính sách sau khi đánh giá rủi ro.
+| Tên                          | Mục đích                                       | Loại      | Bảo mật                                                             | Thời hạn       |
+| ---------------------------- | ---------------------------------------------- | --------- | ------------------------------------------------------------------- | -------------- |
+| `__Secure-examforge_access`  | Xác thực request tới ExamForge                 | Thiết yếu | `HttpOnly`, `Secure`, `SameSite=Lax`                                | Khoảng 15 phút |
+| `__Secure-examforge_refresh` | Cho phép phiên đăng nhập nhận access token mới | Thiết yếu | `HttpOnly`, `Secure`, `SameSite=Lax`, giới hạn cho request xác thực | Khoảng 7 ngày  |
 
-## 4. localStorage và sessionStorage dự kiến
+Các cookie này không thể được JavaScript phía client thông thường đọc vì được cấu hình `HttpOnly`.
 
-| Khóa hoặc nhóm khóa | Mục đích | Loại | Thời hạn | Có thể xóa/từ chối? |
-|---|---|---|---|---|
-| `[LANGUAGE_KEY]` | Ghi nhớ tiếng Việt/tiếng Anh | Chức năng | Đến khi người dùng xóa hoặc thay đổi | Có |
-| `[THEME_KEY]` | Ghi nhớ giao diện sáng/tối/hệ thống | Chức năng | Đến khi người dùng xóa hoặc thay đổi | Có |
-| `[PROFILE_CACHE_KEY]` | Hiển thị nhanh thông tin hồ sơ cơ bản | Chức năng | Xóa khi đăng xuất; `[TTL NẾU CÓ]` | Có; có thể làm chậm lần tải sau |
-| `[ATTEMPT_DRAFT_KEYS]` | Phục hồi câu trả lời/tiến độ chưa đồng bộ | Chức năng do người dùng yêu cầu | Đến khi đồng bộ, nộp bài, bỏ bài hoặc hết `[TTL]` | Có; xóa có thể làm mất thay đổi chưa đồng bộ |
-| `[CONSENT_KEY, NẾU CÓ]` | Lưu phiên bản và nhóm lựa chọn cookie | Thiết yếu cho việc ghi nhớ lựa chọn | Đến khi hết `[TTL]` hoặc chính sách đổi phiên bản | Có, nhưng banner sẽ xuất hiện lại |
+Việc chặn hoặc xóa chúng có thể đăng xuất tài khoản hoặc khiến chức năng yêu cầu xác thực không hoạt động.
 
-Dữ liệu lưu trên thiết bị có thể được người khác nhìn thấy nếu bạn dùng chung tài khoản hệ điều hành hoặc trình duyệt. Hãy đăng xuất khi sử dụng thiết bị dùng chung.
+ExamForge không chủ động lưu access token hoặc refresh token trong `localStorage`.
 
-## 5. Analytics và marketing
+## 4. Lựa chọn ngôn ngữ
 
-Phiên bản MVP hiện tại dự kiến không khởi tạo analytics, session replay hoặc marketing cookie không thiết yếu. Nếu ExamForge bổ sung PostHog, Google Analytics hoặc công cụ tương tự, chúng tôi sẽ cập nhật inventory này và chặn SDK cho đến khi nhận được lựa chọn hợp lệ, khi việc xin lựa chọn là bắt buộc.
+ExamForge sử dụng các cơ chế sau để lưu lựa chọn ngôn ngữ:
 
-## 6. Quản lý lựa chọn
+| Tên                      | Nơi lưu        | Mục đích                                    | Loại      | Thời hạn                     |
+| ------------------------ | -------------- | ------------------------------------------- | --------- | ---------------------------- |
+| `examforge-study-locale` | Cookie         | Cho phép server biết locale đã chọn         | Chức năng | Tối đa 1 năm                 |
+| `examforge-study-locale` | `localStorage` | Đồng bộ và ghi nhớ locale trong trình duyệt | Chức năng | Đến khi thay đổi hoặc bị xóa |
 
-Bạn có thể xóa cookie và browser storage trong cài đặt trình duyệt. Chặn cookie thiết yếu có thể khiến đăng nhập, lưu phiên hoặc bảo mật không hoạt động.
+Cookie locale sử dụng `SameSite=Lax` và được đánh dấu `Secure` trong production.
 
-Khi ExamForge chỉ sử dụng công nghệ thiết yếu và chức năng do người dùng yêu cầu, website có thể không hiển thị consent banner. Nếu bổ sung công nghệ không thiết yếu, chúng tôi sẽ cung cấp lựa chọn “Chỉ cần thiết”, “Chấp nhận tất cả” và “Tùy chỉnh”, không chọn sẵn nhóm không thiết yếu, đồng thời cho phép thay đổi quyết định sau này tại mục **Cài đặt cookie**.
+Cookie này được phép đọc bởi mã ứng dụng vì chỉ lưu locale đã chọn.
 
-## 7. Thay đổi Chính sách
+## 5. Dữ liệu phục hồi lượt làm bài
 
-Khi công nghệ, nhà cung cấp hoặc mục đích thay đổi, chúng tôi sẽ cập nhật Chính sách, phiên bản và ngày hiệu lực. Thay đổi quan trọng có thể làm xuất hiện lại công cụ lựa chọn.
+Khi một lượt thi hoặc luyện tập đang diễn ra, ExamForge có thể lưu bản phục hồi cục bộ bằng key có dạng:
 
-## 8. Liên hệ
+`examforge:attempt-draft:v1:<studentId>:<attemptId>`
 
-Nếu có câu hỏi, hãy liên hệ **[EMAIL QUYỀN RIÊNG TƯ]**. Xem thêm [Chính sách quyền riêng tư](/legal/privacy).
+Dữ liệu được lưu có thể gồm:
 
+* mã lượt làm và phiên bản bài thi;
+* mã người dùng;
+* chế độ làm bài;
+* câu trả lời được lưu cục bộ;
+* trạng thái đồng bộ;
+* thời gian luyện tập đã trôi qua;
+* thời điểm cập nhật.
+
+Cơ chế này giúp giảm nguy cơ mất thay đổi chưa được đồng bộ.
+
+Ứng dụng xóa dữ liệu phục hồi khi không còn cần thiết trong luồng làm bài tương ứng. Người dùng cũng có thể xóa dữ liệu bằng cài đặt trình duyệt, nhưng việc xóa khi vẫn còn thay đổi chưa đồng bộ có thể làm mất các thay đổi cục bộ đó.
+
+## 6. sessionStorage
+
+ExamForge hiện không chủ động phụ thuộc vào `sessionStorage` cho các chức năng của Study được mô tả trong Chính sách này.
+
+Phần này sẽ được cập nhật nếu điều đó thay đổi.
+
+## 7. Analytics và marketing
+
+ExamForge hiện không chủ động khởi tạo:
+
+* cookie quảng cáo;
+* tracker marketing;
+* mã định danh quảng cáo cross-site;
+* cookie phân tích hành vi; hoặc
+* công nghệ session replay.
+
+Nếu analytics hoặc marketing không thiết yếu được bổ sung, Chính sách này và cơ chế lựa chọn tương ứng sẽ được cập nhật trước khi công nghệ đó được kích hoạt trong trường hợp pháp luật yêu cầu sự đồng ý.
+
+## 8. Quản lý dữ liệu trình duyệt
+
+Bạn có thể xóa hoặc chặn cookie và local storage trong trình duyệt.
+
+Xóa cookie xác thực thiết yếu có thể khiến bạn bị đăng xuất.
+
+Xóa dữ liệu phục hồi lượt làm có thể làm mất thay đổi chưa được đồng bộ với server.
+
+Xóa dữ liệu lựa chọn ngôn ngữ có thể khiến ExamForge xác định lại ngôn ngữ trong lần truy cập sau.
+
+## 9. Sự đồng ý đối với cookie
+
+Vì triển khai hiện tại sử dụng công nghệ xác thực cần thiết cho chức năng người dùng yêu cầu và lưu trữ locale mang tính chức năng, ExamForge không coi analytics hoặc marketing là được mặc nhiên chấp thuận.
+
+Nếu công nghệ tracking không thiết yếu được bổ sung trong tương lai, công nghệ đó không được kích hoạt chỉ vì người dùng tiếp tục sử dụng website trong trường hợp pháp luật yêu cầu một lựa chọn riêng.
+
+## 10. Thay đổi Chính sách
+
+Chính sách sẽ được cập nhật khi công nghệ lưu trữ trình duyệt, mục đích hoặc cấu hình liên quan thay đổi đáng kể.
+
+## 11. Liên hệ
+
+Nếu có câu hỏi về cookie hoặc lưu trữ trình duyệt, hãy liên hệ **vy.tranngoclam@gmail.com**.
+
+Xem thêm [Chính sách quyền riêng tư](/legal/privacy).

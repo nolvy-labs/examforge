@@ -7,6 +7,7 @@ import {
 	PublicExamNotFoundError,
 } from "@/features/exams/api/exam-detail.server"
 import { ExamDetailPage } from "@/features/exams/exam-detail/pages/exam-detail.page"
+import { richTextToPlainText } from "@/components/common/rich-text-renderer"
 
 interface ExamPageProps {
 	params: Promise<{ slug: string }>
@@ -23,7 +24,7 @@ export async function generateMetadata({
 			title: detail.exam.title,
 			description:
 				detail.exam.description.trim() ||
-				detail.publishedVersion.description.trim() ||
+				richTextToPlainText(detail.publishedVersion.description) ||
 				translate("examsDescription"),
 		}
 	} catch {

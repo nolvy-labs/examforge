@@ -3,83 +3,155 @@ title: "Terms of Service"
 document: "terms"
 locale: "en"
 version: "1.0"
-effectiveDate: "2026-08-05"
-lastUpdated: "2026-08-05"
----
+effectiveDate: "2026-08-10"
+lastUpdated: "2026-08-10"
+-------------------------
 
 # ExamForge Terms of Service
 
-**Version:** 1.0  
-**Effective date:** August 5, 2026  
-**Last updated:** August 5, 2026
+- **Version:** 1.0
+- **Effective date:** August 10, 2026
+- **Last updated:** August 10, 2026
 
-> **Complete before publication:** replace every bracketed placeholder, especially `[OPERATOR LEGAL NAME]`, `[ADDRESS]`, and `[LEGAL EMAIL]`.
+## 1. About ExamForge
 
-## 1. Scope and acceptance
+ExamForge is an educational software service operated by **Trần Ngọc Lâm Vỹ** (“ExamForge”, “we”, “us”, or “our”).
 
-These Terms govern access to and use of the ExamForge websites, applications, and services (collectively, the “Service”), provided by **[OPERATOR LEGAL NAME]**, at **[ADDRESS]** (“ExamForge”, “we”, “us”).
+These Terms govern your access to and use of ExamForge websites, applications, APIs, examination tools, practice tools, results, statistics, and related services (collectively, the “Service”).
 
-By creating an account or using the Service, you confirm that you have read, understood, and agreed to these Terms and the Privacy Policy. If you do not agree, do not create an account or continue using the Service.
+By accessing or using the Service, you agree to these Terms and acknowledge the Privacy Policy and Cookie and Client Storage Policy.
 
-## 2. Eligibility and accounts
+If you do not agree, you must not use the Service.
 
-You must be at least 16 years old to create an account independently. A person under 16 may use the Service only after ExamForge implements a legally appropriate parent or guardian consent mechanism. The current version is not intentionally offered to account holders under 16.
+## 2. Accounts and eligibility
 
-You agree to provide accurate, current information and not impersonate another person. You are responsible for safeguarding your sign-in credentials and must promptly notify us if you suspect unauthorized access.
+You must provide accurate information associated with your account and must not impersonate another person.
 
-## 3. Learning service
+Where registration is restricted, accounts may be created or issued by an ExamForge administrator rather than through public self-registration.
 
-ExamForge provides tools for practice, mock exams, result review, and learning-progress tracking. Scores, solutions, statistics, and recommendations are for learning purposes, may contain errors, and are not official results issued by any school or examination authority.
+You are responsible for protecting your account credentials and for activity performed through your account. Notify ExamForge promptly if you believe your account has been compromised.
 
-ExamForge is an independent platform and is not affiliated with, endorsed by, or acting for an examination authority unless expressly stated in writing.
+If you are under 16 years old, you must not use an ExamForge account unless your use is permitted under applicable law and any required authorization from a parent or legal guardian has been obtained.
 
-We may modify, supplement, suspend, or discontinue parts of the Service for maintenance, security, or product development. Where reasonable, we will give advance notice of changes that materially affect users.
+You must not share an account with another person unless ExamForge expressly permits it.
+
+## 3. Educational purpose
+
+ExamForge provides tools including practice exercises, mock examinations, answer submission, grading, result review, and learning-progress statistics.
+
+ExamForge results are provided for **learning and practice purposes only**.
+
+Unless expressly stated otherwise:
+
+* an ExamForge score is not an official academic or examination result;
+* ExamForge is not an examination authority, school, university, certification body, or government authority;
+* ExamForge is not affiliated with or endorsed by an examination organization merely because content relates to one of its examinations; and
+* questions, answers, explanations, statistics, or recommendations may contain errors.
+
+You should independently verify information where accuracy is important.
 
 ## 4. Permitted use
 
-While you comply with these Terms, ExamForge grants you a limited, non-exclusive, non-transferable, revocable right to use the Service for personal, non-commercial learning.
+Subject to these Terms, ExamForge grants you a limited, personal, non-exclusive, non-transferable and revocable right to use the Service for lawful educational purposes.
 
 You must not:
 
-- gain unauthorized access to, scan, disrupt, or damage the Service;
-- bypass access limits, security measures, or account controls;
-- use bots, crawlers, scrapers, or automated tools without written permission;
-- copy, sell, sublicense, or distribute ExamForge exams, questions, solutions, or software without sufficient rights;
-- upload malware or unlawful content, or infringe another person's rights;
-- cheat, manipulate results, exploit defects, or conceal exploitation of a defect;
-- use another person's account or allow another person to use yours contrary to these Terms.
+* gain or attempt to gain unauthorized access to accounts, systems or data;
+* circumvent authentication, authorization, rate limits or other security controls;
+* interfere with or intentionally degrade the Service;
+* introduce malware or other harmful software;
+* scrape, crawl, bulk-download or automatically extract content without permission;
+* reverse engineer the Service except where applicable law expressly permits it;
+* copy, sell, republish or commercially distribute ExamForge questions, solutions, software or other protected material without permission;
+* use another person's account or permit unauthorized use of your account;
+* manipulate attempts, scores or statistics through unauthorized means;
+* exploit vulnerabilities for purposes other than responsible reporting; or
+* use the Service in violation of applicable law or the rights of another person.
 
-## 5. Content and intellectual property
+## 5. Exam and learning content
 
-Software, designs, trademarks, and content created by ExamForge belong to ExamForge or the relevant licensor and are protected by law. Access to the Service does not transfer ownership of those assets to you.
+Questions, solutions, explanations and other educational content may originate from ExamForge, licensed sources, authorized contributors or other lawful sources.
 
-If the Service allows you to submit content, you retain your rights and represent that you have the rights needed to provide it. You grant ExamForge a non-exclusive, royalty-free license, limited to what is necessary to host, process, display, and transmit that content to operate the Service. This license ends when the content is deleted, except for time-limited backups or retention required by law.
+Copyright and other intellectual-property rights remain with their respective owners.
 
-To report suspected copyright infringement, send the content description, location, basis of ownership, and your contact details to **[LEGAL EMAIL]**.
+Access to the Service does not grant you ownership of ExamForge software, branding, databases, examination content or other protected materials.
 
-## 6. Suspension and termination
+If you believe content available through ExamForge infringes your rights, contact **vy.tranngoclam@gmail.com** with enough information for the matter to be reviewed.
 
-You may stop using the Service and request account deletion as described in the Privacy Policy.
+## 6. Your content and answers
 
-We may restrict, suspend, or terminate an account where we reasonably believe that the user violated these Terms, created a security risk, infringed another person's rights, or where required by law. Except in urgent cases or where legally restricted, we will try to explain the reason and available appeal process.
+You retain rights you may have in content that you provide to ExamForge.
 
-## 7. Availability and liability
+You authorize ExamForge to store, process, reproduce and transmit that content only to the extent reasonably necessary to:
 
-The Service is provided on an “as is” and “as available” basis. We work to keep it accurate and reliable, but do not guarantee uninterrupted or error-free operation or fitness for every particular purpose.
+* operate the Service;
+* save and grade examination attempts;
+* display your results and progress;
+* maintain security and reliability; and
+* comply with applicable legal obligations.
 
-To the extent permitted by law, ExamForge is not liable for indirect or consequential losses arising solely from reliance on practice results. Nothing in these Terms excludes liability that cannot lawfully be excluded or restricts mandatory consumer rights.
+This authorization does not give ExamForge ownership of your original content.
 
-## 8. Changes to these Terms
+## 7. Availability and changes
 
-We may update these Terms to reflect changes in the Service or law. This page will show the version and effective date. For material changes, we will provide reasonable notice and, where required, ask you to accept the new version before continuing to use the Service. Previous versions will remain available for reference.
+ExamForge is under active development.
 
-## 9. Governing law and disputes
+Features may be added, changed, limited, temporarily unavailable or discontinued for reasons including maintenance, security, infrastructure changes or product development.
 
-These Terms are governed by Vietnamese law. The parties should first attempt to resolve a dispute through good-faith discussion. If unresolved, it may be submitted to a competent authority under Vietnamese law. This does not remove any mandatory consumer complaint or protection right.
+We will make reasonable efforts to avoid unnecessary disruption but do not guarantee uninterrupted or error-free availability.
 
-## 10. Contact
+## 8. Suspension and termination
 
-**Operator:** [OPERATOR LEGAL NAME]  
-**Address:** [ADDRESS]  
-**Legal/support email:** [LEGAL EMAIL]
+You may stop using ExamForge at any time.
 
+We may restrict, suspend or terminate access where reasonably necessary because of:
+
+* violation of these Terms;
+* suspected unauthorized access or abuse;
+* security risks;
+* infringement of another person's rights;
+* misuse of examination content;
+* legal requirements; or
+* protection of ExamForge, its users or infrastructure.
+
+Where appropriate and legally permitted, we may provide an explanation or opportunity to resolve the issue.
+
+## 9. Disclaimer and liability
+
+The Service is provided on an “as available” basis.
+
+ExamForge does not guarantee that every question, answer, explanation, score, statistic or recommendation is complete or error-free.
+
+To the maximum extent permitted by applicable law, ExamForge is not responsible for indirect or consequential loss caused solely by reliance on practice scores or educational recommendations.
+
+Nothing in these Terms limits rights or liabilities that cannot legally be limited, including mandatory consumer rights.
+
+## 10. Privacy
+
+Personal data is processed as described in the [Privacy Policy](/legal/privacy).
+
+Cookies and browser-side storage are described in the [Cookie and Client Storage Policy](/legal/cookies).
+
+## 11. Changes to these Terms
+
+We may update these Terms when the Service, applicable law or our operating practices change.
+
+The current version and effective date will be displayed on this page.
+
+Where a change materially affects your rights or obligations, we will provide reasonable notice where appropriate or legally required.
+
+## 12. Governing law and disputes
+
+These Terms are governed by the laws of **Vietnam**.
+
+Before starting formal proceedings, you and ExamForge should make a reasonable attempt to resolve a dispute through good-faith communication.
+
+Any unresolved matter may be submitted to a competent authority or court in accordance with applicable Vietnamese law.
+
+Nothing in this section removes mandatory rights available to consumers under applicable law.
+
+## 13. Contact
+
+- **Operator:** Trần Ngọc Lâm Vỹ
+- **Location:** Ho Chi Minh City, Vietnam
+- **Legal/support email:** vy.tranngoclam@gmail.com

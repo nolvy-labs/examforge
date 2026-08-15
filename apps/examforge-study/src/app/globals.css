@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "katex/dist/katex.min.css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -124,4 +125,126 @@
 
 html {
   scrollbar-gutter: stable;
+}
+
+@layer components {
+  .rich-text-renderer {
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: inherit;
+    line-height: 1.7;
+  }
+
+  .rich-text-renderer > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .rich-text-renderer h2 {
+    font-size: clamp(1.2rem, 1.1rem + 0.35vw, 1.5rem);
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .rich-text-renderer h3 {
+    font-size: clamp(1.05rem, 1rem + 0.2vw, 1.25rem);
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+  .rich-text-renderer ul,
+  .rich-text-renderer ol {
+    padding-left: 1.5rem;
+  }
+
+  .rich-text-renderer ul { list-style: disc; }
+  .rich-text-renderer ol { list-style: decimal; }
+  .rich-text-renderer li > ul,
+  .rich-text-renderer li > ol { margin-top: 0.25rem; }
+  .rich-text-renderer li + li { margin-top: 0.25rem; }
+
+  .rich-text-renderer blockquote {
+    border-left: 3px solid var(--border);
+    color: var(--muted-foreground);
+    padding-left: 0.875rem;
+  }
+
+  .rich-text-renderer a {
+    color: var(--primary);
+    overflow-wrap: anywhere;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .rich-text-renderer a:focus-visible {
+    border-radius: 0.2rem;
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .rich-text-renderer code {
+    border-radius: 0.25rem;
+    background: var(--muted);
+    font-family: var(--font-geist-mono), monospace;
+    font-size: 0.9em;
+    padding: 0.1rem 0.3rem;
+  }
+
+  .rich-text-renderer pre {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--muted);
+    padding: 0.875rem;
+  }
+
+  .rich-text-renderer pre code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    background: transparent;
+    padding: 0;
+    white-space: pre;
+  }
+
+  .rich-text-renderer table {
+    display: block;
+    max-width: 100%;
+    min-width: 20rem;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+
+  .rich-text-renderer th,
+  .rich-text-renderer td {
+    min-width: 5rem;
+    border: 1px solid var(--border);
+    padding: 0.45rem 0.6rem;
+    vertical-align: top;
+  }
+
+  .rich-text-renderer th {
+    background: var(--muted);
+    font-weight: 650;
+  }
+
+  .rich-text-renderer .rich-text-inline-math {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: middle;
+  }
+
+  .rich-text-renderer .rich-text-block-math {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    text-align: center;
+  }
+
+  .rich-text-renderer .katex-display {
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
+  }
 }

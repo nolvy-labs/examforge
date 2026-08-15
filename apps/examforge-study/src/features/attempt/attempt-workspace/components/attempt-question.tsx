@@ -18,9 +18,12 @@ import {
 import type { AttemptQuestion, AttemptSection } from "../../types/attempt.type"
 import { getQuestionType } from "../../types/attempt.type"
 import { Button } from "@/components/shadcn/button"
-import ContentRenderer from "@/components/common/content-renderer"
+import {
+	RichTextRenderer,
+	richTextToPlainText,
+} from "@/components/common/rich-text-renderer"
 import { Card, CardContent } from "@/components/shadcn/card"
-import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldTitle } from "@/components/shadcn/field"
+import { FieldGroup } from "@/components/shadcn/field"
 import { Fragment } from "react/jsx-runtime"
 import { Separator } from "@/components/shadcn/separator"
 import { Badge } from "@/components/shadcn/badge"
@@ -49,9 +52,7 @@ export function AttemptQuestionBlock({
 						{number}
 					</Badge>
 					<div className="min-w-0 flex-1">
-						<div className="whitespace-pre-line wrap-break-word text-base font-medium leading-7 text-neutral-950">
-							<ContentRenderer content={question.prompt} />
-						</div>
+						<RichTextRenderer content={question.prompt} className="text-base font-medium text-neutral-950 dark:text-neutral-50" />
 						{type !== "group" && (
 							<p className="mt-1 text-xs text-neutral-500">
 								{translate("points", { count: new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(question.points) })}
@@ -69,9 +70,7 @@ export function AttemptQuestionBlock({
 											<Badge className="aspect-square size-7 text-xs">
 												{number}.{index + 1}
 											</Badge>
-											<p className="whitespace-break-spaces mt-1">
-												<ContentRenderer content={child.prompt} />
-											</p>
+											<RichTextRenderer content={child.prompt} className="mt-1 min-w-0 flex-1" />
 										</div>
 										<QuestionEditor question={child} />
 									</div>
@@ -123,23 +122,15 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 	if (type === "multiple-choice-single") {
 		return (
 			<RadioGroup value={selected.length > 0 ? selected[0] : ""} onValueChange={(value) => setOptions(question.id, [value])}>
-				{question.options.map((option) => {
-					return (
-						<FieldLabel key={option.id}>
-							<Field orientation="horizontal">
-								<RadioGroupItem value={option.id} id={option.id} />
-								<FieldContent className="flex-row gap-2 items-start justify-start">
-									<FieldTitle>
-										<ContentRenderer content={option.label || ""} />
-									</FieldTitle>
-									<FieldDescription className="whitespace-break-spaces">
-										<ContentRenderer content={option.text} />
-									</FieldDescription>
-								</FieldContent>
-							</Field>
-						</FieldLabel>
-					)
-				})}
+				{question.options.map((option) => (
+					<AnswerOptionRow
+						key={option.id}
+						label={option.label}
+						content={option.text}
+						onSelect={() => setOptions(question.id, [option.id])}
+						control={<RadioGroupItem value={option.id} id={option.id} aria-label={option.label ?? richTextToPlainText(option.text)} />}
+					/>
+				))}
 				<Button
 					variant="link"
 					size="xs"
@@ -158,10 +149,21 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 			{question.options.map((option) => {
 				const checked = selected.includes(option.id)
 				return (
-					<FieldLabel key={option.id}>
-						<Field orientation="horizontal">
-							<Checkbox
+					<AnswerOptionRow
+						key={option.id}
+						label={option.label}
+						content={option.text}
+						onSelect={() =>
+							setOptions(
+								question.id,
+								checked
+									? selected.filter((id) => id !== option.id)
+									: [...selected, option.id]
+							)
+						}
+						control={<Checkbox
 								checked={checked}
+								aria-label={option.label ?? richTextToPlainText(option.text)}
 								onCheckedChange={(next) =>
 									setOptions(
 										question.id,
@@ -170,17 +172,8 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 											: selected.filter((id) => id !== option.id)
 									)
 								}
-							/>
-							<FieldContent className="flex-row gap-2 items-start justify-start">
-								<FieldTitle>
-									<ContentRenderer content={option.label || ""} />
-								</FieldTitle>
-								<FieldDescription className="whitespace-break-spaces">
-									<ContentRenderer content={option.text} />
-								</FieldDescription>
-							</FieldContent>
-						</Field>
-					</FieldLabel>
+							/>}
+					/>
 				)
 			})}
 			<Button
@@ -193,6 +186,31 @@ function QuestionEditor({ question }: { question: AttemptQuestion }) {
 				<LocaleMessage messageId="attempt.clearAnswer" />
 			</Button>
 		</FieldGroup>
+	)
+}
+
+interface AnswerOptionRowProps {
+	label: string | null
+	content: string
+	control: React.ReactNode
+	onSelect: () => void
+}
+
+function AnswerOptionRow({ label, content, control, onSelect }: AnswerOptionRowProps) {
+	return (
+		<div
+			className="flex w-full cursor-pointer items-start gap-3 rounded-md border p-3"
+			onClick={(event) => {
+				const target = event.target as Element
+				if (!target.closest("a, [data-slot='checkbox'], [data-slot='radio-group-item']")) onSelect()
+			}}
+		>
+			{control}
+			<div className="flex min-w-0 flex-1 items-start gap-2">
+				{label && <span className="text-sm font-medium">{label}</span>}
+				<RichTextRenderer content={content} className="min-w-0 flex-1 text-sm text-muted-foreground" />
+			</div>
+		</div>
 	)
 }
 

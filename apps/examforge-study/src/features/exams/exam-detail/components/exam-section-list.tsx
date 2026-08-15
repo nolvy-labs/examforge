@@ -10,7 +10,7 @@ import type { StudentExamSection } from "../../types/exam.types"
 import {
 	getSectionFacts,
 } from "../model/exam-detail"
-import ContentRenderer from "@/components/common/content-renderer"
+import { RichTextRenderer } from "@/components/common/rich-text-renderer"
 import { LocaleMessage } from "@/components/locale/locale-message"
 import { useLocale, useTranslations } from "next-intl"
 
@@ -50,12 +50,18 @@ export function ExamSectionList({ sections }: Props) {
 								</p>
 							</div>
 						</CardHeader>
-						{section.instructions.trim() && (
+						{(section.instructions || section.stimulusText) && (
 							<CardContent>
-								<h4 className="text-base font-semibold"><LocaleMessage messageId="exams.sectionInstructions" /></h4>
-								<div className="whitespace-pre-line wrap-break-word text-sm leading-6 text-muted-foreground">
-									<ContentRenderer content={section.instructions} />
-								</div>
+								<RichTextRenderer
+									content={section.stimulusText}
+									className="mb-4 text-sm"
+								/>
+								{section.instructions && (
+									<>
+										<h4 className="text-base font-semibold"><LocaleMessage messageId="exams.sectionInstructions" /></h4>
+										<RichTextRenderer content={section.instructions} className="mt-2 text-sm text-muted-foreground" />
+									</>
+								)}
 							</CardContent>
 						)}
 					</Card>
