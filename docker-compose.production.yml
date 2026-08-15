@@ -3,42 +3,41 @@ name: examforge-production
 x-api-environment: &api-environment
   ASPNETCORE_ENVIRONMENT: Production
   ASPNETCORE_URLS: http://+:5001
-  ConnectionStrings__DefaultConnection: "${ConnectionStrings__DefaultConnection:?Set ConnectionStrings__DefaultConnection in the deployment environment}"
-  Jwt__Secret: "${JWT_SECRET:?Set JWT_SECRET in the deployment environment}"
-  Jwt__Issuer: "${JWT_ISSUER:?Set JWT_ISSUER in the deployment environment}"
-  Jwt__Audience: "${JWT_AUDIENCE:?Set JWT_AUDIENCE in the deployment environment}"
+
+  ConnectionStrings__DefaultConnection: "${ConnectionStrings__DefaultConnection:?Set ConnectionStrings__DefaultConnection}"
+
+  Jwt__Secret: "${JWT_SECRET:?Set JWT_SECRET}"
+  Jwt__Issuer: "${JWT_ISSUER:?Set JWT_ISSUER}"
+  Jwt__Audience: "${JWT_AUDIENCE:?Set JWT_AUDIENCE}"
   Jwt__AccessTokenMinutes: "${JWT_ACCESS_TOKEN_MINUTES:-15}"
   Jwt__RefreshTokenDays: "${JWT_REFRESH_TOKEN_DAYS:-7}"
-  Cors__AllowedOrigins__0: "${CORS_ALLOWED_ORIGIN_0:?Set the exact Study HTTPS origin}"
-  Cors__AllowedOrigins__1: "${CORS_ALLOWED_ORIGIN_1:?Set the exact Admin HTTPS origin}"
-  ForwardedHeaders__KnownNetworks__0: "${FORWARDED_HEADERS_KNOWN_NETWORK_0:?Set the immediate proxy/container network CIDR}"
+
+  Cors__AllowedOrigins__0: "${CORS_ALLOWED_ORIGIN_0:?Set Study HTTPS origin}"
+  Cors__AllowedOrigins__1: "${CORS_ALLOWED_ORIGIN_1:?Set Admin HTTPS origin}"
+
+  ForwardedHeaders__KnownNetworks__0: "${FORWARDED_HEADERS_KNOWN_NETWORK_0:?Set proxy network}"
 
 services:
   migrations:
-    build:
-      context: ./apps/examforge-api
-      dockerfile: Dockerfile
-      target: migrations
+    image: "${MIGRATIONS_IMAGE:?Set MIGRATIONS_IMAGE}"
     environment: *api-environment
-    restart: "on-failure:3"
+    restart: "no"
+    networks:
+      - backend
 
   api:
-    build:
-      context: ./apps/examforge-api
-      dockerfile: Dockerfile
-      target: final
+    image: "${API_IMAGE:?Set API_IMAGE}"
     restart: unless-stopped
+    environment: *api-environment
+    ports:
+      - "127.0.0.1:5001:5001"
+    networks:
+      - backend
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "5"
-    environment: *api-environment
-    ports:
-      - "127.0.0.1:5001:5001"
-    depends_on:
-      migrations:
-        condition: service_completed_successfully
     healthcheck:
       test:
         [
@@ -55,3 +54,10 @@ services:
       timeout: 3s
       retries: 3
       start_period: 20s
+
+networks:
+  backend:
+    name: examforge-production-backend
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
