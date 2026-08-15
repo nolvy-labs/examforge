@@ -185,7 +185,7 @@ Theo pháp luật Việt Nam và các điều kiện áp dụng, bạn có thể
 * yêu cầu thông tin về việc xử lý; và
 * khiếu nại hoặc thực hiện các quyền khác theo pháp luật.
 
-Yêu cầu có thể được gửi tới **[LEGAL_EMAIL]**.
+Yêu cầu có thể được gửi tới **vy.tranngoclam@gmail.com**.
 
 ExamForge có thể yêu cầu thông tin cần thiết hợp lý để xác minh yêu cầu liên quan đúng đến cá nhân hoặc tài khoản tương ứng.
 
@@ -195,7 +195,7 @@ ExamForge hiện không lưu ngày sinh trong dữ liệu tài khoản tiêu chu
 
 Nếu ExamForge biết rằng dữ liệu của người dùng dưới 16 tuổi đang được xử lý trong trường hợp pháp luật yêu cầu sự chấp thuận của cha, mẹ hoặc người giám hộ, ExamForge có thể hạn chế tài khoản hoặc hoạt động xử lý liên quan trong khi hoàn thiện các yêu cầu áp dụng.
 
-Cha, mẹ hoặc người giám hộ có thể liên hệ **[LEGAL_EMAIL]** về vấn đề dữ liệu cá nhân liên quan.
+Cha, mẹ hoặc người giám hộ có thể liên hệ **vy.tranngoclam@gmail.com** về vấn đề dữ liệu cá nhân liên quan.
 
 ## 11. Bảo mật
 

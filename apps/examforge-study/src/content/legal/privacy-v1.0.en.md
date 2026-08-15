@@ -185,7 +185,7 @@ Subject to applicable Vietnamese law and any applicable conditions, you may have
 * request information about processing; and
 * make a complaint or exercise other rights provided by law.
 
-Requests may be sent to **[LEGAL_EMAIL]**.
+Requests may be sent to **vy.tranngoclam@gmail.com**.
 
 ExamForge may request information reasonably necessary to verify that a request relates to the correct person or account.
 
@@ -195,7 +195,7 @@ ExamForge does not currently collect date-of-birth information as part of the st
 
 If ExamForge becomes aware that personal data relating to a user under 16 is being processed in circumstances requiring authorization from a parent or legal guardian, ExamForge may restrict the relevant account or processing while the applicable requirements are addressed.
 
-Parents or legal guardians may contact **[LEGAL_EMAIL]** regarding relevant personal-data concerns.
+Parents or legal guardians may contact **vy.tranngoclam@gmail.com** regarding relevant personal-data concerns.
 
 ## 11. Security
 

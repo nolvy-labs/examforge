@@ -127,7 +127,7 @@ jobs:
         
       - name: Configure SSH
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY_B64 }}
           SSH_KNOWN_HOSTS: ${{ secrets.LIGHTSAIL_SSH_KNOWN_HOSTS }}
         run: |
           install -m 700 -d ~/.ssh
