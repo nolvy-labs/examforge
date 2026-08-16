@@ -4,8 +4,8 @@
 
 The ExamForge backend exposes a REST API for two frontend clients:
 
-1. **Study Portal** — learner-facing web application.
-2. **Admin Portal** — admin-facing content management application.
+1. **Study Portal** - learner-facing web application.
+2. **Admin Portal** - admin-facing content management application.
 
 The API should be stable, predictable, and easy to consume from TypeScript clients.
 

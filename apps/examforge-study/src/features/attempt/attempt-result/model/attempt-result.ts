@@ -12,7 +12,7 @@ export function getElapsedMinutes(startedAt: string, finishedAt?: string | null)
 	)
 }
 
-export function getAnswerText(question: AttemptQuestion, unanswered = "—") {
+export function getAnswerText(question: AttemptQuestion, unanswered = "-") {
 	const answer = question.answer
 	if (getQuestionType(question.type) === "fill-blank") {
 		return answer?.textAnswer?.trim() || unanswered

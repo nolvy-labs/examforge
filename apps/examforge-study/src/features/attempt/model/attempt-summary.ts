@@ -7,7 +7,7 @@ export function getAttemptActionHref(attempt: StudentExamAttempt) {
 	return `/attempts/${attempt.attemptId}/result`
 }
 
-export function formatAttemptSummaryDate(value?: string | null, locale = "en", unavailable = "—") {
+export function formatAttemptSummaryDate(value?: string | null, locale = "en", unavailable = "-") {
 	if (!value) return unavailable
 	const date = new Date(value)
 	if (Number.isNaN(date.getTime())) return unavailable

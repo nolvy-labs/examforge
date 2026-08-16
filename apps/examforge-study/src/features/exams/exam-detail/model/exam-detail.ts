@@ -27,7 +27,7 @@ export function formatNumber(value: number, locale = "en") {
 	}).format(value)
 }
 
-export function formatDate(value: string, includeTime = true, locale = "en", unavailable = "—") {
+export function formatDate(value: string, includeTime = true, locale = "en", unavailable = "-") {
 	const date = new Date(value)
 	if (Number.isNaN(date.getTime())) return unavailable
 	return new Intl.DateTimeFormat(locale, {

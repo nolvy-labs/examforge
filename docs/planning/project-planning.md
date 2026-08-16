@@ -201,7 +201,7 @@ The Admin Portal focuses on content operations:
 
 ## 10. Development Milestones
 
-### Milestone 1 — Foundation
+### Milestone 1 - Foundation
 
 - Create monorepo.
 - Create backend solution and projects.
@@ -211,7 +211,7 @@ The Admin Portal focuses on content operations:
 - Add basic GitHub Actions.
 - Add initial documentation.
 
-### Milestone 2 — Backend Core
+### Milestone 2 - Backend Core
 
 - Implement database schema.
 - Add EF Core migrations.
@@ -220,7 +220,7 @@ The Admin Portal focuses on content operations:
 - Implement subject, exam, section, and question APIs.
 - Add Swagger documentation.
 
-### Milestone 3 — Study MVP
+### Milestone 3 - Study MVP
 
 - Implement registration/login.
 - Implement subject and exam browsing.
@@ -229,7 +229,7 @@ The Admin Portal focuses on content operations:
 - Implement result review.
 - Implement basic progress dashboard.
 
-### Milestone 4 — Admin MVP
+### Milestone 4 - Admin MVP
 
 - Implement admin login.
 - Implement subject CRUD.
@@ -238,7 +238,7 @@ The Admin Portal focuses on content operations:
 - Implement publish/archive workflow.
 - Add validation and user feedback.
 
-### Milestone 5 — Quality and Deployment
+### Milestone 5 - Quality and Deployment
 
 - Add backend unit tests.
 - Add integration tests for critical APIs.
